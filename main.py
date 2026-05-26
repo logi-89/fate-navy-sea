@@ -1,4 +1,5 @@
 import pygame
+import threading
 from random import randint
 
 # Initialize Pygame
@@ -59,9 +60,22 @@ def show_title_screen():
         text_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
         screen.blit(title_text, text_rect)
 
-        # Draw buttons
-        font = pygame.font.Font(None, 50)
-        start_text = font.render("Start", True, WHITE)
-        credits_text = font.render("Credits", True, WHITE)
+        # # Draw buttons
+        # font = pygame.font.Font(None, 50)
+        # start_text = font.render("Start", True, WHITE)
+        # credits_text = font.render("Credits", True, WHITE)
 
-        
+# Death screen
+def show_Death():
+    font_large = pygame.font.Font(None, 80)
+    font_small = pygame.font.Font(None, 50)
+
+    # Draw the death message
+    screen.fill((0, 0, 0))
+    title_text = font_large.render("You Died!", True, (255, 0, 0))  # Red text
+    title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+    screen.blit(title_text, title_rect)
+
+
+show_title_screen()
+
