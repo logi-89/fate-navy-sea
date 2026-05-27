@@ -207,8 +207,8 @@ def levelONE(tile_map):
     grounded = [p for p in platforms if p.y > HEIGHT // 4 and p.y < HEIGHT - 50]
     if grounded:
         best     = min(grounded, key=lambda p: p.x)
-        spawn_x  = best.x + 10
-        spawn_y  = best.top - 62        # player height (60) + 2 px gap
+        spawn_x  = best.x + 250
+        spawn_y  = best.top + 400        # player height (60) + 2 px gap
 
     player_rect     = pygame.Rect(spawn_x, spawn_y, 40, 60)
     player_vel_y    = 0
