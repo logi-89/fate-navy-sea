@@ -62,24 +62,25 @@ def build_platforms_from_map(tile_map, tile_size=TILE_SIZE):
                 breakable_doors.append({"rect": rect, "hp": 3, "broken": False})
 
             elif ch == '_':
-                # Elevator: stores origin_y so it can oscillate up/down
                 rect = pygame.Rect(col * tile_size, y, tile_size * 2, tile_size // 2)
                 elevators.append({
                     "rect":     rect,
-                    "origin_y": y,
-                    "range":    150,   # pixels it travels up/down
-                    "speed":    1.2,   # pixels per frame
-                    "dir":      1,     # 1 = moving down, -1 = moving up
+                    "origin_y": float(y),
+                    "range":    150,
+                    "speed":    1.2,
+                    "dir":      1,
+                    # FIX: track sub-pixel position as a float so we don't
+                    # accumulate rounding error every frame
+                    "float_y":  float(y),
                 })
-                col += 2  # elevator occupies 2 tiles wide
+                col += 2
 
             elif ch == '^':
-                # Animated door: slides upward when player presses E nearby
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size * 2)
                 animated_doors.append({
                     "rect":      rect,
                     "open":      False,
-                    "offset_y":  0,          # how far it has slid up
+                    "offset_y":  0,
                     "max_open":  tile_size * 2,
                 })
                 col += 1
@@ -202,39 +203,38 @@ def levelONE(tile_map):
     animated_doors  = map_data["animated_doors"]
     world_w         = map_world_width(tile_map)
 
-    # Spawn: find the leftmost low platform and sit the player on top of it
     spawn_x, spawn_y = 100, 300
     grounded = [p for p in platforms if p.y > HEIGHT // 4 and p.y < HEIGHT - 50]
     if grounded:
         best     = min(grounded, key=lambda p: p.x)
         spawn_x  = best.x + 250
-        spawn_y  = best.top + 400        # player height (60) + 2 px gap
+        spawn_y  = best.top + 400
 
-    player_rect     = pygame.Rect(spawn_x, spawn_y, 40, 60)
-    player_vel_y    = 0
-    is_grounded     = False
+    player_x     = float(spawn_x)
+    player_y     = float(spawn_y)
+    player_rect  = pygame.Rect(spawn_x, spawn_y, 40, 60)
+    player_vel_y = 0.0       
+    is_grounded  = False
     can_double_jump = True
-    camera_x        = 0
+    camera_x     = 0
+
+    SNAP_TOLERANCE = 8
 
     ui_font = pygame.font.Font(None, 30)
 
-    # ── Sea gel palette ───────────────────────────────────────────────────
     GROUND_TOP  = (40, 180, 160)
     GROUND_SIDE = (20, 120, 110)
     GROUND_DIRT = (10,  70,  80)
 
-    COLOR_DOOR_INTACT  = (30, 100, 160)
-    COLOR_DOOR_DAMAGED = (60, 150, 200)
-    COLOR_PAPERCLIP    = (160, 240, 220)
+    COLOR_DOOR_INTACT  = (160,  80,  30)
+    COLOR_DOOR_DAMAGED = (200, 120,  50)
+    COLOR_PAPERCLIP    = (200, 200, 220)
     COLOR_ELEVATOR     = (80, 210, 190)
     COLOR_ANIM_DOOR    = (50,  80, 160)
- 
-    # Colors for extra tile types
-    COLOR_DOOR_INTACT  = (160,  80,  30)   # brown breakable door
-    COLOR_DOOR_DAMAGED = (200, 120,  50)   # lighter when damaged
-    COLOR_PAPERCLIP    = (200, 200, 220)   # silver paperclip
- 
+
     while running:
+        dt = clock.tick(60)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -247,9 +247,8 @@ def levelONE(tile_map):
                     elif can_double_jump and DOUBLE_JUMP_POWER != 0:
                         player_vel_y    = DOUBLE_JUMP_POWER
                         can_double_jump = False
- 
+
                 if event.key == pygame.K_e:
-                    # breakable doors
                     for door in breakable_doors:
                         if door["broken"]:
                             continue
@@ -257,22 +256,30 @@ def levelONE(tile_map):
                             door["hp"] -= 1
                             if door["hp"] <= 0:
                                 door["broken"] = True
-                    # animated ^ doors
                     for door in animated_doors:
                         if not door["open"]:
                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
                                 door["open"] = True
- 
-        keys   = pygame.key.get_pressed()
-        # ── horizontal movement ───────────────────────────────────────────
-        move_x = 0
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= PLAYER_SPEED
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += PLAYER_SPEED
 
-        player_rect.x = max(0, min(player_rect.x + move_x, world_w - player_rect.width))
+        keys = pygame.key.get_pressed()
 
-        # Solid rects = platforms + intact breakable doors +
-        #               elevator rects + closed animated doors
+        # ── elevator logic (moved to TOP of frame, BEFORE collision) ─────
+        for elev in elevators:
+            elev["float_y"] += elev["speed"] * elev["dir"]
+            if elev["float_y"] > elev["origin_y"] + elev["range"]:
+                elev["dir"] = -1
+            elif elev["float_y"] < elev["origin_y"] - elev["range"]:
+                elev["dir"] = 1
+            elev["rect"].y = int(elev["float_y"])
+
+        # ── animated door logic ───────────────────────────────────────────
+        for door in animated_doors:
+            if door["open"] and door["offset_y"] < door["max_open"]:
+                door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
+                door["rect"].y   -= 4
+                door["rect"].height = max(4, door["max_open"] - door["offset_y"])
+
+        # ── build solid rects for this frame ─────────────────────────────
         solid_rects = (
             platforms
             + [d["rect"] for d in breakable_doors if not d["broken"]]
@@ -281,17 +288,27 @@ def levelONE(tile_map):
                if not d["open"] or d["offset_y"] < d["max_open"]]
         )
 
-        # ── resolve horizontal collisions ─────────────────────────────────
+        # ── horizontal movement ───────────────────────────────────────────
+        move_x = 0
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= PLAYER_SPEED
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += PLAYER_SPEED
+
+        player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
+        player_rect.x = int(player_x)
+
         for plat in solid_rects:
             if player_rect.colliderect(plat):
                 if move_x > 0:
                     player_rect.right = plat.left
+                    player_x = float(player_rect.x)
                 elif move_x < 0:
                     player_rect.left = plat.right
+                    player_x = float(player_rect.x)
 
         # ── vertical movement ─────────────────────────────────────────────
         player_vel_y = min(player_vel_y + GRAVITY, MAX_FALL_SPEED)
-        player_rect.y += int(player_vel_y)
+        player_y    += player_vel_y          # FIX: accumulate float position
+        player_rect.y = int(player_y)        # sync rect for collision checks
 
         # ── collect paperclips ────────────────────────────────────────────
         for clip in paperclips:
@@ -301,48 +318,52 @@ def levelONE(tile_map):
         # ── resolve vertical collisions ───────────────────────────────────
         is_grounded = False
         for plat in solid_rects:
-            if player_rect.colliderect(plat):
-                if player_vel_y > 0 and player_rect.bottom - int(player_vel_y) <= plat.top + 5:
+            if not player_rect.colliderect(plat):
+                continue
+
+            if player_vel_y >= 0:
+                prev_bottom = player_y - player_vel_y + player_rect.height
+                if prev_bottom <= plat.top + SNAP_TOLERANCE:
                     player_rect.bottom = plat.top
-                    player_vel_y       = 0
+                    player_y           = float(player_rect.y)
+                    player_vel_y       = 0.0
                     is_grounded        = True
                     can_double_jump    = True
-                elif player_vel_y < 0 and player_rect.top - int(player_vel_y) >= plat.bottom - 5:
+
+            elif player_vel_y < 0:
+                prev_top = player_y - player_vel_y
+                if prev_top >= plat.bottom - SNAP_TOLERANCE:
                     player_rect.top = plat.bottom
-                    player_vel_y    = 0
+                    player_y        = float(player_rect.y)
+                    player_vel_y    = 0.0
 
-        # ── elevator logic ────────────────────────────────────────────────
-        for elev in elevators:
-            elev["rect"].y += elev["speed"] * elev["dir"]
-            if elev["rect"].y > elev["origin_y"] + elev["range"]:
-                elev["dir"] = -1
-            elif elev["rect"].y < elev["origin_y"] - elev["range"]:
-                elev["dir"] = 1
-            # carry player if standing on it
-            if (is_grounded and
-                    player_rect.bottom == elev["rect"].top and
+        # ── elevator carry ────────────────────────────────────────────────
+        if is_grounded:
+            for elev in elevators:
+                on_elev = (
+                    abs(player_rect.bottom - elev["rect"].top) <= 2 and
                     player_rect.right  > elev["rect"].left and
-                    player_rect.left   < elev["rect"].right):
-                player_rect.y += int(elev["speed"] * elev["dir"])
+                    player_rect.left   < elev["rect"].right
+                )
+                if on_elev:
+                    delta = elev["speed"] * elev["dir"]
+                    player_y += delta
+                    player_rect.y = int(player_y)
+                    break
 
-        # ── animated door logic ───────────────────────────────────────────
-        for door in animated_doors:
-            if door["open"] and door["offset_y"] < door["max_open"]:
-                door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
-                door["rect"].y   = (door["rect"].y - 4)   # slide upward
-                door["rect"].height = max(4, door["max_open"] - door["offset_y"])
-
+        # ── fall out of world → respawn ───────────────────────────────────
         if player_rect.y > HEIGHT + 200:
+            player_x     = float(spawn_x)
+            player_y     = float(spawn_y)
             player_rect.x = spawn_x
             player_rect.y = spawn_y
-            player_vel_y  = 0
-        
+            player_vel_y  = 0.0
+
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
- 
+
         # ── draw ──────────────────────────────────────────────────────────
         draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
- 
-        # walls / platforms
+
         for plat in platforms:
             vx = plat.x - camera_x
             if vx + plat.width < 0 or vx > WIDTH:
@@ -350,8 +371,7 @@ def levelONE(tile_map):
             pygame.draw.rect(screen, GROUND_TOP,  (vx, plat.y,     plat.width, 8))
             pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
             pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y,     plat.width, plat.height), 2)
- 
-        # breakable doors  (!)
+
         for door in breakable_doors:
             if door["broken"]:
                 continue
@@ -359,14 +379,12 @@ def levelONE(tile_map):
             if vx + door["rect"].width < 0 or vx > WIDTH:
                 continue
             color = COLOR_DOOR_DAMAGED if door["hp"] < 3 else COLOR_DOOR_INTACT
-            pygame.draw.rect(screen, color,      (vx, door["rect"].y, door["rect"].width, door["rect"].height))
+            pygame.draw.rect(screen, color,       (vx, door["rect"].y, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (220,160,80),(vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
-            # show remaining HP as small pips
             for i in range(door["hp"]):
                 pygame.draw.circle(screen, (255,220,80),
                                    (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
- 
-        # paperclips  (?)
+
         for clip in paperclips:
             if clip["collected"]:
                 continue
@@ -378,7 +396,6 @@ def levelONE(tile_map):
             pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
             pygame.draw.circle(screen, (240,240,255),   (cx, cy), 8, 2)
 
-        # elevators (_)
         for elev in elevators:
             vx = elev["rect"].x - camera_x
             pygame.draw.rect(screen, COLOR_ELEVATOR,
@@ -388,7 +405,6 @@ def levelONE(tile_map):
                              (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height),
                              2, border_radius=4)
 
-        # animated doors (^)
         for door in animated_doors:
             if door["rect"].height <= 0:
                 continue
@@ -397,13 +413,11 @@ def levelONE(tile_map):
                              (vx, door["rect"].y, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (120, 180, 255),
                              (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
- 
-        # player
+
         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
- 
-        # HUD
+
         clips_total     = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
         hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Break door", True, (255, 255, 255))
@@ -412,11 +426,8 @@ def levelONE(tile_map):
         screen.blit(hint,    (20, 20))
         screen.blit(pos_txt, (20, 50))
         screen.blit(clip_txt,(20, 80))
- 
+
         pygame.display.flip()
-        clock.tick(60)
- 
     pygame.quit()
- 
- 
+
 show_title_screen()
