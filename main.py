@@ -1,3 +1,5 @@
+import constants
+
 import pygame
 from random import randint
 
@@ -17,26 +19,8 @@ coins = 0
 game_over = False
 clock = pygame.time.Clock()
 
-# Colors
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-BLACK = (0, 0, 0)
-GROUND_COLOR = (50, 205, 50)
-BUTTON_COLOR = (100, 100, 200)
-HOVER_COLOR = (150, 150, 255)
-BROWN = (128, 0, 0)
-
-# Player settings
-player_size = 150
-player_x = WIDTH // 2 - player_size // 2
-player_y = HEIGHT - player_size
-player_speed = 5
-player_velocity_y = 0
-jump_height = -15
-gravity = 1
-
 # Ground settings
-ground_level = HEIGHT - player_size
+ground_level = HEIGHT - constants.player_size
 
 # Function to create a gradient
 def draw_gradient(screen, color1, color2):
@@ -55,13 +39,13 @@ def show_title_screen():
 
         # Draw title
         font = pygame.font.Font(None, 100)
-        title_text = font.render("Fate: navy sea", True, WHITE)
+        title_text = font.render("Fate: navy sea", True, constants.WHITE)
         text_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
         screen.blit(title_text, text_rect)
 
         # Draw buttons
         font = pygame.font.Font(None, 50)
-        start_text = font.render("Start", True, WHITE)
-        credits_text = font.render("Credits", True, WHITE)
+        start_text = font.render("Start", True, constants.WHITE)
+        credits_text = font.render("Credits", True, constants.WHITE)
 
         
