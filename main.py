@@ -105,10 +105,11 @@ def show_title_screen():
 SHOP_ITEMS = [
     {"name": "Health Flask",      "desc": "+1 flask (heals 40 HP when used)",   "cost": 15,  "key": "flask"},
     {"name": "Sword Upgrade",     "desc": "+15 sword damage",                   "cost": 30,  "key": "sword_dmg"},
-    {"name": "Water Gun Ammo +3",   "desc": "+3 balloon capacity",                "cost": 20,  "key": "balloon_ammo"},
+    {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity",                "cost": 20,  "key": "balloon_ammo"},
     {"name": "Max HP +25",        "desc": "Increase maximum health",            "cost": 40,  "key": "max_hp"},
     {"name": "Sea Boots",         "desc": "+1 speed permanently",               "cost": 50,  "key": "speed"},
     {"name": "Revive Token",      "desc": "Auto-revive once with 30 HP",        "cost": 80,  "key": "revive"},
+    {"name": "spears",            "desc": "spears",                             "cost": 80,   "key": "spears"},
 ]
 
 def run_shop():
@@ -118,7 +119,9 @@ def run_shop():
     # Platforms (X, Y, Width, Height)
 
 def introLORE():
+    t = 0
     screen.fill(constants.BLACK)
+    
 
 #intro aka the start of the game
 def intro():
