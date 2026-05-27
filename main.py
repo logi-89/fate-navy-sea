@@ -27,20 +27,59 @@ DOUBLE_JUMP_POWER= 0 # -13
 TILE_SIZE = 50  # Each tile is 50x50 pixels
 
 def build_platforms_from_map(tile_map, tile_size=TILE_SIZE):
-    platforms = []
+    """
+        # -> wall / solid platform
+        $ -> (reserved / unused — collected into 'specials')
+        @ -> (reserved / unused — collected into 'specials')
+        ? -> paper clip pickup
+        ! -> breakable door
+    """
+    platforms = []  
+    breakable_doors = []  
+    paperclips = []
+ 
+
+    RUN_CHARS  = {'#', '!'}
+
+    POINT_CHARS = {'?', '$', '@'}
+ 
     for row_idx, row in enumerate(tile_map):
-        y = row_idx * tile_size
+        y   = row_idx * tile_size
         col = 0
         while col < len(row):
-            if row[col] == '#':
+            ch = row[col]
+
+            if ch == '#':
                 start_col = col
                 while col < len(row) and row[col] == '#':
                     col += 1
                 width = (col - start_col) * tile_size
                 platforms.append(pygame.Rect(start_col * tile_size, y, width, tile_size))
+ 
+            # ── breakable doors ───────────────────────────────────────────
+            elif ch == '!':
+                start_col = col
+                while col < len(row) and row[col] == '!':
+                    col += 1
+                width = (col - start_col) * tile_size
+                rect  = pygame.Rect(start_col * tile_size, y, width, tile_size)
+                breakable_doors.append({"rect": rect, "hp": 3, "broken": False})
+ 
+            # ── paper clip pickup ─────────────────────────────────────────
+            elif ch == '?':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                paperclips.append({"rect": rect, "collected": False})
+                col += 1
+ 
+ 
             else:
                 col += 1
-    return platforms
+ 
+    return {
+        "platforms":       platforms,
+        "breakable_doors": breakable_doors,
+        "paperclips":      paperclips,
+    }
 
 def map_world_width(tile_map, tile_size=TILE_SIZE):
     return max(len(row) for row in tile_map) * tile_size
@@ -132,32 +171,40 @@ def introLORE():
 def intro():
     introLORE()
     print("le bron")
-    levelONE(maps.map1)
+    levelONE(maps.L1)
 
 def levelONE(tile_map):
-    running   = True
-    platforms = build_platforms_from_map(tile_map)
-    world_w   = map_world_width(tile_map)
-
+    running    = True
+    map_data   = build_platforms_from_map(tile_map)
+    platforms       = map_data["platforms"]
+    breakable_doors = map_data["breakable_doors"]
+    paperclips      = map_data["paperclips"]
+    world_w    = map_world_width(tile_map)
+ 
     spawn_x, spawn_y = 100, 100
     for plat in sorted(platforms, key=lambda p: p.y):
         if plat.y > HEIGHT // 4:
             spawn_x = plat.x + 10
             spawn_y = plat.top - 60
             break
-
+ 
     player_rect     = pygame.Rect(spawn_x, spawn_y, 40, 60)
     player_vel_y    = 0
     is_grounded     = False
     can_double_jump = True
     camera_x        = 0
-
+ 
     ui_font = pygame.font.Font(None, 30)
-
+ 
     GROUND_TOP  = (139, 115, 85)
     GROUND_SIDE = (100, 80,  55)
     GROUND_DIRT = (80,  55,  30)
-
+ 
+    # Colors for extra tile types
+    COLOR_DOOR_INTACT  = (160,  80,  30)   # brown breakable door
+    COLOR_DOOR_DAMAGED = (200, 120,  50)   # lighter when damaged
+    COLOR_PAPERCLIP    = (200, 200, 220)   # silver paperclip
+ 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -171,19 +218,37 @@ def levelONE(tile_map):
                     elif can_double_jump and DOUBLE_JUMP_POWER != 0:
                         player_vel_y    = DOUBLE_JUMP_POWER
                         can_double_jump = False
-
+ 
+                # ── attack: damage the nearest door in front of player ──
+                if event.key == pygame.K_e:
+                    for door in breakable_doors:
+                        if door["broken"]:
+                            continue
+                        if player_rect.inflate(20, 0).colliderect(door["rect"]):
+                            door["hp"] -= 1
+                            if door["hp"] <= 0:
+                                door["broken"] = True
+ 
         keys   = pygame.key.get_pressed()
         move_x = 0
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= PLAYER_SPEED
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += PLAYER_SPEED
-
+ 
         player_rect.x = max(0, min(player_rect.x + move_x, world_w - player_rect.width))
-
+ 
         player_vel_y = min(player_vel_y + GRAVITY, MAX_FALL_SPEED)
         player_rect.y += int(player_vel_y)
-
+ 
+        # ── collect paperclips ────────────────────────────────────────────
+        for clip in paperclips:
+            if not clip["collected"] and player_rect.colliderect(clip["rect"]):
+                clip["collected"] = True
+ 
+        # ── solid collision: platforms + intact doors ─────────────────────
+        solid_rects = platforms + [d["rect"] for d in breakable_doors if not d["broken"]]
+ 
         is_grounded = False
-        for plat in platforms:
+        for plat in solid_rects:
             if player_rect.colliderect(plat):
                 if player_vel_y > 0 and player_rect.bottom - player_vel_y <= plat.top + 4:
                     player_rect.bottom  = plat.top
@@ -193,16 +258,18 @@ def levelONE(tile_map):
                 elif player_vel_y < 0 and player_rect.top - player_vel_y >= plat.bottom - 4:
                     player_rect.top  = plat.bottom
                     player_vel_y     = 0
-
+ 
         if player_rect.y > HEIGHT + 200:
             player_rect.x = spawn_x
             player_rect.y = spawn_y
             player_vel_y  = 0
-
+ 
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
-
+ 
+        # ── draw ──────────────────────────────────────────────────────────
         draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
-
+ 
+        # walls / platforms
         for plat in platforms:
             vx = plat.x - camera_x
             if vx + plat.width < 0 or vx > WIDTH:
@@ -210,20 +277,53 @@ def levelONE(tile_map):
             pygame.draw.rect(screen, GROUND_TOP,  (vx, plat.y,     plat.width, 8))
             pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
             pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y,     plat.width, plat.height), 2)
-
+ 
+        # breakable doors  (!)
+        for door in breakable_doors:
+            if door["broken"]:
+                continue
+            vx = door["rect"].x - camera_x
+            if vx + door["rect"].width < 0 or vx > WIDTH:
+                continue
+            color = COLOR_DOOR_DAMAGED if door["hp"] < 3 else COLOR_DOOR_INTACT
+            pygame.draw.rect(screen, color,      (vx, door["rect"].y, door["rect"].width, door["rect"].height))
+            pygame.draw.rect(screen, (220,160,80),(vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
+            # show remaining HP as small pips
+            for i in range(door["hp"]):
+                pygame.draw.circle(screen, (255,220,80),
+                                   (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
+ 
+        # paperclips  (?)
+        for clip in paperclips:
+            if clip["collected"]:
+                continue
+            vx = clip["rect"].x - camera_x
+            if vx + clip["rect"].width < 0 or vx > WIDTH:
+                continue
+            cx = int(vx + clip["rect"].width  // 2)
+            cy = int(clip["rect"].y + clip["rect"].height // 2)
+            pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
+            pygame.draw.circle(screen, (240,240,255),   (cx, cy), 8, 2)
+ 
+        # player
         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
-
-        hint = ui_font.render("A/D – Move   |   SPACE – Jump", True, (255, 255, 255))
-        screen.blit(hint, (20, 20))
+ 
+        # HUD
+        clips_total     = len(paperclips)
+        clips_collected = sum(1 for c in paperclips if c["collected"])
+        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Break door", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
+        clip_txt= ui_font.render(f"Paperclips: {clips_collected}/{clips_total}", True, (200, 200, 220))
+        screen.blit(hint,    (20, 20))
         screen.blit(pos_txt, (20, 50))
-
+        screen.blit(clip_txt,(20, 80))
+ 
         pygame.display.flip()
         clock.tick(60)
-
+ 
     pygame.quit()
-
-
+ 
+ 
 show_title_screen()
