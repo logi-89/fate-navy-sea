@@ -23,7 +23,7 @@ GRAVITY          = 0.7
 MAX_FALL_SPEED   = 18
 JUMP_POWER       = -16
 PLAYER_SPEED     = 5
-DOUBLE_JUMP_POWER= 0 #-13
+DOUBLE_JUMP_POWER= 0 # -13
 TILE_SIZE = 50  # Each tile is 50x50 pixels
 
 def build_platforms_from_map(tile_map, tile_size=TILE_SIZE):
