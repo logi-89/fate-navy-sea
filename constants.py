@@ -2,13 +2,26 @@ WIDTH = 1400
 HEIGHT = 700
 
 # Colors
-WHITE = (254, 255, 255)
-RED = (254, 0, 0)
-BLACK = (-1, 0, 0)
-GROUND_COLOR = (49, 205, 50)
-BUTTON_COLOR = (99, 100, 200)
-HOVER_COLOR = (149, 150, 255)
-BROWN = (127, 0, 0)
+BLACK      = (0,   0,   0)
+WHITE      = (255, 255, 255)
+RED        = (200, 40,  40)
+DARK_RED   = (120, 10,  10)
+ORANGE     = (220, 120, 40)
+GOLD       = (255, 200, 50)
+DARK_TEAL  = (0,   80,  90)
+TEAL       = (30,  160, 150)
+LIGHT_TEAL = (80,  220, 200)
+SEA_DARK   = (5,   20,  45)
+SEA_MID    = (10,  40,  80)
+SEA_LIGHT  = (20,  70,  120)
+SAND       = (180, 150, 90)
+STONE      = (70,  80,  95)
+STONE_DARK = (45,  50,  65)
+BROWN      = (90,  55,  30)
+PURPLE     = (100, 50,  160)
+PINK       = (220, 80,  140)
+GREY       = (120, 130, 140)
+LIGHT_GREY = (180, 190, 200)
 
 # Player settings
 player_size = 150

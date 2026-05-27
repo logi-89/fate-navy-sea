@@ -2,36 +2,16 @@ import pygame
 import threading
 from random import randint
 import math
+import constants
 
 pygame.init()
 
 WIDTH = 1400
-HEIGHT = 700
+HEIGHT = 850
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Fate: navy sea")
 
 clock = pygame.time.Clock()
-
-BLACK      = (0,   0,   0)
-WHITE      = (255, 255, 255)
-RED        = (200, 40,  40)
-DARK_RED   = (120, 10,  10)
-ORANGE     = (220, 120, 40)
-GOLD       = (255, 200, 50)
-DARK_TEAL  = (0,   80,  90)
-TEAL       = (30,  160, 150)
-LIGHT_TEAL = (80,  220, 200)
-SEA_DARK   = (5,   20,  45)
-SEA_MID    = (10,  40,  80)
-SEA_LIGHT  = (20,  70,  120)
-SAND       = (180, 150, 90)
-STONE      = (70,  80,  95)
-STONE_DARK = (45,  50,  65)
-BROWN      = (90,  55,  30)
-PURPLE     = (100, 50,  160)
-PINK       = (220, 80,  140)
-GREY       = (120, 130, 140)
-LIGHT_GREY = (180, 190, 200)
 
 # Button Colors for Title Screen
 BUTTON_COLOR = (40, 80, 120)
@@ -42,7 +22,7 @@ GRAVITY          = 0.7
 MAX_FALL_SPEED   = 18
 JUMP_POWER       = -16
 PLAYER_SPEED     = 5
-DOUBLE_JUMP_POWER= -13
+DOUBLE_JUMP_POWER= 0 #-13
 
 def draw_vertical_gradient(surface, top_color, bottom_color):
     for y in range(HEIGHT):
@@ -86,7 +66,7 @@ def show_title_screen():
         pygame.draw.rect(screen, (10, 45, 75), (0, 430, WIDTH, 270))
         draw_waves(screen, t)
 
-        title_text = title_font.render("Fate: Navy Sea", True, WHITE)
+        title_text = title_font.render("Fate: Navy Sea", True, constants.WHITE)
         title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
         screen.blit(title_text, title_rect)
 
@@ -101,9 +81,9 @@ def show_title_screen():
             button_rect,
             border_radius=18
         )
-        pygame.draw.rect(screen, WHITE, button_rect, 3, border_radius=18)
+        pygame.draw.rect(screen, constants.WHITE, button_rect, 3, border_radius=18)
 
-        start_text = button_font.render("Start", True, WHITE)
+        start_text = button_font.render("Start", True, constants.WHITE)
         start_rect = start_text.get_rect(center=button_rect.center)
         screen.blit(start_text, start_rect)
 
@@ -114,7 +94,7 @@ def show_title_screen():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
-                    levelONE()
+                    intro()
                     return True
 
         pygame.display.flip()
@@ -125,14 +105,28 @@ def show_title_screen():
 SHOP_ITEMS = [
     {"name": "Health Flask",      "desc": "+1 flask (heals 40 HP when used)",   "cost": 15,  "key": "flask"},
     {"name": "Sword Upgrade",     "desc": "+15 sword damage",                   "cost": 30,  "key": "sword_dmg"},
-    {"name": "Balloon Ammo +3",   "desc": "+3 balloon capacity",                "cost": 20,  "key": "balloon_ammo"},
+    {"name": "Water Gun Ammo +3",   "desc": "+3 balloon capacity",                "cost": 20,  "key": "balloon_ammo"},
     {"name": "Max HP +25",        "desc": "Increase maximum health",            "cost": 40,  "key": "max_hp"},
     {"name": "Sea Boots",         "desc": "+1 speed permanently",               "cost": 50,  "key": "speed"},
     {"name": "Revive Token",      "desc": "Auto-revive once with 30 HP",        "cost": 80,  "key": "revive"},
 ]
 
 def run_shop():
+    # Background
+    draw_vertical_gradient(screen, (5, 20, 35), (15, 60, 90))
     selected = 0
+    # Platforms (X, Y, Width, Height)
+
+def introLORE():
+    screen.fill(constants.BLACK)
+
+#intro aka the start of the game
+def intro():
+
+    introLORE()
+    print("le bron")
+    levelONE()
+
 
 def levelONE():
     running = True
@@ -205,22 +199,22 @@ def levelONE():
 
         camera_x = player_rect.x - WIDTH // 2
 
-        draw_vertical_gradient(screen, SEA_MID, SEA_LIGHT)
+        draw_vertical_gradient(screen, constants.SEA_MID, constants.SEA_LIGHT)
 
         for plat in platforms:
             view_rect = pygame.Rect(plat.x - camera_x, plat.y, plat.width, plat.height)
             if view_rect.right > 0 and view_rect.left < WIDTH:
-                pygame.draw.rect(screen, STONE if "cliff" in str(plat) else SAND, view_rect)
-                pygame.draw.rect(screen, STONE_DARK, view_rect, 2)
+                pygame.draw.rect(screen, constants.STONE if "cliff" in str(plat) else constants.SAND, view_rect)
+                pygame.draw.rect(screen, constants.STONE_DARK, view_rect, 2)
 
         # Draw Player
         player_view_rect = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
-        pygame.draw.rect(screen, ORANGE, player_view_rect, border_radius=4)
-        pygame.draw.rect(screen, GOLD, player_view_rect, 3, border_radius=4)
+        pygame.draw.rect(screen, constants.ORANGE, player_view_rect, border_radius=4)
+        pygame.draw.rect(screen, constants.GOLD, player_view_rect, 3, border_radius=4)
 
         # UI Instructions overlay
         ui_font = pygame.font.Font(None, 30)
-        instructions = ui_font.render("A / D to Move | SPACE to Jump & Double Jump", True, WHITE)
+        instructions = ui_font.render("A / D to Move | SPACE to Jump", True, constants.WHITE)
         screen.blit(instructions, (20, 20))
 
         pygame.display.flip()
