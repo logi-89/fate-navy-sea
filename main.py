@@ -19,7 +19,7 @@ BUTTON_COLOR = (40, 80, 120)
 HOVER_COLOR = (60, 110, 170)
 
 # Physics
-GRAVITY          = 0.7
+GRAVITY          = 0.981
 MAX_FALL_SPEED   = 18
 JUMP_POWER       = -16
 PLAYER_SPEED     = 5
@@ -259,7 +259,7 @@ def levelONE(tile_map):
     grounded = [p for p in platforms if p.y > HEIGHT // 4 and p.y < HEIGHT - 50]
     if grounded:
         best     = min(grounded, key=lambda p: p.x)
-        spawn_x  = best.x + 250
+        spawn_x  = best.x + 250 + 3000
         spawn_y  = best.top + 400
 
     player_x     = float(spawn_x)
@@ -332,15 +332,16 @@ def levelONE(tile_map):
 
         keys = pygame.key.get_pressed()
 
-        # ── ELEVATOR ATTACHMENT PHYSICS ──────────────────────────────────
+        # ── ELEVATOR ATTACHMENT PHYSICS ──────────────────────────────────s
         riding_elev = None
         for elev in elevators:
-            if (player_rect.bottom >= elev["rect"].top - 5 and 
-                player_rect.bottom <= elev["rect"].top + 5 and 
+            if (player_rect.bottom >= elev["rect"].top - 10 and 
+                player_rect.bottom <= elev["rect"].top + 10 and 
                 player_rect.right > elev["rect"].left and 
                 player_rect.left < elev["rect"].right and 
                 player_vel_y >= 0):
                 riding_elev = elev
+                #print(riding_elev)
                 break
 
         for elev in elevators:
@@ -356,6 +357,7 @@ def levelONE(tile_map):
                 delta_y = elev["float_y"] - prev_y
                 player_y += delta_y
                 player_rect.y = int(player_y)
+                #print(riding_elev)
 
         # ── ANIMATED DOORS ───────────────────────────────────────────────
         for door in animated_doors:
@@ -395,7 +397,7 @@ def levelONE(tile_map):
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
                 if elev["dir"] == 1: 
-                    player_rect.top = elev["rect"].bottom
+                    player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             show_death_screen(tile_map)
@@ -430,7 +432,7 @@ def levelONE(tile_map):
                     player_vel_y    = 0.0
 
         if is_grounded:
-            coyote_frames = 6          
+            coyote_frames = 6
         else:
             coyote_frames = max(0, coyote_frames - 1)
 
@@ -497,7 +499,7 @@ def levelONE(tile_map):
         # UI Text Data
         clips_total     = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
+        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Action Button   |   ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
         clip_txt= ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
         
