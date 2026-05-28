@@ -312,3 +312,4 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.display.flip()
 
     pygame.quit()
+    # I love pygame
