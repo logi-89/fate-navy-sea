@@ -1,0 +1,57 @@
+import pygame
+
+from constants import *
+from helper.graphics import *
+import levels.level1
+
+def show_title_screen(screen, clock):
+    running = True
+    t = 0
+
+    title_font = pygame.font.Font(None, 110)
+    sub_font = pygame.font.Font(None, 44)
+    button_font = pygame.font.Font(None, 56)
+
+    start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 80, 240, 70)
+
+    while running:
+        mouse_pos = pygame.mouse.get_pos()
+        hovered = start_button.collidepoint(mouse_pos)
+
+        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+        pygame.draw.circle(screen, (160, 220, 255), (WIDTH // 2, 180), 90)
+        pygame.draw.circle(screen, (200, 245, 255), (WIDTH // 2, 180), 55)
+        pygame.draw.rect(screen, (10, 45, 75), (0, 430, WIDTH, 270))
+        draw_waves(screen, t)
+
+        title_text = title_font.render("Fate: Navy Sea", True, WHITE)
+        title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+        screen.blit(title_text, title_rect)
+
+        sub_text = sub_font.render("Set sail into the storm", True, (220, 245, 255))
+        sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 65))
+        screen.blit(sub_text, sub_rect)
+
+        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered else title_screen.BUTTON_COLOR, start_button, border_radius=18)
+        pygame.draw.rect(screen, WHITE, start_button, 3, border_radius=18)
+
+        start_text = button_font.render("Start", True,WHITE)
+        start_rect = start_text.get_rect(center=start_button.center)
+        screen.blit(start_text, start_rect)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # ESC from Title Screen exits game
+                    pygame.quit()
+                    return False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos):
+                    levels.level1.intro(screen, clock)
+                    return True
+
+        pygame.display.flip()
+        clock.tick(60)
+        t += 0.03

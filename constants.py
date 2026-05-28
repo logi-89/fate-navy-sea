@@ -1,5 +1,5 @@
 WIDTH = 1400
-HEIGHT = 700
+HEIGHT = 850
 
 # Colors
 BLACK      = (0,   0,   0)
@@ -23,6 +23,30 @@ PINK       = (220, 80,  140)
 GREY       = (120, 130, 140)
 LIGHT_GREY = (180, 190, 200)
 
+class title_screen:
+    BUTTON_COLOR = (40, 80, 120)
+    HOVER_COLOR = (60, 110, 170)
+
+# Physics
+class physics:
+    GRAVITY          = 0.7
+    MAX_FALL_SPEED   = 18
+    JUMP_POWER       = -16
+    PLAYER_SPEED     = 5
+    DOUBLE_JUMP_POWER= 0 # -13
+    TILE_SIZE = 50  # Each tile is 50x50 pixels
+
+class shop:
+    # SHOP SCREEN
+    SHOP_ITEMS = [
+        {"name": "Health Flask", "desc": "+1 flask (heals 40 HP when used)", "cost": 15, "key": "flask"},
+        {"name": "Sword Upgrade", "desc": "+15 sword damage", "cost": 30, "key": "sword_dmg"},
+        {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity", "cost": 20, "key": "balloon_ammo"},
+        {"name": "Max HP +25", "desc": "Increase maximum health", "cost": 40, "key": "max_hp"},
+        {"name": "Sea Boots", "desc": "+1 speed permanently", "cost": 50, "key": "speed"},
+        {"name": "Revive Token", "desc": "Auto-revive once with 30 HP", "cost": 80, "key": "revive"},
+        {"name": "spears", "desc": "spears", "cost": 80, "key": "spears"},
+    ]
 
 # Sea gel palette
 GROUND_TOP  = (40, 180, 160)   # bright teal surface
