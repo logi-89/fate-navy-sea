@@ -9,7 +9,7 @@ from helper import death_screen
 
 clock = None
 
-def introLORE(screen):
+def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
 # Please use this as an entry point for the first function running from level 1
@@ -22,7 +22,7 @@ def intro(screen, set_clock):
     levelONE(screen, maps.L1)
 
 
-def levelONE(screen, tile_map):
+def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     global clock
 
     running = True
@@ -269,7 +269,7 @@ def levelONE(screen, tile_map):
         # UI Text Data
         clips_total = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
+        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Lock Pick   |   ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
         clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
 

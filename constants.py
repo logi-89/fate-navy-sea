@@ -1,3 +1,4 @@
+# Window Size
 WIDTH = 1400
 HEIGHT = 850
 
@@ -23,19 +24,21 @@ PINK       = (220, 80,  140)
 GREY       = (120, 130, 140)
 LIGHT_GREY = (180, 190, 200)
 
+# Main Menu Colors
 class title_screen:
     BUTTON_COLOR = (40, 80, 120)
     HOVER_COLOR = (60, 110, 170)
 
-# Physics
+# Physics Constants
 class physics:
-    GRAVITY          = 0.7
+    GRAVITY          = 0.981
     MAX_FALL_SPEED   = 18
     JUMP_POWER       = -16
     PLAYER_SPEED     = 5
     DOUBLE_JUMP_POWER= 0 # -13
     TILE_SIZE = 50  # Each tile is 50x50 pixels
 
+# Shop
 class shop:
     # SHOP SCREEN
     SHOP_ITEMS = [

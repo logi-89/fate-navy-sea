@@ -2,7 +2,7 @@ from constants import *
 
 import pygame
 
-def build_platforms_from_map(tile_map, tile_size=physics.TILE_SIZE):
+def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
     """
         # -> wall / solid platform
         ? -> paper clip pickup
@@ -75,5 +75,5 @@ def build_platforms_from_map(tile_map, tile_size=physics.TILE_SIZE):
         "animated_doors":  animated_doors,
     }
 
-def map_world_width(tile_map, tile_size=physics.TILE_SIZE):
+def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
     return max(len(row) for row in tile_map) * tile_size
