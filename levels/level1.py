@@ -120,7 +120,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             prev_y = elev["float_y"]
             elev["float_y"] += elev["speed"] * elev["dir"]
             
-            # Smoother range handling
             if elev["float_y"] >= elev["origin_y"] + elev["range"]:
                 elev["float_y"] = elev["origin_y"] + elev["range"]
                 elev["dir"] = -1
@@ -130,7 +129,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 
             elev["rect"].y = int(elev["float_y"])
 
-            # Move player with the elevator platform immediately
+            # Move player with the elevator platform vertically
             if elev is riding_elev:
                 delta_y = elev["float_y"] - prev_y
                 player_y += delta_y
@@ -143,9 +142,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 door["rect"].y -= 4
                 door["rect"].height = max(4, door["max_open"] - door["offset_y"])
 
+        # Separate static solids from dynamic elevators
         static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
                         [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
-        all_solids = static_solids + [e["rect"] for e in elevators]
 
         # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS ────────────────
         move_x = 0
@@ -155,8 +154,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
 
-        # Resolve Horizontal Walls
-        for plat in all_solids:
+        # Build horizontal solids list, EXCLUDING the current elevator you are riding
+        horizontal_solids = static_solids + [e["rect"] for e in elevators if e is not riding_elev]
+
+        # Resolve Horizontal Walls (Now you won't collide with your own platform's sides)
+        for plat in horizontal_solids:
             if player_rect.colliderect(plat):
                 if move_x > 0:
                     player_rect.right = plat.left
@@ -169,6 +171,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
         player_y += player_vel_y
         player_rect.y = int(player_y)
+
+        # Re-include ALL platforms for floor and ceiling validation
+        all_solids = static_solids + [e["rect"] for e in elevators]
 
         # Resolve Floors and Ceilings
         is_grounded = False
@@ -187,21 +192,23 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         player_y        = float(player_rect.y)
                         player_vel_y    = 0.0
 
-        # If riding an elevator, forcefully preserve grounded status
+        # Maintain ground tracking if riding an active elevator
         if riding_elev is not None:
-            is_grounded = True
-            can_double_jump = True
+            # Verify the player hasn't walked off the edges horizontally
+            if player_rect.right > riding_elev["rect"].left and player_rect.left < riding_elev["rect"].right:
+                is_grounded = True
+                can_double_jump = True
+            else:
+                riding_elev = None
 
-        # ACTUAL CRUSH / SQUISH DETECTION ──────────────────────────────
+        # ── 5. ACTUAL CRUSH / SQUISH DETECTION ──────────────────────────────
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
-                # Elevator moving down crushes player against static floor below
                 if elev["dir"] == 1 and player_rect.bottom > elev["rect"].top:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(screen, clock, tile_map)
                             return
-                # Elevator moving up crushes player against a ceiling above
                 elif elev["dir"] == -1 and player_rect.top < elev["rect"].bottom:
                     for static_ceiling in static_solids:
                         if player_rect.colliderect(static_ceiling):
