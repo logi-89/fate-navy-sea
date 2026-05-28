@@ -69,8 +69,6 @@ def build_platforms_from_map(tile_map, tile_size=TILE_SIZE):
                     "range":    150,
                     "speed":    1.2,
                     "dir":      1,
-                    # FIX: track sub-pixel position as a float so we don't
-                    # accumulate rounding error every frame
                     "float_y":  float(y),
                 })
                 col += 2
@@ -161,6 +159,10 @@ def show_title_screen():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # ESC from Title Screen exits game
+                    pygame.quit()
+                    return False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
                     intro()
@@ -169,6 +171,56 @@ def show_title_screen():
         pygame.display.flip()
         clock.tick(60)
         t += 0.03
+
+def show_death_screen(tile_map):
+    """ Displays Game Over interface when crushed by elevator. """
+    running = True
+    title_font = pygame.font.Font(None, 100)
+    sub_font = pygame.font.Font(None, 44)
+    button_font = pygame.font.Font(None, 50)
+    
+    button_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 50, 300, 70)
+
+    while running:
+        mouse_pos = pygame.mouse.get_pos()
+        hovered = button_rect.collidepoint(mouse_pos)
+
+        screen.fill((20, 5, 5))
+        pygame.draw.rect(screen, (80, 10, 10), (0, 0, WIDTH, HEIGHT), 15)
+
+        title_text = title_font.render("GAME OVER", True, (255, 50, 50))
+        title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+        screen.blit(title_text, title_rect)
+
+        sub_text = sub_font.render("You were crushed by the elevator machinery!", True, (220, 180, 180))
+        sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 70))
+        screen.blit(sub_text, sub_rect)
+
+        pygame.draw.rect(screen, (140, 30, 30) if hovered else (90, 20, 20), button_rect, border_radius=12)
+        pygame.draw.rect(screen, (255, 100, 100), button_rect, 2, border_radius=12)
+
+        btn_text = button_font.render("Respawn (R)", True, constants.WHITE)
+        btn_rect = btn_text.get_rect(center=button_rect.center)
+        screen.blit(btn_text, btn_rect)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # ESC from Death Screen exits game
+                    pygame.quit()
+                    return False
+                if event.key == pygame.K_r:
+                    levelONE(tile_map)
+                    return True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    levelONE(tile_map)
+                    return True
+
+        pygame.display.flip()
+        clock.tick(60)
 
 # SHOP SCREEN
 SHOP_ITEMS = [
@@ -215,8 +267,12 @@ def levelONE(tile_map):
     player_rect  = pygame.Rect(spawn_x, spawn_y, 40, 60)
     player_vel_y = 0.0       
     is_grounded  = False
+    coyote_frames = 0 
     can_double_jump = True
     camera_x     = 0
+
+    player_inventory_clips = 0 
+    show_warning_frames = 0
 
     SNAP_TOLERANCE = 8
 
@@ -238,11 +294,20 @@ def levelONE(tile_map):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                pygame.quit()
+                return
+
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # ESC safely closes active match loop
+                    running = False
+                    pygame.quit()
+                    return
+
                 if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
-                    if is_grounded:
+                    if is_grounded or coyote_frames > 0:
                         player_vel_y    = JUMP_POWER
                         is_grounded     = False
+                        coyote_frames   = 0
                         can_double_jump = True
                     elif can_double_jump and DOUBLE_JUMP_POWER != 0:
                         player_vel_y    = DOUBLE_JUMP_POWER
@@ -253,9 +318,13 @@ def levelONE(tile_map):
                         if door["broken"]:
                             continue
                         if player_rect.inflate(20, 0).colliderect(door["rect"]):
-                            door["hp"] -= 1
-                            if door["hp"] <= 0:
-                                door["broken"] = True
+                            if player_inventory_clips >= 1:
+                                door["hp"] -= 1
+                                if door["hp"] <= 0:
+                                    door["broken"] = True
+                            else:
+                                show_warning_frames = 90 
+
                     for door in animated_doors:
                         if not door["open"]:
                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
@@ -263,8 +332,19 @@ def levelONE(tile_map):
 
         keys = pygame.key.get_pressed()
 
-        # ── elevator logic (moved to TOP of frame, BEFORE collision) ─────
+        # ── ELEVATOR ATTACHMENT PHYSICS ──────────────────────────────────
+        riding_elev = None
         for elev in elevators:
+            if (player_rect.bottom >= elev["rect"].top - 5 and 
+                player_rect.bottom <= elev["rect"].top + 5 and 
+                player_rect.right > elev["rect"].left and 
+                player_rect.left < elev["rect"].right and 
+                player_vel_y >= 0):
+                riding_elev = elev
+                break
+
+        for elev in elevators:
+            prev_y = elev["float_y"]
             elev["float_y"] += elev["speed"] * elev["dir"]
             if elev["float_y"] > elev["origin_y"] + elev["range"]:
                 elev["dir"] = -1
@@ -272,23 +352,24 @@ def levelONE(tile_map):
                 elev["dir"] = 1
             elev["rect"].y = int(elev["float_y"])
 
-        # ── animated door logic ───────────────────────────────────────────
+            if elev is riding_elev:
+                delta_y = elev["float_y"] - prev_y
+                player_y += delta_y
+                player_rect.y = int(player_y)
+
+        # ── ANIMATED DOORS ───────────────────────────────────────────────
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
                 door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
                 door["rect"].y   -= 4
                 door["rect"].height = max(4, door["max_open"] - door["offset_y"])
 
-        # ── build solid rects for this frame ─────────────────────────────
-        solid_rects = (
-            platforms
-            + [d["rect"] for d in breakable_doors if not d["broken"]]
-            + [e["rect"] for e in elevators]
-            + [d["rect"] for d in animated_doors
-               if not d["open"] or d["offset_y"] < d["max_open"]]
-        )
+        # Layer mapping objects
+        static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
+                        [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
+        all_solids = static_solids + [e["rect"] for e in elevators]
 
-        # ── horizontal movement ───────────────────────────────────────────
+        # ── HORIZONTAL AXIS COLLISIONS ───────────────────────────────────
         move_x = 0
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= PLAYER_SPEED
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += PLAYER_SPEED
@@ -296,7 +377,7 @@ def levelONE(tile_map):
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
 
-        for plat in solid_rects:
+        for plat in all_solids:
             if player_rect.colliderect(plat):
                 if move_x > 0:
                     player_rect.right = plat.left
@@ -305,19 +386,30 @@ def levelONE(tile_map):
                     player_rect.left = plat.right
                     player_x = float(player_rect.x)
 
-        # ── vertical movement ─────────────────────────────────────────────
+        # ── VERTICAL AXIS COLLISIONS ─────────────────────────────────────
         player_vel_y = min(player_vel_y + GRAVITY, MAX_FALL_SPEED)
-        player_y    += player_vel_y          # FIX: accumulate float position
-        player_rect.y = int(player_y)        # sync rect for collision checks
+        player_y    += player_vel_y          
+        player_rect.y = int(player_y)        
 
-        # ── collect paperclips ────────────────────────────────────────────
+        # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
+        for elev in elevators:
+            if player_rect.colliderect(elev["rect"]):
+                if elev["dir"] == 1: 
+                    player_rect.top = elev["rect"].bottom
+                    for static_floor in static_solids:
+                        if player_rect.colliderect(static_floor):
+                            show_death_screen(tile_map)
+                            return
+
+        # ── ITEMS ─────────────────────────────────────────────────────────
         for clip in paperclips:
             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
                 clip["collected"] = True
+                player_inventory_clips += 1 
 
-        # ── resolve vertical collisions ───────────────────────────────────
+        # Vertical floor stabilizing checks
         is_grounded = False
-        for plat in solid_rects:
+        for plat in all_solids:
             if not player_rect.colliderect(plat):
                 continue
 
@@ -337,21 +429,12 @@ def levelONE(tile_map):
                     player_y        = float(player_rect.y)
                     player_vel_y    = 0.0
 
-        # ── elevator carry ────────────────────────────────────────────────
         if is_grounded:
-            for elev in elevators:
-                on_elev = (
-                    abs(player_rect.bottom - elev["rect"].top) <= 2 and
-                    player_rect.right  > elev["rect"].left and
-                    player_rect.left   < elev["rect"].right
-                )
-                if on_elev:
-                    delta = elev["speed"] * elev["dir"]
-                    player_y += delta
-                    player_rect.y = int(player_y)
-                    break
+            coyote_frames = 6          
+        else:
+            coyote_frames = max(0, coyote_frames - 1)
 
-        # ── fall out of world → respawn ───────────────────────────────────
+        # Check death box fall boundary
         if player_rect.y > HEIGHT + 200:
             player_x     = float(spawn_x)
             player_y     = float(spawn_y)
@@ -361,7 +444,7 @@ def levelONE(tile_map):
 
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
 
-        # ── draw ──────────────────────────────────────────────────────────
+        # ── ART RENDERING LAYER ───────────────────────────────────────────
         draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
 
         for plat in platforms:
@@ -382,8 +465,7 @@ def levelONE(tile_map):
             pygame.draw.rect(screen, color,       (vx, door["rect"].y, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (220,160,80),(vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
             for i in range(door["hp"]):
-                pygame.draw.circle(screen, (255,220,80),
-                                   (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
+                pygame.draw.circle(screen, (255,220,80), (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
 
         for clip in paperclips:
             if clip["collected"]:
@@ -398,34 +480,41 @@ def levelONE(tile_map):
 
         for elev in elevators:
             vx = elev["rect"].x - camera_x
-            pygame.draw.rect(screen, COLOR_ELEVATOR,
-                             (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height),
-                             border_radius=4)
-            pygame.draw.rect(screen, (200, 255, 240),
-                             (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height),
-                             2, border_radius=4)
+            pygame.draw.rect(screen, COLOR_ELEVATOR, (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height), border_radius=4)
+            pygame.draw.rect(screen, (200, 255, 240), (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height), 2, border_radius=4)
 
         for door in animated_doors:
             if door["rect"].height <= 0:
                 continue
             vx = door["rect"].x - camera_x
-            pygame.draw.rect(screen, COLOR_ANIM_DOOR,
-                             (vx, door["rect"].y, door["rect"].width, door["rect"].height))
-            pygame.draw.rect(screen, (120, 180, 255),
-                             (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
+            pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, door["rect"].y, door["rect"].width, door["rect"].height))
+            pygame.draw.rect(screen, (120, 180, 255), (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
 
         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
+        # UI Text Data
         clips_total     = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Break door", True, (255, 255, 255))
+        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Action   |   ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
-        clip_txt= ui_font.render(f"Paperclips: {clips_collected}/{clips_total}", True, (200, 200, 220))
+        clip_txt= ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
+        
+        if player_inventory_clips >= 1:
+            inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
+        else:
+            inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
+        
         screen.blit(hint,    (20, 20))
         screen.blit(pos_txt, (20, 50))
         screen.blit(clip_txt,(20, 80))
+        screen.blit(inv_txt, (20, 110))
+
+        if show_warning_frames > 0:
+            warn_txt = ui_font.render("Find a paperclip first to pick this wall lock!", True, (255, 100, 100))
+            screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
+            show_warning_frames -= 1
 
         pygame.display.flip()
     pygame.quit()
