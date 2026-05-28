@@ -497,7 +497,7 @@ def levelONE(tile_map):
         # UI Text Data
         clips_total     = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E – Action   |   ESC – Quit", True, (255, 255, 255))
+        hint    = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
         clip_txt= ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
         
