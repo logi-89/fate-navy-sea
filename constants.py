@@ -53,6 +53,8 @@ GROUND_TOP  = (40, 180, 160)   # bright teal surface
 GROUND_SIDE = (20, 120, 110)   # deeper teal edge
 GROUND_DIRT = (10,  70,  80)   # dark ocean-floor fill
 
+dev_mode =  True
+
 COLOR_DOOR_INTACT  = (30, 100, 160)   # deep sea blue door
 COLOR_DOOR_DAMAGED = (60, 150, 200)   # lighter cracked blue
 COLOR_PAPERCLIP    = (160, 240, 220)  # seafoam silver

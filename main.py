@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Fate: navy sea")
 
 clock = pygame.time.Clock()
-
+   
 def run_shop():
     graphics.draw_vertical_gradient(screen, (5, 20, 35), (15, 60, 90))
     selected = 0

@@ -2,8 +2,6 @@ import maps
 
 import pygame
 
-import constants
-
 from constants import *
 from helper import mapGeneration
 from helper import graphics
@@ -11,20 +9,7 @@ from helper import death_screen
 
 clock = None
 
-def introLORE(screen):
-    screen.fill(BLACK)
-
-# Please use this as an entry point for the first function running from level 1
-def intro(screen, set_clock):
-    global clock
-
-    clock = set_clock
-    introLORE(screen)
-    print("[DEBUG] Show intro")
-    levelONE(screen, maps.L1)
-
-
-def levelONE(screen, tile_map):
+def levelTWO(screen, tile_map):
     global clock
 
     running = True
@@ -43,9 +28,6 @@ def levelONE(screen, tile_map):
         spawn_x = best.x + 250
         spawn_y = best.top + 400
 
-        if constants.dev_mode == True:
-            spawn_x = spawn_x + 3000
-    
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
     player_rect            = pygame.Rect(spawn_x, spawn_y, 40, 60)
@@ -131,8 +113,6 @@ def levelONE(screen, tile_map):
                 delta_y = elev["float_y"] - prev_y
                 player_y += delta_y
                 player_rect.y = int(player_y)
-                print("eleve")
-                print(player_y)
 
         # ── ANIMATED DOORS ───────────────────────────────────────────────
         for door in animated_doors:
@@ -167,8 +147,6 @@ def levelONE(screen, tile_map):
         player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
         player_y += player_vel_y
         player_rect.y = int(player_y)
-        print("VAC")
-        print(player_y)
 
         # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
         for elev in elevators:
@@ -214,7 +192,7 @@ def levelONE(screen, tile_map):
             coyote_frames = max(0, coyote_frames - 1)
 
         # Check death box fall boundary
-        if player_rect.y > HEIGHT + 190:
+        if player_rect.y > HEIGHT + 200:
             player_x      = float(spawn_x)
             player_y      = float(spawn_y)
             player_rect.x = spawn_x
@@ -278,7 +256,7 @@ def levelONE(screen, tile_map):
         # UI Text Data
         clips_total = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –  Action  |   ESC – Quit", True, (255, 255, 255))
+        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
         clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
 

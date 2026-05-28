@@ -53,3 +53,6 @@ def show_death_screen(screen, clock, tile_map):
 
         pygame.display.flip()
         clock.tick(60)
+
+
+        

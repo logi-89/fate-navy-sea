@@ -42,8 +42,8 @@ def build_platforms_from_map(tile_map, tile_size=physics.TILE_SIZE):
                 elevators.append({
                     "rect":     rect,
                     "origin_y": float(y),
-                    "range":    150,
-                    "speed":    1.2,
+                    "range":    160,
+                    "speed":    1.1,
                     "dir":      1,
                     "float_y":  float(y),
                 })
