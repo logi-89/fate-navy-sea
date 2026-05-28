@@ -1,12 +1,10 @@
 import pygame
 
+from constants import *
 from helper import graphics
 from levels import menu
 
 pygame.init()
-
-WIDTH = 1400
-HEIGHT = 850
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Fate: navy sea")

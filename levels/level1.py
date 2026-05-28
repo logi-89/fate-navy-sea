@@ -11,7 +11,7 @@ from helper import death_screen
 
 clock = None
 
-def introLORE(screen):
+def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
 # Please use this as an entry point for the first function running from level 1
@@ -24,7 +24,7 @@ def intro(screen, set_clock):
     levelONE(screen, maps.L1)
 
 
-def levelONE(screen, tile_map):
+def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     global clock
 
     running = True
