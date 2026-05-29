@@ -45,7 +45,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "rect":     rect,
                     "origin_y": float(y),
                     "range":    200,
-                    "speed":    1.1,
+                    "speed":    1.5,
                     "dir":      1,
                     "float_y":  float(y),
                 })

@@ -3,7 +3,7 @@ import maps
 import pygame
 
 import constants
-constants.dev_mode = False
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -39,7 +39,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
 
-    spawn_x, spawn_y = 100, 300
+    spawn_x, spawn_y = 100, 100
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)

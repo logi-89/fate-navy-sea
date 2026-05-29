@@ -29,12 +29,12 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
 
-    spawn_x, spawn_y = 100, 300
+    spawn_x, spawn_y = 2000, -100
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x - 1670
-        spawn_y = best.top + 50
+        spawn_y = best.top - 1675
 
         if constants.dev_mode == True:
             spawn_x = spawn_x + 3000
