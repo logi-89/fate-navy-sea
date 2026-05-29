@@ -46,7 +46,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top + 200
 
         if constants.dev_mode == True:
-            spawn_x = spawn_x + 3000
+            spawn_x = spawn_x + 6000
+            spawn_y = spawn_y - 200
     
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
@@ -205,6 +206,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             #if player_rect.colliderect(trigger["rect"]):
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 2:
+                    print("TOOOOOO LEVEL 2 !!!!!!!!!!!!")
                     levels.level2.intro(screen, clock)
                     return
 

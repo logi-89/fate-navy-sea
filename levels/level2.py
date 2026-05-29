@@ -9,9 +9,6 @@ from helper import mapGeneration
 from helper import graphics
 from helper import death_screen
 
-# import levels
-# from levels import level2
-
 clock = None
 def intro(screen, set_clock):
     global clock
@@ -37,8 +34,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
-        spawn_x = best.x + 250
-        spawn_y = best.top + 200
+        spawn_x = best.x - 1670
+        spawn_y = best.top + 50
 
         if constants.dev_mode == True:
             spawn_x = spawn_x + 3000
@@ -194,14 +191,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen_level_one(screen, clock, tile_map)
                             return
-
-# TOOOOOO LEVEL 2 !!!!!!!!!!!!
-        for trigger in map_data.get("level_triggers", []):
-            #if player_rect.colliderect(trigger["rect"]):
-            if player_rect.colliderect(trigger["rect"]):
-                if trigger["target_level"] == 2:
-                    levels.level2.levelTWO(screen, clock)
-                    return
 
         # Re-include ALL platforms for floor and ceiling validation
         all_solids = static_solids + [e["rect"] for e in elevators]

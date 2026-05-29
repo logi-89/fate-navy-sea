@@ -70,6 +70,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 level_triggers.append({"rect": rect, "target_level": 2})
                 col += 1  # Standard increment so the loop continues
+                print("ch == 2")
 
 
             else:
