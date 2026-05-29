@@ -273,7 +273,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             # pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
             # pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
             pygame.draw.rect(screen, (40, 95, 80), (vx, plat.y, plat.width, 6))
-            pygame.draw.rect(screen, (35, 30, 25), (vx, plat.y + 6, plat.width, plat.height - 6))
+            #pygame.draw.rect(screen, (35, 30, 25), (vx, plat.y + 6, plat.width, plat.height - 6))
+            pygame.draw.rect(screen, (140,140, 140), (vx, plat.y + 6, plat.width, plat.height - 6))
             pygame.draw.rect(screen, (20, 48, 42), (vx, plat.y, plat.width, plat.height), 2)
 
         for door in breakable_doors:
