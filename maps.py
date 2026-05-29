@@ -90,6 +90,10 @@ L_Lab = [
 
 
 loreDrop = [
-    "le bron", "Thule spotted in Subnautica 2! Good thing those colonisers can't fight back", "Who is Fi Fy Fuh the Destroyer? Who did they destroy to get that title? What even are they?", '"If immortal jellyfish can make you immortal, can giraffes make you taller?" asks a Lazarath Lab scientist.',
-    'Squid teenager sent to the factory after he used BubbleGPT to cheat in school. "Red is sus, I'm not," he said, when brought in for questioning.', "Thule edits go viral on Coral Media. "Never before has a scientist been so cool," says one random kid on the street."
+    "LeBron.",
+    "Thule spotted in Subnautica 2! Good thing those colonizers can't fight back.",
+    "Who is Fi Fy Fuh the Destroyer? Who did they destroy to get that title? What even are they?",
+    '"If immortal jellyfish can make you immortal, can giraffes make you taller?" asks a Lazarath Lab scientist.',
+    'Squid teenager sent to the factory after using BubbleGPT to cheat in school. "Red is sus, I\'m not," he said when brought in for questioning.',
+    'Thule edits go viral on Coral Media. "Never before has a scientist been so cool," says one random kid on the street.'
 ]
