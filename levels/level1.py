@@ -3,6 +3,7 @@ import maps
 import pygame
 
 import constants
+constants.dev_mode = False
 
 from constants import *
 from helper import mapGeneration
@@ -63,8 +64,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     SNAP_TOLERANCE = 8
     ui_font = pygame.font.Font(None, 30)
 
-    COLOR_ELEVATOR = (80, 210, 190)
-    COLOR_ANIM_DOOR = (50, 80, 160)
+    #COLOR_ELEVATOR = (80, 210, 190)
+    COLOR_ELEVATOR  = (25, 75, 75)
+    #COLOR_ANIM_DOOR = (50, 80, 160)
+    COLOR_ANIM_DOOR = (45, 55, 65)
 
     while running:
         dt = clock.tick(60)
@@ -134,7 +137,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             if elev is riding_elev:
                 elev_speed = abs(elev["speed"])
                 
-                if keys[pygame.K_q]:
+                if keys[pygame.K_e]:
                     # Move UP (decrease Y)
                     elev["float_y"] -= elev_speed
                     if elev["float_y"] < elev["origin_y"] - elev["range"]:
@@ -194,7 +197,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
                 # If player is driven downwards into a static solid wall/floor
-                if elev is riding_elev and keys[pygame.K_e]:
+                if elev is riding_elev and keys[pygame.K_q]:
                     player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
@@ -259,15 +262,19 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
 
         # ART RENDERING LAYER ───────────────────────────────────────────
-        graphics.draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
+        #graphics.draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
+        graphics.draw_vertical_gradient(screen, (4, 8, 15), (14, 42, 54))
 
         for plat in platforms:
             vx = plat.x - camera_x
             if vx + plat.width < 0 or vx > WIDTH:
                 continue
-            pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
-            pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
-            pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
+            # pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
+            # pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
+            # pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
+            pygame.draw.rect(screen, (40, 95, 80), (vx, plat.y, plat.width, 6))
+            pygame.draw.rect(screen, (35, 30, 25), (vx, plat.y + 6, plat.width, plat.height - 6))
+            pygame.draw.rect(screen, (20, 48, 42), (vx, plat.y, plat.width, plat.height), 2)
 
         for door in breakable_doors:
             if door["broken"]:
@@ -289,7 +296,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 continue
             cx = int(vx + clip["rect"].width // 2)
             cy = int(clip["rect"].y + clip["rect"].height // 2)
-            pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
+            #pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
+            
             pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
 
         for elev in elevators:
@@ -311,16 +319,37 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
         # UI Text Data
+        # clips_total = len(paperclips)
+        # clips_collected = sum(1 for c in paperclips if c["collected"])
+        # hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up   |   Q – Elev Down   |  F – Action Button   |  ESC – Quit", True, (255, 255, 255))
+        # pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
+        # clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
+
+        # if player_inventory_clips >= 1:
+        #     inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
+        # else:
+        #     inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
+
+        # screen.blit(hint, (20, 20))
+        # screen.blit(pos_txt, (20, 50))
+        # screen.blit(clip_txt, (20, 80))
+        # screen.blit(inv_txt, (20, 110))
+
+        #  SUBMERGED HUD / TEXT DATA 
         clips_total = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   Q – Elev Up   |   E – Elev Down   |  F – Action Button   |  ESC – Quit", True, (255, 255, 255))
-        pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
-        clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
+        
+        # Bioluminescent green/seafoam tone for text legibility
+        TEXT_COLOR = (120, 220, 190)
+        
+        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up   |   Q – Elev Down   |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
+        pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
+        clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
 
         if player_inventory_clips >= 1:
-            inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
+            inv_txt = ui_font.render("Lock Pick: READY", True, (80, 255, 140))
         else:
-            inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
+            inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (245, 110, 110))
 
         screen.blit(hint, (20, 20))
         screen.blit(pos_txt, (20, 50))

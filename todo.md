@@ -27,7 +27,7 @@
 
 * [ ] **Warden’s Office Journey:**
 * [ ] Map out path/enemies between Cell Block and Warden's Office
-* [ ] Create functional elevator transition to the upper level
+* [x] Create functional elevator transition to the upper level
 
 
 * [ ] **Warden’s Office (Upper Level):**
@@ -44,7 +44,6 @@
 
 ### Core Tasks
 
-* [ ] Proper animation for lock picking
 * [ ] Enemies in level
 
 ### Level Progression & Scripting
