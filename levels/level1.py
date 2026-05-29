@@ -342,7 +342,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # Bioluminescent green/seafoam tone for text legibility
         TEXT_COLOR = (120, 220, 190)
         
-        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up   |   Q – Elev Down   |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
+        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up  |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
         clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
 
