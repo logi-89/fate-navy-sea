@@ -5,16 +5,18 @@ import pygame
 def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
     """
         # -> wall / solid platform
-        ? -> paper clip pickup
+        @ -> paper clip pickup
         ! -> breakable door (3 hits)
         _ -> elevator platform (moves up/down)
         ^ -> animated door (opens upward)
+        num -> #level
     """
     platforms       = []
     breakable_doors = []
     paperclips      = []
     elevators       = []
     animated_doors  = []
+    level_triggers = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size
@@ -42,7 +44,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 elevators.append({
                     "rect":     rect,
                     "origin_y": float(y),
-                    "range":    160,
+                    "range":    200,
                     "speed":    1.1,
                     "dir":      1,
                     "float_y":  float(y),
@@ -59,10 +61,16 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 })
                 col += 1
 
-            elif ch == '?':
+            elif ch == '@':
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 paperclips.append({"rect": rect, "collected": False})
                 col += 1
+
+            elif ch == '2':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                level_triggers.append({"rect": rect, "target_level": 2})
+                col += 1  # Standard increment so the loop continues
+
 
             else:
                 col += 1
@@ -73,6 +81,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "paperclips":      paperclips,
         "elevators":       elevators,
         "animated_doors":  animated_doors,
+        "level_triggers":  level_triggers,
     }
 
 def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):

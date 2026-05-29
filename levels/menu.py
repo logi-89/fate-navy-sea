@@ -3,6 +3,7 @@ import pygame
 from constants import *
 from helper.graphics import *
 import levels.level1
+import levels.level2
 
 def show_title_screen(screen, clock):
     running = True

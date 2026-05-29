@@ -9,6 +9,9 @@ from helper import mapGeneration
 from helper import graphics
 from helper import death_screen
 
+import levels
+from levels import level2
+
 clock = None
 
 def introLORE(screen: pygame.Surface) -> None:
@@ -41,7 +44,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x + 250
-        spawn_y = best.top + 400
+        spawn_y = best.top + 200
 
         if constants.dev_mode == True:
             spawn_x = spawn_x + 3000
@@ -78,58 +81,73 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     pygame.quit()
                     return
 
+                # Jumping controls (W, SPACE, UP) completely separated from elevator riding
                 if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
                     if is_grounded or coyote_frames > 0:
                         player_vel_y    = physics.JUMP_POWER
                         is_grounded     = False
                         coyote_frames   = 0
                         can_double_jump = True
+                        riding_elev     = None 
                     elif can_double_jump and physics.DOUBLE_JUMP_POWER != 0:
                         player_vel_y    = physics.DOUBLE_JUMP_POWER
                         can_double_jump = False
+                        riding_elev     = None
 
-                if event.key == pygame.K_e:
-                    for door in breakable_doors:
-                        if door["broken"]:
-                            continue
-                        if player_rect.inflate(20, 0).colliderect(door["rect"]):
-                            if player_inventory_clips >= 1:
-                                door["hp"] -= 1
-                                if door["hp"] <= 0:
-                                    door["broken"] = True
-                            else:
-                                show_warning_frames = 90
+                # F Key now serves as global Action key (doors) when NOT actively driving downward
+                if event.key == pygame.K_f:
+                    # Only process door actions if we aren't using the key to drive an elevator down
+                    if riding_elev is None:
+                        for door in breakable_doors:
+                            if door["broken"]:
+                                continue
+                            if player_rect.inflate(20, 0).colliderect(door["rect"]):
+                                if player_inventory_clips >= 1:
+                                    door["hp"] -= 1
+                                    if door["hp"] <= 0:
+                                        door["broken"] = True
+                                else:
+                                    show_warning_frames = 90
 
-                    for door in animated_doors:
-                        if not door["open"]:
-                            if player_rect.inflate(30, 30).colliderect(door["rect"]):
-                                door["open"] = True
+                        for door in animated_doors:
+                            if not door["open"]:
+                                if player_rect.inflate(30, 30).colliderect(door["rect"]):
+                                    door["open"] = True
 
         keys = pygame.key.get_pressed()
 
-        # UPDATE ELEVATORS POSITION FIRST
+        # ── ELEVATOR REGISTRATION ─────────────────────────────────────
+        # Find which elevator platform the player is landing/standing on
         riding_elev = None
         for elev in elevators:
-            # Check if player was standing on this elevator last frame
             if (elev["rect"].top - SNAP_TOLERANCE <= player_rect.bottom <= elev["rect"].top + SNAP_TOLERANCE and
                 player_rect.right > elev["rect"].left and
                 player_rect.left < elev["rect"].right and
                 player_vel_y >= 0):
                 riding_elev = elev
+                break 
 
+        # ── Q / E PLAYER-CONTROLLED ELEVATOR MOVEMENT ──────────────────
+        for elev in elevators:
             prev_y = elev["float_y"]
-            elev["float_y"] += elev["speed"] * elev["dir"]
             
-            if elev["float_y"] >= elev["origin_y"] + elev["range"]:
-                elev["float_y"] = elev["origin_y"] + elev["range"]
-                elev["dir"] = -1
-            elif elev["float_y"] <= elev["origin_y"] - elev["range"]:
-                elev["float_y"] = elev["origin_y"] - elev["range"]
-                elev["dir"] = 1
+            if elev is riding_elev:
+                elev_speed = abs(elev["speed"])
                 
+                if keys[pygame.K_q]:
+                    # Move UP (decrease Y)
+                    elev["float_y"] -= elev_speed
+                    if elev["float_y"] < elev["origin_y"] - elev["range"]:
+                        elev["float_y"] = elev["origin_y"] - elev["range"]
+                elif keys[pygame.K_e]:
+                    # Move DOWN (increase Y)
+                    elev["float_y"] += elev_speed
+                    if elev["float_y"] > elev["origin_y"] + elev["range"]:
+                        elev["float_y"] = elev["origin_y"] + elev["range"]
+                        
             elev["rect"].y = int(elev["float_y"])
 
-            # Move player with the elevator platform vertically
+            # Move the player smoothly along with the elevator platform
             if elev is riding_elev:
                 delta_y = elev["float_y"] - prev_y
                 player_y += delta_y
@@ -154,10 +172,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
 
-        # Build horizontal solids list, EXCLUDING the current elevator you are riding
+        # Exclude currently ridden elevator from horizontal body blocks 
         horizontal_solids = static_solids + [e["rect"] for e in elevators if e is not riding_elev]
 
-        # Resolve Horizontal Walls (Now you won't collide with your own platform's sides)
+        # Resolve Horizontal Walls (allows jumping and running off easily)
         for plat in horizontal_solids:
             if player_rect.colliderect(plat):
                 if move_x > 0:
@@ -175,12 +193,21 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
-                if elev["dir"] == 1:
+                # If player is driven downwards into a static solid wall/floor
+                if elev is riding_elev and keys[pygame.K_e]:
                     player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen_level_one(screen, clock, tile_map)
                             return
+
+# TOOOOOO LEVEL 2 !!!!!!!!!!!!
+        for trigger in map_data.get("level_triggers", []):
+            #if player_rect.colliderect(trigger["rect"]):
+            if player_rect.colliderect(trigger["rect"]):
+                if trigger["target_level"] == 2:
+                    levels.level2.levelTWO(screen, clock)
+                    return
 
         # Re-include ALL platforms for floor and ceiling validation
         all_solids = static_solids + [e["rect"] for e in elevators]
@@ -204,26 +231,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # Maintain ground tracking if riding an active elevator
         if riding_elev is not None:
-            # Verify the player hasn't walked off the edges horizontally
             if player_rect.right > riding_elev["rect"].left and player_rect.left < riding_elev["rect"].right:
                 is_grounded = True
                 can_double_jump = True
             else:
                 riding_elev = None
-
-        # ── 5. ACTUAL CRUSH / SQUISH DETECTION ──────────────────────────────
-        for elev in elevators:
-            if player_rect.colliderect(elev["rect"]):
-                if elev["dir"] == 1 and player_rect.bottom > elev["rect"].top:
-                    for static_floor in static_solids:
-                        if player_rect.colliderect(static_floor):
-                            death_screen.show_death_screen(screen, clock, tile_map)
-                            return
-                elif elev["dir"] == -1 and player_rect.top < elev["rect"].bottom:
-                    for static_ceiling in static_solids:
-                        if player_rect.colliderect(static_ceiling):
-                            death_screen.show_death_screen(screen, clock, tile_map)
-                            return
 
         #  ITEMS & BOUNDARIES ───────────────────────────────────────────
         for clip in paperclips:
@@ -300,7 +312,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # UI Text Data
         clips_total = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –  Action  |   ESC – Quit", True, (255, 255, 255))
+        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   Q – Elev Up   |   E – Elev Down   |  F – Action Button   |  ESC – Quit", True, (255, 255, 255))
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
         clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
 

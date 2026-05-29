@@ -57,6 +57,7 @@ GROUND_SIDE = (20, 120, 110)   # deeper teal edge
 GROUND_DIRT = (10,  70,  80)   # dark ocean-floor fill
 
 dev_mode =  True
+#dev_mode = False
 
 COLOR_DOOR_INTACT  = (30, 100, 160)   # deep sea blue door
 COLOR_DOOR_DAMAGED = (60, 150, 200)   # lighter cracked blue
