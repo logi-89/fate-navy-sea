@@ -16,7 +16,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     paperclips      = []
     elevators       = []
     animated_doors  = []
-    level_triggers = []
+    level_triggers  = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size

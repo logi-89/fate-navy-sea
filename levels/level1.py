@@ -17,7 +17,6 @@ clock = None
 def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
-# Please use this as an entry point for the first function running from level 1
 def intro(screen, set_clock):
     global clock
 
@@ -206,7 +205,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             #if player_rect.colliderect(trigger["rect"]):
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 2:
-                    levels.level2.levelTWO(screen, clock)
+                    levels.level2.intro(screen, clock)
                     return
 
         # Re-include ALL platforms for floor and ceiling validation
