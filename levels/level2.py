@@ -1,281 +1,249 @@
-# import maps
+import maps
 
-# import pygame
+import pygame
 
-# from constants import *
-# from helper import mapGeneration
-# from helper import graphics
-# from helper import death_screen
+from constants import *
+from helper import mapGeneration
+from helper import graphics
+from helper import death_screen
 
-# clock = None
+clock = None
 
-# def levelTWO(screen, tile_map):
-#     global clock
+def levelTWO(screen, tile_map):
+    global clock
 
-#     running = True
-#     map_data        = mapGeneration.build_platforms_from_map(tile_map)
-#     platforms       = map_data["platforms"]
-#     breakable_doors = map_data["breakable_doors"]
-#     paperclips      = map_data["paperclips"]
-#     elevators       = map_data["elevators"]
-#     animated_doors  = map_data["animated_doors"]
-#     world_w         = mapGeneration.map_world_width(tile_map)
+    running = True
+    map_data        = mapGeneration.build_platforms_from_map(tile_map)
+    platforms       = map_data["platforms"]
+    breakable_doors = map_data["breakable_doors"]
+    paperclips      = map_data["paperclips"]
+    animated_doors  = map_data["animated_doors"]
+    world_w         = mapGeneration.map_world_width(tile_map)
 
-#     spawn_x, spawn_y = 100, 300
-#     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
-#     if grounded:
-#         best    = min(grounded, key=lambda p: p.x)
-#         spawn_x = best.x + 250
-#         spawn_y = best.top + 400
+    spawn_x, spawn_y = 100, 300
+    grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
+    if grounded:
+        best    = min(grounded, key=lambda p: p.x)
+        spawn_x = best.x + 250
+        spawn_y = best.top + 400
 
-#     player_x               = float(spawn_x)
-#     player_y               = float(spawn_y)
-#     player_rect            = pygame.Rect(spawn_x, spawn_y, 40, 60)
-#     player_vel_y           = 0.0
-#     is_grounded            = False
-#     coyote_frames          = 0
-#     can_double_jump        = True
-#     camera_x               = 0
-#     player_inventory_clips = 0
-#     show_warning_frames    = 0
+    player_x               = float(spawn_x)
+    player_y               = float(spawn_y)
+    player_rect            = pygame.Rect(spawn_x, spawn_y, 40, 60)
+    player_vel_y           = 0.0
+    is_grounded            = False
+    coyote_frames          = 0
+    can_double_jump        = True
+    camera_x               = 0
+    player_inventory_clips = 0
+    show_warning_frames    = 0
 
-#     SNAP_TOLERANCE = 8
+    SNAP_TOLERANCE = 8
 
-#     ui_font = pygame.font.Font(None, 30)
+    ui_font = pygame.font.Font(None, 30)
 
-#     COLOR_ELEVATOR = (80, 210, 190)
-#     COLOR_ANIM_DOOR = (50, 80, 160)
+    COLOR_ELEVATOR = (80, 210, 190)
+    COLOR_ANIM_DOOR = (50, 80, 160)
 
-#     while running:
-#         dt = clock.tick(60)
+    while running:
+        dt = clock.tick(60)
 
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 running = False
-#                 pygame.quit()
-#                 return
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+                return
 
-#             if event.type == pygame.KEYDOWN:
-#                 if event.key == pygame.K_ESCAPE:  # ESC safely closes active match loop
-#                     running = False
-#                     pygame.quit()
-#                     return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:  # ESC safely closes active match loop
+                    running = False
+                    pygame.quit()
+                    return
 
-#                 if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
-#                     if is_grounded or coyote_frames > 0:
-#                         player_vel_y    = physics.JUMP_POWER
-#                         is_grounded     = False
-#                         coyote_frames   = 0
-#                         can_double_jump = True
-#                     elif can_double_jump and physics.DOUBLE_JUMP_POWER != 0:
-#                         player_vel_y    = physics.DOUBLE_JUMP_POWER
-#                         can_double_jump = False
+                if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
+                    if is_grounded or coyote_frames > 0:
+                        player_vel_y    = physics.JUMP_POWER
+                        is_grounded     = False
+                        coyote_frames   = 0
+                        can_double_jump = True
+                    elif can_double_jump and physics.DOUBLE_JUMP_POWER != 0:
+                        player_vel_y    = physics.DOUBLE_JUMP_POWER
+                        can_double_jump = False
 
-#                 if event.key == pygame.K_e:
-#                     for door in breakable_doors:
-#                         if door["broken"]:
-#                             continue
-#                         if player_rect.inflate(20, 0).colliderect(door["rect"]):
-#                             if player_inventory_clips >= 1:
-#                                 door["hp"] -= 1
-#                                 if door["hp"] <= 0:
-#                                     door["broken"] = True
-#                             else:
-#                                 show_warning_frames = 90
+                if event.key == pygame.K_e:
+                    for door in breakable_doors:
+                        if door["broken"]:
+                            continue
+                        if player_rect.inflate(20, 0).colliderect(door["rect"]):
+                            if player_inventory_clips >= 1:
+                                door["hp"] -= 1
+                                if door["hp"] <= 0:
+                                    door["broken"] = True
+                            else:
+                                show_warning_frames = 90
 
-#                     for door in animated_doors:
-#                         if not door["open"]:
-#                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
-#                                 door["open"] = True
+                    for door in animated_doors:
+                        if not door["open"]:
+                            if player_rect.inflate(30, 30).colliderect(door["rect"]):
+                                door["open"] = True
 
-#         keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()
 
-#         # ── ELEVATOR ATTACHMENT PHYSICS ──────────────────────────────────
-#         riding_elev = None
-#         for elev in elevators:
-#             if (elev["rect"].top - 10 <= player_rect.bottom <= elev["rect"].top + 10 and
-#                 player_rect.right > elev["rect"].left and
-#                 player_rect.left < elev["rect"].right and
-#                 player_vel_y >= 0):
-#                 riding_elev = elev
-#                 break
+        # ── ANIMATED DOORS ───────────────────────────────────────────────
+        for door in animated_doors:
+            if door["open"] and door["offset_y"] < door["max_open"]:
+                door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
+                door["rect"].y -= 4
+                door["rect"].height = max(4, door["max_open"] - door["offset_y"])
 
-#         for elev in elevators:
-#             prev_y = elev["float_y"]
-#             elev["float_y"] += elev["speed"] * elev["dir"]
-#             if elev["float_y"] > elev["origin_y"] + elev["range"]:
-#                 elev["dir"] = -1
-#             elif elev["float_y"] < elev["origin_y"] - elev["range"]:
-#                 elev["dir"] = 1
-#             elev["rect"].y = int(elev["float_y"])
+        # Layer mapping objects
+        static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
+                        [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
+        all_solids = static_solids
 
-#             if elev is riding_elev:
-#                 delta_y = elev["float_y"] - prev_y
-#                 player_y += delta_y
-#                 player_rect.y = int(player_y)
+        # ── HORIZONTAL AXIS COLLISIONS ───────────────────────────────────
+        move_x = 0
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= physics.PLAYER_SPEED
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += physics.PLAYER_SPEED
 
-#         # ── ANIMATED DOORS ───────────────────────────────────────────────
-#         for door in animated_doors:
-#             if door["open"] and door["offset_y"] < door["max_open"]:
-#                 door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
-#                 door["rect"].y -= 4
-#                 door["rect"].height = max(4, door["max_open"] - door["offset_y"])
+        player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
+        player_rect.x = int(player_x)
 
-#         # Layer mapping objects
-#         static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
-#                         [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
-#         all_solids = static_solids + [e["rect"] for e in elevators]
+        for plat in all_solids:
+            if player_rect.colliderect(plat):
+                if move_x > 0:
+                    player_rect.right = plat.left
+                    player_x = float(player_rect.x)
+                elif move_x < 0:
+                    player_rect.left = plat.right
+                    player_x = float(player_rect.x)
 
-#         # ── HORIZONTAL AXIS COLLISIONS ───────────────────────────────────
-#         move_x = 0
-#         if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= physics.PLAYER_SPEED
-#         if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += physics.PLAYER_SPEED
+        # ── VERTICAL AXIS COLLISIONS ─────────────────────────────────────
+        player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
+        player_y += player_vel_y
+        player_rect.y = int(player_y)
 
-#         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
-#         player_rect.x = int(player_x)
+        # # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
+        # for elev in elevators:
+        #     if player_rect.colliderect(elev["rect"]):
+        #         if elev["dir"] == 1:
+        #             player_rect.bottom = elev["rect"].bottom
+        #             for static_floor in static_solids:
+        #                 if player_rect.colliderect(static_floor):
+        #                     death_screen.show_death_screen(screen, clock, tile_map)
+        #                     return
 
-#         for plat in all_solids:
-#             if player_rect.colliderect(plat):
-#                 if move_x > 0:
-#                     player_rect.right = plat.left
-#                     player_x = float(player_rect.x)
-#                 elif move_x < 0:
-#                     player_rect.left = plat.right
-#                     player_x = float(player_rect.x)
+        # ── ITEMS ─────────────────────────────────────────────────────────
+        for clip in paperclips:
+            if not clip["collected"] and player_rect.colliderect(clip["rect"]):
+                clip["collected"] = True
+                player_inventory_clips += 1
 
-#         # ── VERTICAL AXIS COLLISIONS ─────────────────────────────────────
-#         player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
-#         player_y += player_vel_y
-#         player_rect.y = int(player_y)
+        # Vertical floor stabilizing checks
+        is_grounded = False
+        for plat in all_solids:
+            if not player_rect.colliderect(plat):
+                continue
 
-#         # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
-#         for elev in elevators:
-#             if player_rect.colliderect(elev["rect"]):
-#                 if elev["dir"] == 1:
-#                     player_rect.bottom = elev["rect"].bottom
-#                     for static_floor in static_solids:
-#                         if player_rect.colliderect(static_floor):
-#                             death_screen.show_death_screen(screen, clock, tile_map)
-#                             return
+            if player_vel_y >= 0:
+                prev_bottom = player_y - player_vel_y + player_rect.height
+                if prev_bottom <= plat.top + SNAP_TOLERANCE:
+                    player_rect.bottom = plat.top
+                    player_y           = float(player_rect.y)
+                    player_vel_y       = 0.0
+                    is_grounded        = True
+                    can_double_jump    = True
 
-#         # ── ITEMS ─────────────────────────────────────────────────────────
-#         for clip in paperclips:
-#             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
-#                 clip["collected"] = True
-#                 player_inventory_clips += 1
+            elif player_vel_y < 0:
+                prev_top = player_y - player_vel_y
+                if prev_top >= plat.bottom - SNAP_TOLERANCE:
+                    player_rect.top = plat.bottom
+                    player_y        = float(player_rect.y)
+                    player_vel_y    = 0.0
 
-#         # Vertical floor stabilizing checks
-#         is_grounded = False
-#         for plat in all_solids:
-#             if not player_rect.colliderect(plat):
-#                 continue
+        if is_grounded:
+            coyote_frames = 6
+        else:
+            coyote_frames = max(0, coyote_frames - 1)
 
-#             if player_vel_y >= 0:
-#                 prev_bottom = player_y - player_vel_y + player_rect.height
-#                 if prev_bottom <= plat.top + SNAP_TOLERANCE:
-#                     player_rect.bottom = plat.top
-#                     player_y           = float(player_rect.y)
-#                     player_vel_y       = 0.0
-#                     is_grounded        = True
-#                     can_double_jump    = True
+        # Check death box fall boundary
+        if player_rect.y > HEIGHT + 200:
+            player_x      = float(spawn_x)
+            player_y      = float(spawn_y)
+            player_rect.x = spawn_x
+            player_rect.y = spawn_y
+            player_vel_y = 0.0
 
-#             elif player_vel_y < 0:
-#                 prev_top = player_y - player_vel_y
-#                 if prev_top >= plat.bottom - SNAP_TOLERANCE:
-#                     player_rect.top = plat.bottom
-#                     player_y        = float(player_rect.y)
-#                     player_vel_y    = 0.0
+        camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
 
-#         if is_grounded:
-#             coyote_frames = 6
-#         else:
-#             coyote_frames = max(0, coyote_frames - 1)
+        # ── ART RENDERING LAYER ───────────────────────────────────────────
+        graphics.draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
 
-#         # Check death box fall boundary
-#         if player_rect.y > HEIGHT + 200:
-#             player_x      = float(spawn_x)
-#             player_y      = float(spawn_y)
-#             player_rect.x = spawn_x
-#             player_rect.y = spawn_y
-#             player_vel_y = 0.0
+        for plat in platforms:
+            vx = plat.x - camera_x
+            if vx + plat.width < 0 or vx > WIDTH:
+                continue
+            pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
+            pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
+            pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
 
-#         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
+        for door in breakable_doors:
+            if door["broken"]:
+                continue
+            vx = door["rect"].x - camera_x
+            if vx + door["rect"].width < 0 or vx > WIDTH:
+                continue
+            color = COLOR_DOOR_DAMAGED if door["hp"] < 3 else COLOR_DOOR_INTACT
+            pygame.draw.rect(screen, color, (vx, door["rect"].y, door["rect"].width, door["rect"].height))
+            pygame.draw.rect(screen, (220, 160, 80), (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
+            for i in range(door["hp"]):
+                pygame.draw.circle(screen, (255, 220, 80), (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
 
-#         # ── ART RENDERING LAYER ───────────────────────────────────────────
-#         graphics.draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
+        for clip in paperclips:
+            if clip["collected"]:
+                continue
+            vx = clip["rect"].x - camera_x
+            if vx + clip["rect"].width < 0 or vx > WIDTH:
+                continue
+            cx = int(vx + clip["rect"].width // 2)
+            cy = int(clip["rect"].y + clip["rect"].height // 2)
+            pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
+            pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
 
-#         for plat in platforms:
-#             vx = plat.x - camera_x
-#             if vx + plat.width < 0 or vx > WIDTH:
-#                 continue
-#             pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
-#             pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
-#             pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
+        for door in animated_doors:
+            if door["rect"].height <= 0:
+                continue
+            vx = door["rect"].x - camera_x
+            pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, door["rect"].y, door["rect"].width, door["rect"].height))
+            pygame.draw.rect(screen, (120, 180, 255), (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
 
-#         for door in breakable_doors:
-#             if door["broken"]:
-#                 continue
-#             vx = door["rect"].x - camera_x
-#             if vx + door["rect"].width < 0 or vx > WIDTH:
-#                 continue
-#             color = COLOR_DOOR_DAMAGED if door["hp"] < 3 else COLOR_DOOR_INTACT
-#             pygame.draw.rect(screen, color, (vx, door["rect"].y, door["rect"].width, door["rect"].height))
-#             pygame.draw.rect(screen, (220, 160, 80), (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
-#             for i in range(door["hp"]):
-#                 pygame.draw.circle(screen, (255, 220, 80), (int(vx + 10 + i * 14), door["rect"].y + 8), 5)
+        pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
+        pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
+        pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
-#         for clip in paperclips:
-#             if clip["collected"]:
-#                 continue
-#             vx = clip["rect"].x - camera_x
-#             if vx + clip["rect"].width < 0 or vx > WIDTH:
-#                 continue
-#             cx = int(vx + clip["rect"].width // 2)
-#             cy = int(clip["rect"].y + clip["rect"].height // 2)
-#             pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
-#             pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
+        # UI Text Data
+        clips_total = len(paperclips)
+        clips_collected = sum(1 for c in paperclips if c["collected"])
+        hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
+        pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
+        clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
 
-#         for elev in elevators:
-#             vx = elev["rect"].x - camera_x
-#             pygame.draw.rect(screen, COLOR_ELEVATOR, (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height),
-#                              border_radius=4)
-#             pygame.draw.rect(screen, (200, 255, 240), (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height), 2,
-#                              border_radius=4)
+        if player_inventory_clips >= 1:
+            inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
+        else:
+            inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
 
-#         for door in animated_doors:
-#             if door["rect"].height <= 0:
-#                 continue
-#             vx = door["rect"].x - camera_x
-#             pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, door["rect"].y, door["rect"].width, door["rect"].height))
-#             pygame.draw.rect(screen, (120, 180, 255), (vx, door["rect"].y, door["rect"].width, door["rect"].height), 3)
+        screen.blit(hint, (20, 20))
+        screen.blit(pos_txt, (20, 50))
+        screen.blit(clip_txt, (20, 80))
+        screen.blit(inv_txt, (20, 110))
 
-#         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
-#         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
-#         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
+        if show_warning_frames > 0:
+            warn_txt = ui_font.render("Find a paperclip first to pick this wall lock!", True, (255, 100, 100))
+            screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
+            show_warning_frames -= 1
 
-#         # UI Text Data
-#         clips_total = len(paperclips)
-#         clips_collected = sum(1 for c in paperclips if c["collected"])
-#         hint = ui_font.render("A/D – Move   |   SPACE – Jump   |   E –    |   ESC – Quit", True, (255, 255, 255))
-#         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
-#         clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
+        pygame.display.flip()
 
-#         if player_inventory_clips >= 1:
-#             inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
-#         else:
-#             inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
-
-#         screen.blit(hint, (20, 20))
-#         screen.blit(pos_txt, (20, 50))
-#         screen.blit(clip_txt, (20, 80))
-#         screen.blit(inv_txt, (20, 110))
-
-#         if show_warning_frames > 0:
-#             warn_txt = ui_font.render("Find a paperclip first to pick this wall lock!", True, (255, 100, 100))
-#             screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
-#             show_warning_frames -= 1
-
-#         pygame.display.flip()
-
-#     # after while running:
-#     pygame.quit()
+    # after while running:
+    pygame.quit()

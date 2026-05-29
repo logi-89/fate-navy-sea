@@ -172,6 +172,16 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         player_y += player_vel_y
         player_rect.y = int(player_y)
 
+        # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
+        for elev in elevators:
+            if player_rect.colliderect(elev["rect"]):
+                if elev["dir"] == 1:
+                    player_rect.bottom = elev["rect"].bottom
+                    for static_floor in static_solids:
+                        if player_rect.colliderect(static_floor):
+                            death_screen.show_death_screen_level_one(screen, clock, tile_map)
+                            return
+
         # Re-include ALL platforms for floor and ceiling validation
         all_solids = static_solids + [e["rect"] for e in elevators]
 

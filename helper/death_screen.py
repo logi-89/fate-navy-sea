@@ -4,7 +4,7 @@ from constants import *
 from levels import level1
 
 # Death screen
-def show_death_screen(screen, clock, tile_map):
+def show_death_screen_level_one(screen, clock, tile_map):
     """ Displays Game Over interface when crushed by elevator. """
     running = True
     title_font = pygame.font.Font(None, 100)
