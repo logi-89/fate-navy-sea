@@ -4,7 +4,7 @@ import pygame
 
 import constants
 
-constants.dev_mode = True
+#constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -82,6 +82,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     coyote_frames          = 0
     can_double_jump        = True
     camera_x               = 0
+    camera_y               = 0
     show_warning_frames    = 0
 
     # ── LORE POPUP STATE 
@@ -519,6 +520,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             show_warning_frames -= 1
 
         pygame.display.flip()
+
 
     pygame.quit()
     # I love pygame
