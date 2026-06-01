@@ -59,9 +59,7 @@ def show_title_screen(screen, clock):
 
 
 #The Tidal Trader? (Triple T)
-#SHOP_NAME_HM =Harbor Market?
-#SHOP_NAME_PKS = Pearlkeeper’s Shop
-#SHOP_NAME_NE = "Neptune's Exchange"
+
 
 def shop_(screen, clock, name):
     running = True

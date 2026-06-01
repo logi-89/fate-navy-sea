@@ -4,7 +4,7 @@ import pygame
 
 import constants
 
-#constants.dev_mode = True
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -82,13 +82,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     coyote_frames          = 0
     can_double_jump        = True
     camera_x               = 0
-    player_inventory_clips = 0
     show_warning_frames    = 0
 
     # ── LORE POPUP STATE 
     lore_display_text  = None   # currently shown lore string (None = hidden)
     lore_display_timer = 0      # frames remaining to show it (0 = hidden)
-    
+
     SNAP_TOLERANCE = 8
     ui_font   = pygame.font.Font(None, 30)
     lore_font = pygame.font.Font(None, 26)   # slightly smaller for lore text
@@ -165,7 +164,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         if door["broken"]:
                             continue
                         if player_rect.inflate(20, 0).colliderect(door["rect"]):
-                            if player_inventory_clips >= 1:
+                            if constants.player_inventory_clips >= 1:
                                 door["hp"] -= 1
                                 if door["hp"] <= 0:
                                     door["broken"] = True
@@ -275,7 +274,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             death_screen.show_death_screen(screen, clock, lambda: levelONE(screen, tile_map))
                             return
 
-# TOOOOOO LEVEL 2 !!!!!!!!!!!!
+    # TOOOOOO LEVEL 2 !!!!!!!!!!!!
         for trigger in map_data.get("level_triggers", []):
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 2:
@@ -315,7 +314,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for clip in paperclips:
             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
                 clip["collected"] = True
-                player_inventory_clips += 1
+                constants.player_inventory_clips += 1
 
         #  LORE DROP collection: walk over "?" to reveal it 
         for lorey in lore_drop:
@@ -504,7 +503,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
         clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
 
-        if player_inventory_clips >= 1:
+        if constants.player_inventory_clips >= 1:
             inv_txt = ui_font.render("Lock Pick: READY", True, (80, 255, 140))
         else:
             inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (245, 110, 110))

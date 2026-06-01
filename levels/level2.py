@@ -54,7 +54,9 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top - 1675
 
         if constants.dev_mode == True:
-            spawn_x = spawn_x + 3000
+            #spawn_x = spawn_x + 3000
+            physics.PLAYER_SPEED = 6.7
+
 
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
