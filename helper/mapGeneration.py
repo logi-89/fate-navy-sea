@@ -17,6 +17,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     elevators       = []
     animated_doors  = []
     level_triggers  = []
+    lore = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size
@@ -68,6 +69,12 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 paperclips.append({"rect": rect, "collected": False})
                 col += 1
 
+            elif ch == '?':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                lore.append({"rect": rect, "collected": False})
+                col += 1
+
+
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
                 target = int(ch)
@@ -86,6 +93,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "elevators":       elevators,
         "animated_doors":  animated_doors,
         "level_triggers":  level_triggers,
+        "lore": lore,
     }
 
 def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):

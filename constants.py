@@ -24,6 +24,12 @@ PINK       = (220, 80,  140)
 GREY       = (120, 130, 140)
 LIGHT_GREY = (180, 190, 200)
 
+# LOREEEE DROOOP!
+lore_display_text  = None   # currently shown lore string (None = hidden)
+lore_display_timer = 0      # frames remaining to show it
+
+
+
 # Main Menu Colors
 class title_screen:
     BUTTON_COLOR = (40, 80, 120)
@@ -33,9 +39,9 @@ class title_screen:
 class physics:
     GRAVITY          = 0.981
     MAX_FALL_SPEED   = 18
-    JUMP_POWER       = 0 #-16 DO NOT ADD YET I DIDNOT PUT ZERO FOR A REASON
+    JUMP_POWER       = -16  
     PLAYER_SPEED     = 5
-    DOUBLE_JUMP_POWER= -13
+    DOUBLE_JUMP_POWER = 0 #-13 DO NOT ADD YET I PUT ZERO FOR A REASON
     TILE_SIZE = 50  # Each tile is 50x50 pixels
 
 # Shop

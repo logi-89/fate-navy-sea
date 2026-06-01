@@ -4,7 +4,7 @@ import pygame
 
 import constants
 
-constants.dev_mode = True
+#constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -39,6 +39,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     elevators       = map_data["elevators"]
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
+    lore_drop = map_data["lore"]
 
     # Cap elevator downward travel at the nearest platform below
     for elev in elevators:
@@ -84,8 +85,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     player_inventory_clips = 0
     show_warning_frames    = 0
 
+    # ── LORE POPUP STATE ───────────────────────────────────────────────────
+    lore_display_text  = None   # currently shown lore string (None = hidden)
+    lore_display_timer = 0      # frames remaining to show it (0 = hidden)
+    # ──────────────────────────────────────────────────────────────────────
+
     SNAP_TOLERANCE = 8
-    ui_font = pygame.font.Font(None, 30)
+    ui_font   = pygame.font.Font(None, 30)
+    lore_font = pygame.font.Font(None, 26)   # slightly smaller for lore text
 
     #COLOR_ELEVATOR = (80, 210, 190)
     COLOR_ELEVATOR  = (25, 75, 75)
@@ -153,7 +160,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         can_double_jump = False
                         riding_elev     = None
 
-                # F Key — interact with doors (no longer blocked on elevators)
+                # F Key — interact with doors AND lore drops
                 if event.key == pygame.K_f and input_allowed:
                     for door in breakable_doors:
                         if door["broken"]:
@@ -171,6 +178,15 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
                                 door["open"] = True
 
+                    # ── LORE DROP interaction: press F near a "?" to read ──
+                    import random
+                    for lorey in lore_drop:
+                        if not lorey["collected"]:
+                            continue
+                        if player_rect.inflate(40, 20).colliderect(lorey["rect"]):
+                            lore_display_text  = random.choice(maps.loreDrop)
+                            lore_display_timer = 300   # 5s at 60 fps
+
         keys = pygame.key.get_pressed()
 
         # ── ELEVATOR REGISTRATION ─────────────────────────────────────
@@ -184,7 +200,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 riding_elev = elev
                 break 
 
-        # ── Q / E PLAYER-CONTROLLED ELEVATOR MOVEMENT ──────────────────
+        # ── Q / E PLAYER-CONTROLLED ELEVATOR MOVEMENT 
         for elev in elevators:
             prev_y = elev["float_y"]
             
@@ -211,7 +227,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 player_y += delta_y
                 player_rect.y = int(player_y)
 
-        # ANIMATED DOORS ─────────────────────────────────────
+        # ANIMATED DOORS 
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
                 door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
@@ -222,7 +238,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
                         [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
 
-        # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS ────────────────
+        # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS 
         move_x = 0
         if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:  move_x -= physics.PLAYER_SPEED
         if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed: move_x += physics.PLAYER_SPEED
@@ -243,13 +259,13 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_rect.left = plat.right
                     player_x = float(player_rect.x)
 
-        #  VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS ──────────────────
+        #  VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS 
         if riding_elev is None:
             player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
             player_y += player_vel_y
             player_rect.y = int(player_y)
 
-        # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
+        # CRUSH / SQUISH DETECTION UNDER ELEVATOR 
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
                 # Crush: Q = DOWN, so driving down into a ceiling is fatal
@@ -262,7 +278,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
 # TOOOOOO LEVEL 2 !!!!!!!!!!!!
         for trigger in map_data.get("level_triggers", []):
-            #if player_rect.colliderect(trigger["rect"]):
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 2:
                     print("TOOOOOO LEVEL 2 !!!!!!!!!!!!")
@@ -297,11 +312,16 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             else:
                 riding_elev = None
 
-        #  ITEMS & BOUNDARIES ───────────────────────────────────────────
+        #  ITEMS & BOUNDARIES 
         for clip in paperclips:
             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
                 clip["collected"] = True
                 player_inventory_clips += 1
+
+        #  LORE DROP collection: walk over "?" to reveal it 
+        for lorey in lore_drop:
+            if not lorey["collected"] and player_rect.colliderect(lorey["rect"]):
+                lorey["collected"] = True   # player has reached the question mark
 
         if is_grounded:
             coyote_frames = 6
@@ -317,8 +337,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
 
-        # ART RENDERING LAYER ───────────────────────────────────────────
-        #graphics.draw_vertical_gradient(screen, (10, 30, 60), (30, 90, 140))
+        # ART RENDERING LAYER
         graphics.draw_vertical_gradient(screen, (4, 8, 15), (14, 42, 54))
 
         for plat in platforms:
@@ -352,6 +371,33 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
             pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
 
+        for lorey in lore_drop:
+            vx = lorey["rect"].x - camera_x
+            if vx + lorey["rect"].width < 0 or vx > WIDTH:
+                continue
+            cx = int(vx + lorey["rect"].width // 2)
+            cy = int(lorey["rect"].y + lorey["rect"].height // 2)
+
+            if not lorey["collected"]:
+                # Pulsing cyan question-mark orb (pre-pickup)
+                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0   # 0..1 sine-like
+                radius = int(10 + pulse * 4)
+                alpha_surf = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
+                glow_col = (40, int(180 + pulse * 60), int(200 + pulse * 55), 90)
+                pygame.draw.circle(alpha_surf, glow_col, (radius + 2, radius + 2), radius + 2)
+                screen.blit(alpha_surf, (cx - radius - 2, cy - radius - 2))
+                pygame.draw.circle(screen, (80, 220, 210), (cx, cy), radius)
+                pygame.draw.circle(screen, (180, 255, 245), (cx, cy), radius, 2)
+                q_surf = lore_font.render("?", True, (10, 30, 40))
+                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
+                # small "F" hint badge below
+                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
+                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
+            else:
+                # Collected — show a faint dim dot so player knows they can re-press F
+                pygame.draw.circle(screen, (30, 80, 90), (cx, cy), 6)
+                pygame.draw.circle(screen, (60, 140, 160), (cx, cy), 6, 1)
+
         for elev in elevators:
             vx = elev["rect"].x - camera_x
             pygame.draw.rect(screen, COLOR_ELEVATOR, (vx, elev["rect"].y, elev["rect"].width, elev["rect"].height),
@@ -369,6 +415,84 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y, player_rect.width, player_rect.height)
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
+
+        # WATER-THEMED LORE POPUP
+        if lore_display_text and lore_display_timer > 0:
+            lore_display_timer -= 1
+
+            # Fade out in the last 60 frames
+            alpha = 255
+            if lore_display_timer < 60:
+                alpha = int(255 * lore_display_timer / 60)
+
+            # Panel dimensions
+            pad_x, pad_y = 28, 18
+            max_text_w   = 680
+            words        = lore_display_text.split()
+            lines        = []
+            cur_line     = ""
+            for word in words:
+                test = (cur_line + " " + word).strip()
+                if lore_font.size(test)[0] <= max_text_w:
+                    cur_line = test
+                else:
+                    lines.append(cur_line)
+                    cur_line = word
+            if cur_line:
+                lines.append(cur_line)
+
+            line_h   = lore_font.get_height() + 4
+            panel_w  = max_text_w + pad_x * 2
+            panel_h  = line_h * len(lines) + pad_y * 2 + 36   # +36 for header row
+
+            panel_x  = WIDTH  // 2 - panel_w // 2
+            panel_y  = HEIGHT // 2 - panel_h // 2
+
+            # Draw on a transparent surface so we can alpha-blend
+            surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+
+            # Background: deep ocean teal with partial transparency
+            bg_col = (8, 28, 44, min(210, alpha))
+            pygame.draw.rect(surf, bg_col, (0, 0, panel_w, panel_h), border_radius=10)
+
+            # Layered water shimmer bands
+            for band_i, band_y_off in enumerate(range(0, panel_h, 18)):
+                band_alpha = int(12 * (1 - band_i / (panel_h // 18 + 1)) * alpha / 255)
+                band_col   = (40, 140, 160, band_alpha)
+                pygame.draw.rect(surf, band_col,
+                                 (0, band_y_off, panel_w, 9), border_radius=4)
+
+            # Border: bioluminescent seafoam ring
+            border_col = (80, 200, 185, min(220, alpha))
+            pygame.draw.rect(surf, border_col, (0, 0, panel_w, panel_h), 2, border_radius=10)
+
+            # Inner highlight line at the top (simulates water surface glint)
+            glint_col = (160, 255, 240, min(80, alpha))
+            pygame.draw.line(surf, glint_col, (12, 3), (panel_w - 12, 3), 1)
+
+            # Header: "~  TRANSMISSION  ~" styled title
+            header_font = pygame.font.Font(None, 22)
+            header_surf = header_font.render("~  T R A N S M I S S I O N  ~", True,
+                                             (100, 220, 200))
+            header_surf.set_alpha(alpha)
+            surf.blit(header_surf, (panel_w // 2 - header_surf.get_width() // 2, pad_y - 4))
+
+            # Separator squiggle (just a line with dots)
+            sep_y = pad_y + 20
+            pygame.draw.line(surf, (50, 140, 150, min(160, alpha)),
+                             (pad_x, sep_y), (panel_w - pad_x, sep_y), 1)
+
+            # Lore text lines
+            text_col = (190, 240, 230)
+            for li, line in enumerate(lines):
+                t_surf = lore_font.render(line, True, text_col)
+                t_surf.set_alpha(alpha)
+                surf.blit(t_surf, (pad_x, sep_y + 8 + li * line_h))
+
+            screen.blit(surf, (panel_x, panel_y))
+
+            if lore_display_timer == 0:
+                lore_display_text = None
 
         #  HUD / TEXT DATA 
         clips_total = len(paperclips)
