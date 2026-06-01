@@ -85,11 +85,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     player_inventory_clips = 0
     show_warning_frames    = 0
 
-    # ── LORE POPUP STATE ───────────────────────────────────────────────────
+    # ── LORE POPUP STATE 
     lore_display_text  = None   # currently shown lore string (None = hidden)
     lore_display_timer = 0      # frames remaining to show it (0 = hidden)
-    # ──────────────────────────────────────────────────────────────────────
-
+    
     SNAP_TOLERANCE = 8
     ui_font   = pygame.font.Font(None, 30)
     lore_font = pygame.font.Font(None, 26)   # slightly smaller for lore text
