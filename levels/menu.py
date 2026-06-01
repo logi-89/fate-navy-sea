@@ -56,3 +56,67 @@ def show_title_screen(screen, clock):
         pygame.display.flip()
         clock.tick(60)
         t += 0.03
+
+
+#The Tidal Trader? (Triple T)
+#SHOP_NAME_HM =Harbor Market?
+#SHOP_NAME_PKS = Pearlkeeper’s Shop
+#SHOP_NAME_NE = "Neptune's Exchange"
+
+def shop_(screen, clock, name):
+    running = True
+    font_title = pygame.font.Font(None, 80)
+    font_item = pygame.font.Font(None, 36)
+
+    while running:
+        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+
+        pygame.draw.rect(screen, (10, 45, 75), (0, 500, WIDTH, 200))
+
+        title = font_title.render(name, True, WHITE)
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, 70)))
+
+        # # Coins
+        # coins_text = font_item.render(
+        #     f"Gold: {player.gold}", True, (255, 230, 100)
+        # )
+        # screen.blit(coins_text, (40, 30))
+
+        # Shop items
+        for i, item in enumerate(shop.SHOP_ITEMS):
+            y = 150 + i * 70
+
+            item_rect = pygame.Rect(100, y, WIDTH - 200, 55)
+
+            pygame.draw.rect(screen, (20, 70, 110), item_rect, border_radius=10)
+            pygame.draw.rect(screen, WHITE, item_rect, 2, border_radius=10)
+
+            text = font_item.render(
+                f"{item['name']} - {item['cost']}g",
+                True,
+                WHITE
+            )
+
+            desc = pygame.font.Font(None, 26).render(
+                item["desc"],
+                True,
+                (200, 220, 240)
+            )
+
+            screen.blit(text, (120, y + 5))
+            screen.blit(desc, (120, y + 28))
+
+        exit_text = font_item.render("ESC - Leave Shop", True, WHITE)
+        screen.blit(exit_text, (20, HEIGHT - 50))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+
+        pygame.display.flip()
+        clock.tick(60)

@@ -16,3 +16,4 @@ def run_shop():
     selected = 0
 
 menu.show_title_screen(screen, clock) 
+#menu.shop_(screen, clock, "lentons") 
