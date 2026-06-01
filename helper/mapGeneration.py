@@ -40,6 +40,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 breakable_doors.append({"rect": rect, "hp": 3, "broken": False})
 
             elif ch == '_':
+                # col += 1 (not 2): a single '_' creates a 2-tile-wide elevator
+                # rect; advancing by 2 would skip the next ASCII character.
                 rect = pygame.Rect(col * tile_size, y, tile_size * 2, tile_size // 2)
                 elevators.append({
                     "rect":     rect,
@@ -49,7 +51,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "dir":      1,
                     "float_y":  float(y),
                 })
-                col += 2
+                col += 1
 
             elif ch == '^':
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size * 2)
@@ -66,11 +68,12 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 paperclips.append({"rect": rect, "collected": False})
                 col += 1
 
-            elif ch == '2':
+            elif ch.isdigit():
+                # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
+                target = int(ch)
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
-                level_triggers.append({"rect": rect, "target_level": 2})
-                col += 1  # Standard increment so the loop continues
-                print("ch == 2")
+                level_triggers.append({"rect": rect, "target_level": target})
+                col += 1
 
 
             else:

@@ -3,7 +3,8 @@ import maps
 import pygame
 
 import constants
-constants.dev_mode = True
+# NOTE: dev_mode spawn offset is now controlled from constants.py
+# constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -39,6 +40,20 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
 
+    # Cap elevator downward travel at the nearest platform below
+    for elev in elevators:
+        floor_y = None
+        for plat in platforms:
+            if (plat.top > elev["rect"].bottom and
+                plat.left < elev["rect"].right and
+                plat.right > elev["rect"].left):
+                if floor_y is None or plat.top < floor_y:
+                    floor_y = plat.top
+        if floor_y is not None:
+            elev["max_y"] = floor_y - elev["rect"].height
+        else:
+            elev["max_y"] = elev["origin_y"] + elev["range"]
+
     spawn_x, spawn_y = 100, 100
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
@@ -49,10 +64,18 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         if constants.dev_mode == True:
             spawn_x = spawn_x + 6000
             spawn_y = spawn_y - 200
-    
+
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
     player_rect            = pygame.Rect(spawn_x, spawn_y, 40, 60)
+
+    # Nudge spawn upward if it overlaps a platform
+    for plat in platforms:
+        if player_rect.colliderect(plat):
+            player_rect.bottom = plat.top
+            spawn_x = player_rect.x
+            spawn_y = player_rect.y
+            break
     player_vel_y           = 0.0
     is_grounded            = False
     coyote_frames          = 0
@@ -69,8 +92,41 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     #COLOR_ANIM_DOOR = (50, 80, 160)
     COLOR_ANIM_DOOR = (45, 55, 65)
 
+    # Loading screen — blocks input during transition
+    loading_font = pygame.font.Font(None, 48)
+    for _ in range(15):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                return
+        screen.fill((4, 8, 15))
+        text = loading_font.render("Loading...", True, (120, 220, 190))
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2))
+        pygame.display.flip()
+        clock.tick(60)
+    pygame.event.clear()
+
+    input_allowed = False
+
     while running:
         dt = clock.tick(60)
+
+        # Wait for all keys to be released before allowing input
+        if not input_allowed:
+            key_state = pygame.key.get_pressed()
+            all_released = True
+            for scancode in range(len(key_state)):
+                if key_state[scancode]:
+                    all_released = False
+                    break
+            if all_released:
+                input_allowed = True
+
+        # Initialise early so the event handler never reads unbound
+        riding_elev = None
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -85,7 +141,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     return
 
                 # Jumping controls (W, SPACE, UP) completely separated from elevator riding
-                if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP):
+                if event.key in (pygame.K_SPACE, pygame.K_w, pygame.K_UP) and input_allowed:
                     if is_grounded or coyote_frames > 0:
                         player_vel_y    = physics.JUMP_POWER
                         is_grounded     = False
@@ -97,25 +153,23 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         can_double_jump = False
                         riding_elev     = None
 
-                # F Key now serves as global Action key (doors) when NOT actively driving downward
-                if event.key == pygame.K_f:
-                    # Only process door actions if we aren't using the key to drive an elevator down
-                    if riding_elev is None:
-                        for door in breakable_doors:
-                            if door["broken"]:
-                                continue
-                            if player_rect.inflate(20, 0).colliderect(door["rect"]):
-                                if player_inventory_clips >= 1:
-                                    door["hp"] -= 1
-                                    if door["hp"] <= 0:
-                                        door["broken"] = True
-                                else:
-                                    show_warning_frames = 90
+                # F Key — interact with doors (no longer blocked on elevators)
+                if event.key == pygame.K_f and input_allowed:
+                    for door in breakable_doors:
+                        if door["broken"]:
+                            continue
+                        if player_rect.inflate(20, 0).colliderect(door["rect"]):
+                            if player_inventory_clips >= 1:
+                                door["hp"] -= 1
+                                if door["hp"] <= 0:
+                                    door["broken"] = True
+                            else:
+                                show_warning_frames = 90
 
-                        for door in animated_doors:
-                            if not door["open"]:
-                                if player_rect.inflate(30, 30).colliderect(door["rect"]):
-                                    door["open"] = True
+                    for door in animated_doors:
+                        if not door["open"]:
+                            if player_rect.inflate(30, 30).colliderect(door["rect"]):
+                                door["open"] = True
 
         keys = pygame.key.get_pressed()
 
@@ -137,16 +191,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             if elev is riding_elev:
                 elev_speed = abs(elev["speed"])
                 
-                if keys[pygame.K_e]:
+                # E=UP / Q=DOWN (standardised across both levels)
+                if keys[pygame.K_e] and input_allowed:
                     # Move UP (decrease Y)
                     elev["float_y"] -= elev_speed
                     if elev["float_y"] < elev["origin_y"] - elev["range"]:
                         elev["float_y"] = elev["origin_y"] - elev["range"]
-                elif keys[pygame.K_e]:
+                elif keys[pygame.K_q] and input_allowed:
                     # Move DOWN (increase Y)
                     elev["float_y"] += elev_speed
-                    if elev["float_y"] > elev["origin_y"] + elev["range"]:
-                        elev["float_y"] = elev["origin_y"] + elev["range"]
+                    if elev["float_y"] > elev["max_y"]:
+                        elev["float_y"] = elev["max_y"]
                         
             elev["rect"].y = int(elev["float_y"])
 
@@ -169,8 +224,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS ────────────────
         move_x = 0
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:  move_x -= physics.PLAYER_SPEED
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: move_x += physics.PLAYER_SPEED
+        if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:  move_x -= physics.PLAYER_SPEED
+        if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed: move_x += physics.PLAYER_SPEED
 
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
@@ -189,19 +244,20 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_x = float(player_rect.x)
 
         #  VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS ──────────────────
-        player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
-        player_y += player_vel_y
-        player_rect.y = int(player_y)
+        if riding_elev is None:
+            player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
+            player_y += player_vel_y
+            player_rect.y = int(player_y)
 
         # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR ───────────────────────
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
-                # If player is driven downwards into a static solid wall/floor
+                # Crush: Q = DOWN, so driving down into a ceiling is fatal
                 if elev is riding_elev and keys[pygame.K_q]:
                     player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
-                            death_screen.show_death_screen_level_one(screen, clock, tile_map)
+                            death_screen.show_death_screen(screen, clock, lambda: levelONE(screen, tile_map))
                             return
 
 # TOOOOOO LEVEL 2 !!!!!!!!!!!!
@@ -269,13 +325,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             vx = plat.x - camera_x
             if vx + plat.width < 0 or vx > WIDTH:
                 continue
-            # pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
-            # pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
-            # pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
-            pygame.draw.rect(screen, (40, 95, 80), (vx, plat.y, plat.width, 6))
-            #pygame.draw.rect(screen, (35, 30, 25), (vx, plat.y + 6, plat.width, plat.height - 6))
-            pygame.draw.rect(screen, (140,140, 140), (vx, plat.y + 6, plat.width, plat.height - 6))
-            pygame.draw.rect(screen, (20, 48, 42), (vx, plat.y, plat.width, plat.height), 2)
+            pygame.draw.rect(screen, GROUND_TOP, (vx, plat.y, plat.width, 8))
+            pygame.draw.rect(screen, GROUND_DIRT, (vx, plat.y + 8, plat.width, plat.height - 8))
+            pygame.draw.rect(screen, GROUND_SIDE, (vx, plat.y, plat.width, plat.height), 2)
 
         for door in breakable_doors:
             if door["broken"]:
@@ -297,8 +349,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 continue
             cx = int(vx + clip["rect"].width // 2)
             cy = int(clip["rect"].y + clip["rect"].height // 2)
-            #pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
-            
+            pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
             pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
 
         for elev in elevators:
@@ -319,31 +370,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
-        # UI Text Data
-        # clips_total = len(paperclips)
-        # clips_collected = sum(1 for c in paperclips if c["collected"])
-        # hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up   |   Q – Elev Down   |  F – Action Button   |  ESC – Quit", True, (255, 255, 255))
-        # pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (200, 220, 255))
-        # clip_txt = ui_font.render(f"Paperclips Found: {clips_collected}/{clips_total}", True, (200, 200, 220))
-
-        # if player_inventory_clips >= 1:
-        #     inv_txt = ui_font.render("Lock Pick: READY", True, (150, 255, 150))
-        # else:
-        #     inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (255, 150, 150))
-
-        # screen.blit(hint, (20, 20))
-        # screen.blit(pos_txt, (20, 50))
-        # screen.blit(clip_txt, (20, 80))
-        # screen.blit(inv_txt, (20, 110))
-
-        #  SUBMERGED HUD / TEXT DATA 
+        #  HUD / TEXT DATA 
         clips_total = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
         
         # Bioluminescent green/seafoam tone for text legibility
         TEXT_COLOR = (120, 220, 190)
         
-        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E – Elev Up  |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
+        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E/Q – Elevator   |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
         clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
 

@@ -1,11 +1,11 @@
 import pygame
 
 from constants import *
-from levels import level1
 
-# Death screen
-def show_death_screen_level_one(screen, clock, tile_map):
-    """ Displays Game Over interface when crushed by elevator. """
+# Accepts a restart_func callback so crushed players respawn in the
+# correct level (not hardcoded to level1).
+def show_death_screen(screen, clock, restart_func):
+    """Displays Game Over when crushed. Calls restart_func() on respawn."""
     running = True
     title_font = pygame.font.Font(None, 100)
     sub_font = pygame.font.Font(None, 44)
@@ -40,19 +40,16 @@ def show_death_screen_level_one(screen, clock, tile_map):
                 pygame.quit()
                 return False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # ESC from Death Screen exits game
+                if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     return False
                 if event.key == pygame.K_r:
-                    level1.levelONE(screen, tile_map)
+                    restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
-                    level1.levelONE(screen, tile_map)
+                    restart_func()
                     return True
 
         pygame.display.flip()
         clock.tick(60)
-
-
-        
