@@ -3,8 +3,8 @@ import maps
 import pygame
 
 import constants
-# NOTE: dev_mode spawn offset is now controlled from constants.py
-# constants.dev_mode = True
+
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
