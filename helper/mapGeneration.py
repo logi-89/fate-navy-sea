@@ -18,6 +18,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     animated_doors  = []
     level_triggers  = []
     lore = []
+    water = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size
@@ -41,13 +42,27 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 breakable_doors.append({"rect": rect, "hp": 3, "broken": False})
 
             elif ch == '_':
-                # col += 1 (not 2): a single '_' creates a 2-tile-wide elevator
-                # rect; advancing by 2 would skip the next ASCII character.
                 rect = pygame.Rect(col * tile_size, y, tile_size * 2, tile_size // 2)
+                
+                # Scan upward for a # tile to set upper limit
+                min_y = float(y)  # default: don't move up at all
+                for scan_row in range(row_idx - 1, -1, -1):
+                    if col < len(tile_map[scan_row]) and tile_map[scan_row][col] == '#':
+                        min_y = float(scan_row * tile_size + tile_size)
+                        break
+                
+                # Scan downward for a # tile to set lower limit
+                max_y = float(y + 200)  # default fallback
+                for scan_row in range(row_idx + 1, len(tile_map)):
+                    if col < len(tile_map[scan_row]) and tile_map[scan_row][col] == '#':
+                        max_y = float(scan_row * tile_size - tile_size // 2)
+                        break
+                
                 elevators.append({
                     "rect":     rect,
                     "origin_y": float(y),
-                    "range":    200,
+                    "min_y":    min_y,
+                    "max_y":    max_y,
                     "speed":    1.5,
                     "dir":      1,
                     "float_y":  float(y),
@@ -74,6 +89,10 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 lore.append({"rect": rect, "collected": False})
                 col += 1
 
+            elif ch =='~':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                lore.append({"rect": rect, "collected": False})
+                col += 1
 
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
@@ -93,7 +112,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "elevators":       elevators,
         "animated_doors":  animated_doors,
         "level_triggers":  level_triggers,
-        "lore": lore,
+        "lore":            lore,
+        "water":           water,
     }
 
 def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):

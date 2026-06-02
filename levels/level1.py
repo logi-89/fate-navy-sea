@@ -37,32 +37,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     elevators       = map_data["elevators"]
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
+    water           = map_data["water"]
     
     # Safely track map height
     world_h         = len(tile_map) * 40  
-    
     lore_drop = map_data["lore"]
-
-    # Cap elevator downward travel at the nearest platform below
-    for elev in elevators:
-        floor_y = None
-        for plat in platforms:
-            if (plat.top > elev["rect"].bottom and
-                plat.left < elev["rect"].right and
-                plat.right > elev["rect"].left):
-                if floor_y is None or plat.top < floor_y:
-                    floor_y = plat.top
-        if floor_y is not None:
-            elev["max_y"] = floor_y - elev["rect"].height
-        else:
-            elev["max_y"] = elev["origin_y"] + elev["range"]
-
     spawn_x, spawn_y = 100, -200
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x + 200
-        spawn_y = best.top + 400
+        spawn_y = best.top + 150
 
         if constants.dev_mode == True:
             spawn_x = spawn_x + 7600
@@ -71,14 +56,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
     player_rect            = pygame.Rect(spawn_x, spawn_y, 40, 60)
-
-    # Nudge spawn upward if it overlaps a platform
-    for plat in platforms:
-        if player_rect.colliderect(plat):
-            player_rect.bottom = plat.top
-            spawn_x = player_rect.x
-            spawn_y = player_rect.y
-            break
     player_vel_y           = 0.0
     is_grounded            = False
     coyote_frames          = 0
@@ -97,6 +74,27 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
     COLOR_ELEVATOR  = (25, 75, 75)
     COLOR_ANIM_DOOR = (45, 55, 65)
+    # Cap elevator downward travel at the nearest platform below
+    for elev in elevators:
+        floor_y = None
+        for plat in platforms:
+            if (plat.top > elev["rect"].bottom and
+                plat.left < elev["rect"].right and
+                plat.right > elev["rect"].left):
+                if floor_y is None or plat.top < floor_y:
+                    floor_y = plat.top
+        if floor_y is not None:
+            elev["max_y"] = floor_y - elev["rect"].height
+        else:
+            elev["max_y"] = elev["origin_y"] + elev["range"]
+
+    # Nudge spawn upward if it overlaps a platform
+    for plat in platforms:
+        if player_rect.colliderect(plat):
+            player_rect.bottom = plat.top
+            spawn_x = player_rect.x
+            spawn_y = player_rect.y
+            break
 
     # Loading screen
     loading_font = pygame.font.Font(None, 48)
@@ -203,8 +201,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 elev_speed = abs(elev["speed"])
                 if keys[pygame.K_e] and input_allowed:
                     elev["float_y"] -= elev_speed
-                    if elev["float_y"] < elev["origin_y"] - elev["range"]:
-                        elev["float_y"] = elev["origin_y"] - elev["range"]
+                    if elev["float_y"] < elev["min_y"]:
+                        elev["float_y"] = elev["min_y"]
+
                 elif keys[pygame.K_q] and input_allowed:
                     elev["float_y"] += elev_speed
                     if elev["float_y"] > elev["max_y"]:
@@ -318,23 +317,29 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             player_rect.y = spawn_y
             player_vel_y = 0.0
 
-        # ── SMOOTH CAMERA LERP TRACKING ───────────────────────────────
-        # Determine maximum camera limits based on world boundaries
+        # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
         max_cam_y = max(0, world_h - HEIGHT)
-        
-        # Determine ideal camera target destination (centered on player)
+
         target_cam_x = player_rect.centerx - WIDTH // 2
         target_cam_y = player_rect.centery - HEIGHT // 2
-        
-        # Clamp targets immediately so the camera doesn't try to look outside the map bounds
+
         target_cam_x = max(0, min(target_cam_x, max_cam_x))
         target_cam_y = max(0, min(target_cam_y, max_cam_y))
-        
-        # Smoothly slide camera position toward target (Lerp)
-        # 0.1 means the camera closes 10% of the distance to the player per frame
-        camera_x += (target_cam_x - camera_x) * 0.1
-        camera_y += (target_cam_y - camera_y) * 0.1
+
+        LARP = 0.12
+        camera_x += (target_cam_x - camera_x) * LARP
+        camera_y += (target_cam_y - camera_y) * LARP
+
+        # Snap to avoid sub-pixel drift when very close
+        if abs(camera_x - target_cam_x) < 0.5:
+            camera_x = target_cam_x
+        if abs(camera_y - target_cam_y) < 0.5:
+            camera_y = target_cam_y
+
+        # Single integer offset used for ALL rendering this frame
+        cam_ix = int(camera_x)
+        cam_iy = int(camera_y)
 
         # ART RENDERING LAYER
         graphics.draw_vertical_gradient(screen, (4, 8, 15), (14, 42, 54))
@@ -404,7 +409,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.rect(screen, COLOR_ELEVATOR, (vx, vy, elev["rect"].width, elev["rect"].height),
                              border_radius=4)
             pygame.draw.rect(screen, (200, 255, 240), (vx, vy, elev["rect"].width, elev["rect"].height), 2,
-                             border_radius=4)
+                            border_radius=4)
 
         for door in animated_doors:
             if door["rect"].height <= 0:
