@@ -9,6 +9,7 @@ from constants import *
 from helper import mapGeneration
 from helper import graphics
 from helper import death_screen
+from helper import enemy as enemies_module
 
 import levels
 from levels import level2
@@ -320,60 +321,16 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             player_vel_y = 0.0
 
         # ENEMY AI
-        for enemy in enemies[:]:
-            dx = player_rect.centerx - enemy["rect"].centerx
-            dy = player_rect.centery - enemy["rect"].centery
-            dist = math.sqrt(dx*dx + dy*dy)
-
-            can_see = False
-            if dist < enemy["detect_range"]:
-                can_see = True
-                for obs in platforms:
-                    if obs.clipline(enemy["rect"].center, player_rect.center):
-                        can_see = False
-                        break
-
-            enemy["state"] = "chase" if can_see else "patrol"
-
-            if enemy["state"] == "chase":
-                enemy["dir"] = 1 if dx > 0 else -1
-                move_x = enemy["chase_speed"] * enemy["dir"]
-            else:
-                move_x = enemy["speed"] * enemy["dir"]
-
-            enemy["rect"].x += int(move_x)
-
-            for plat in static_solids:
-                if enemy["rect"].colliderect(plat):
-                    if move_x > 0:
-                        enemy["rect"].right = plat.left
-                        if enemy["state"] == "patrol":
-                            enemy["dir"] = -1
-                    elif move_x < 0:
-                        enemy["rect"].left = plat.right
-                        if enemy["state"] == "patrol":
-                            enemy["dir"] = 1
-
-            if enemy["state"] == "patrol":
-                if enemy["rect"].left <= enemy["patrol_left"]:
-                    enemy["rect"].left = int(enemy["patrol_left"])
-                    enemy["dir"] = 1
-                elif enemy["rect"].right >= enemy["patrol_right"]:
-                    enemy["rect"].right = int(enemy["patrol_right"])
-                    enemy["dir"] = -1
-
-            if player_rect.colliderect(enemy["rect"]):
-                if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].centery:
-                    enemies.remove(enemy)
-                    player_vel_y = -12
-                    can_double_jump = True
-                else:
-                    death_screen.show_death_screen_ENEMIES(
-                        screen, clock,
-                        lambda: levelONE(screen, tile_map),
-                        "You were killed by an enemy!"
-                    )
-                    return
+        enemy_result = enemies_module.update_enemies(
+            enemies, player_rect, player_vel_y,
+            static_solids, platforms, screen, clock,
+            lambda: levelONE(screen, tile_map)
+        )
+        if enemy_result == "death":
+            return
+        elif enemy_result is not None:
+            player_vel_y = enemy_result
+            can_double_jump = True
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
@@ -481,24 +438,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
-        # ENEMY RENDERING
-        for enemy in enemies:
-            vx = enemy["rect"].x - camera_x
-            vy = enemy["rect"].y - camera_y
-            if vx + enemy["rect"].width < 0 or vx > WIDTH or vy + enemy["rect"].height < 0 or vy > HEIGHT:
-                continue
-
-            col = (200, 50, 50) if enemy["state"] == "chase" else (160, 70, 50)
-            pygame.draw.rect(screen, col, (vx, vy, enemy["rect"].width, enemy["rect"].height), border_radius=4)
-            pygame.draw.rect(screen, (255, 100, 100), (vx, vy, enemy["rect"].width, enemy["rect"].height), 2, border_radius=4)
-
-            eye_dir = enemy["dir"]
-            eye_off = 8 if eye_dir > 0 else -8
-            eye_y = vy + 14
-            pygame.draw.circle(screen, (255, 255, 200), (int(vx + 14 + eye_off), eye_y), 5)
-            pygame.draw.circle(screen, (0, 0, 0), (int(vx + 14 + eye_off), eye_y), 3)
-            pygame.draw.circle(screen, (255, 255, 200), (int(vx + 36 + eye_off), eye_y), 5)
-            pygame.draw.circle(screen, (0, 0, 0), (int(vx + 36 + eye_off), eye_y), 3)
+        enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
 
         # WATER RENDERING
         water_time = pygame.time.get_ticks() / 1000.0
