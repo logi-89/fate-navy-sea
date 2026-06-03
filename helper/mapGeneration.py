@@ -19,6 +19,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     level_triggers  = []
     lore = []
     water = []
+    enemies = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size
@@ -94,6 +95,21 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 water.append(rect)
                 col += 1
 
+            elif ch == 'E':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append({
+                    "rect": rect,
+                    "start_x": float(rect.x),
+                    "patrol_left": float(rect.x - 150),
+                    "patrol_right": float(rect.x + 150),
+                    "dir": 1,
+                    "speed": 2,
+                    "chase_speed": 4,
+                    "detect_range": 350,
+                    "state": "patrol",
+                })
+                col += 1
+
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
                 target = int(ch)
@@ -114,6 +130,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "level_triggers":  level_triggers,
         "lore":            lore,
         "water":           water,
+        "enemies":         enemies,
     }
 
 def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
