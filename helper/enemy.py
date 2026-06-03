@@ -65,6 +65,29 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
                 enemy["rect"].right = int(enemy["patrol_right"])
                 enemy["dir"] = -1
 
+        # Vertical movement
+        enemy["vy"] = enemy.get("vy", 0)
+        enemy["on_ground"] = enemy.get("on_ground", False)
+
+        enemy["vy"] = min(enemy["vy"] + 0.8, 15)
+        enemy["rect"].y += int(enemy["vy"])
+
+        enemy["on_ground"] = False
+        for plat in static_solids:
+            if enemy["rect"].colliderect(plat):
+                if enemy["vy"] >= 0:
+                    enemy["rect"].bottom = plat.top
+                    enemy["vy"] = 0
+                    enemy["on_ground"] = True
+                elif enemy["vy"] < 0:
+                    enemy["rect"].top = plat.bottom
+                    enemy["vy"] = 0
+
+        # Jump when chasing, on ground, and player is above
+        if enemy["state"] == "chase" and enemy["on_ground"] and player_rect.bottom < enemy["rect"].top - 20:
+            enemy["vy"] = -14
+            enemy["on_ground"] = False
+
         if player_rect.colliderect(enemy["rect"]):
             if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].top + 10:
                 enemies.remove(enemy)

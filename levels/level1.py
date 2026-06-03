@@ -247,11 +247,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
                 door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
-                door["rect"].y -= 4
-                door["rect"].height = max(4, door["max_open"] - door["offset_y"])
+                door["rect"].y = door["origin_y"] + door["offset_y"]
+                door["rect"].height = door["max_open"] - door["offset_y"]
 
         static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
-                        [d["rect"] for d in animated_doors if not d["open"] or d["offset_y"] < d["max_open"]]
+                        [d["rect"] for d in animated_doors if d["rect"].height > 0 and (not d["open"] or d["offset_y"] < d["max_open"])]
 
         # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS
         move_x = 0
