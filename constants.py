@@ -63,6 +63,17 @@ GROUND_DIRT = (10,  70,  80)   # dark ocean-floor fill
 
 dev_mode = False
 
+PLAYER_MAX_HP = 100
+ENEMY_DAMAGE = 15
+ENEMY_HP = 1
+INVINCIBLE_FRAMES = 60
+
+WEAPON_DEFS = {
+    "spear":         {"name": "Spear",         "dmg": 99, "speed": 14, "cooldown": 20, "ammo": -1, "color": (180, 120, 60)},
+    "water_gun":     {"name": "Water Gun",     "dmg": 10, "speed": 22, "cooldown": 8,  "ammo": 50, "color": (80, 200, 240)},
+    "water_balloon": {"name": "Water Balloon", "dmg": 25, "speed": 9,  "cooldown": 35, "ammo": 20, "color": (60, 180, 220)},
+}
+
 COLOR_DOOR_INTACT  = (30, 100, 160)   # deep sea blue door
 COLOR_DOOR_DAMAGED = (60, 150, 200)   # lighter cracked blue
 COLOR_PAPERCLIP    = (160, 240, 220)  # seafoam silver

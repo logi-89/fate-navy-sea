@@ -69,12 +69,6 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
             if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].centery:
                 enemies.remove(enemy)
                 return -12.0
-            else:
-                death_screen.show_death_screen_ENEMIES(
-                    screen, clock, restart_func,
-                    "You were killed by an enemy!"
-                )
-                return "death"
     return None
 
 

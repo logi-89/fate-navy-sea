@@ -10,6 +10,7 @@ from helper import mapGeneration
 from helper import graphics
 from helper import death_screen
 from helper import enemy as enemies_module
+from helper import weapons
 
 import levels
 from levels import level2
@@ -43,9 +44,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     enemies         = map_data.get("enemies", [])
     
     # Safely track map height
-    world_h         = len(tile_map) * 40  
+    world_h         = len(tile_map) * physics.TILE_SIZE
     lore_drop = map_data["lore"]
-    spawn_x, spawn_y = 100, -200
+    spawn_x, spawn_y = 400, 500
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
@@ -66,6 +67,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
+    player_hp              = PLAYER_MAX_HP
+    invincible_timer       = 0
+    player_facing          = 1
+    weapon_list            = weapons.get_available(constants.dev_mode)
+    selected_weapon        = 0
+    ammo_counts            = {k: WEAPON_DEFS[k]["ammo"] for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    projectiles            = []
+    weapon_cooldown        = 0
 
     # LORE POPUP STATE 
     lore_display_text  = None   
@@ -159,6 +168,13 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         can_double_jump = False
                         riding_elev     = None
 
+                if event.key == pygame.K_1 and input_allowed and len(weapon_list) > 0:
+                    selected_weapon = 0
+                elif event.key == pygame.K_2 and input_allowed and len(weapon_list) > 1:
+                    selected_weapon = 1
+                elif event.key == pygame.K_3 and input_allowed and len(weapon_list) > 2:
+                    selected_weapon = 2
+
                 if event.key == pygame.K_f and input_allowed:
                     for door in breakable_doors:
                         if door["broken"]:
@@ -182,7 +198,13 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             continue
                         if player_rect.inflate(40, 20).colliderect(lorey["rect"]):
                             lore_display_text  = random.choice(maps.loreDrop)
-                            lore_display_timer = 300   
+                            lore_display_timer = 300
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed:
+                if weapon_cooldown <= 0 and selected_weapon < len(weapon_list):
+                    wk = weapon_list[selected_weapon]
+                    if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts):
+                        weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
         keys = pygame.key.get_pressed()
 
@@ -233,6 +255,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         move_x = 0
         if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:  move_x -= physics.PLAYER_SPEED
         if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed: move_x += physics.PLAYER_SPEED
+        if move_x > 0: player_facing = 1
+        elif move_x < 0: player_facing = -1
 
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
@@ -326,11 +350,34 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             static_solids, platforms, screen, clock,
             lambda: levelONE(screen, tile_map)
         )
-        if enemy_result == "death":
-            return
-        elif enemy_result is not None:
+        if enemy_result is not None:
             player_vel_y = enemy_result
             can_double_jump = True
+
+        # ENEMY SIDE-CONTACT DAMAGE
+        if invincible_timer <= 0:
+            for enemy in enemies:
+                if player_rect.colliderect(enemy["rect"]):
+                    dmg = enemy.get("damage", ENEMY_DAMAGE)
+                    player_hp -= dmg
+                    invincible_timer = INVINCIBLE_FRAMES
+                    kb = 10 if player_rect.centerx < enemy["rect"].centerx else -10
+                    player_x += kb
+                    player_rect.x = int(player_x)
+                    player_vel_y = -8
+                    if player_hp <= 0:
+                        death_screen.show_death_screen_ENEMIES(
+                            screen, clock,
+                            lambda: levelONE(screen, tile_map),
+                            "You were killed by an enemy!"
+                        )
+                        return
+                    break
+        invincible_timer = max(0, invincible_timer - 1)
+
+        # WEAPON UPDATES
+        weapons.update(projectiles, static_solids, enemies)
+        weapon_cooldown = max(0, weapon_cooldown - 1)
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
@@ -439,6 +486,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
 
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
+        weapons.render(screen, projectiles, camera_x, camera_y)
 
         # WATER RENDERING
         water_time = pygame.time.get_ticks() / 1000.0
@@ -538,7 +586,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         
         TEXT_COLOR = (120, 220, 190)
         
-        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E/Q – Elevator   |  F – Action Button   |  ESC – Quit", True, TEXT_COLOR)
+        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E/Q – Elevator   |  1-3 – Weapon   |  Click – Fire   |  F – Action   |  ESC – Quit", True, TEXT_COLOR)
         pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
         clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
 
@@ -551,6 +599,28 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         screen.blit(pos_txt, (20, 50))
         screen.blit(clip_txt, (20, 80))
         screen.blit(inv_txt, (20, 110))
+
+        # HEALTH BAR
+        bar_x, bar_y = 20, 548
+        bar_w, bar_h = 200, 18
+        hp_ratio = max(0, player_hp / PLAYER_MAX_HP)
+        pygame.draw.rect(screen, (30, 10, 10), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
+        pygame.draw.rect(screen, (40, 180, 80), (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=4)
+        pygame.draw.rect(screen, (80, 220, 140), (bar_x, bar_y, bar_w, bar_h), 2, border_radius=4)
+        hp_txt = ui_font.render(f"HP: {player_hp}/{PLAYER_MAX_HP}", True, (180, 255, 210))
+        screen.blit(hp_txt, (bar_x + bar_w + 12, bar_y - 2))
+
+        # WEAPON HUD
+        y_off = 140
+        for wi, wk in enumerate(weapon_list):
+            defs = WEAPON_DEFS[wk]
+            prefix = ">" if wi == selected_weapon else " "
+            ammo = ammo_counts.get(wk, defs["ammo"])
+            ammo_str = "INF" if defs["ammo"] < 0 else str(ammo)
+            col = (80, 220, 200) if wi == selected_weapon else (100, 140, 150)
+            w_txt = ui_font.render(f"{prefix} [{wi+1}] {defs['name']}: {ammo_str}", True, col)
+            screen.blit(w_txt, (20, y_off))
+            y_off += 24
 
         if show_warning_frames > 0:
             warn_txt = ui_font.render("Find a paperclip first to pick this wall lock!", True, (255, 100, 100))
