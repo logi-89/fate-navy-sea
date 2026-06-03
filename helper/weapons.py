@@ -4,11 +4,28 @@ from constants import WEAPON_DEFS, WIDTH, HEIGHT
 
 
 def get_available(dev_mode):
-    return ["spear", "water_gun", "water_balloon"] if dev_mode else ["spear"]
+    return ["spear", "water_gun", "water_balloon"] if dev_mode else []
 
 
-def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts):
+def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemies=None):
     defs = WEAPON_DEFS[weapon_key]
+
+    melee_r = defs.get("melee_range", 0)
+    if melee_r > 0:
+        if player_facing > 0:
+            hit_rect = pygame.Rect(player_rect.right, player_rect.y, melee_r, player_rect.height)
+        else:
+            hit_rect = pygame.Rect(player_rect.left - melee_r, player_rect.y, melee_r, player_rect.height)
+        hit = False
+        if enemies:
+            for e in enemies[:]:
+                if hit_rect.colliderect(e["rect"]):
+                    e["hp"] -= defs["dmg"]
+                    if e["hp"] <= 0:
+                        enemies.remove(e)
+                    hit = True
+        return hit
+
     ammo = ammo_counts.get(weapon_key, defs["ammo"])
     if ammo == 0:
         return False
@@ -40,8 +57,7 @@ def update(projectiles, static_solids, enemies):
         p["rect"].x += int(p["vx"])
         p["rect"].y += int(p["vy"])
 
-        if p["weapon"] != "spear":
-            p["vy"] = min(p["vy"] + 0.4, 12)
+        p["vy"] = min(p["vy"] + 0.4, 12)
 
         p["life"] -= 1
         if p["life"] <= 0:
@@ -74,15 +90,7 @@ def render(screen, projectiles, camera_x, camera_y):
         if vx + p["rect"].width < 0 or vx > WIDTH or vy + p["rect"].height < 0 or vy > HEIGHT:
             continue
 
-        if p["weapon"] == "spear":
-            pts = [
-                (int(vx + p["rect"].width // 2), int(vy)),
-                (int(vx), int(vy + p["rect"].height)),
-                (int(vx + p["rect"].width), int(vy + p["rect"].height)),
-            ]
-            pygame.draw.polygon(screen, p["color"], pts)
-            pygame.draw.polygon(screen, (255, 220, 160), pts, 1)
-        elif p["weapon"] == "water_gun":
+        if p["weapon"] == "water_gun":
             cx = int(vx + p["rect"].width // 2)
             cy = int(vy + p["rect"].height // 2)
             pygame.draw.circle(screen, p["color"], (cx, cy), 5)

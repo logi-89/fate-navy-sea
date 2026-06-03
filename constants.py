@@ -69,7 +69,7 @@ ENEMY_HP = 1
 INVINCIBLE_FRAMES = 60
 
 WEAPON_DEFS = {
-    "spear":         {"name": "Spear",         "dmg": 99, "speed": 14, "cooldown": 20, "ammo": -1, "color": (180, 120, 60)},
+    "spear":         {"name": "Spear",         "dmg": 99, "speed": 14, "cooldown": 20, "ammo": -1, "color": (180, 120, 60), "melee_range": 50},
     "water_gun":     {"name": "Water Gun",     "dmg": 10, "speed": 22, "cooldown": 8,  "ammo": 50, "color": (80, 200, 240)},
     "water_balloon": {"name": "Water Balloon", "dmg": 25, "speed": 9,  "cooldown": 35, "ammo": 20, "color": (60, 180, 220)},
 }

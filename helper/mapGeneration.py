@@ -107,8 +107,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "chase_speed": 4,
                     "detect_range": 350,
                     "state": "patrol",
-                    "hp": 1,
-                    "max_hp": 1,
+                    "hp": 50,
+                    "max_hp": 50,
                     "damage": 15,
                 })
                 col += 1

@@ -50,7 +50,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
-        spawn_x = best.x + 200
+        spawn_x = best.x + 215
         spawn_y = best.top + 150
 
         if constants.dev_mode == True:
@@ -169,12 +169,13 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         can_double_jump = False
                         riding_elev     = None
 
-                if event.key == pygame.K_1 and input_allowed and len(weapon_list) > 0:
-                    selected_weapon = 0
-                elif event.key == pygame.K_2 and input_allowed and len(weapon_list) > 1:
-                    selected_weapon = 1
-                elif event.key == pygame.K_3 and input_allowed and len(weapon_list) > 2:
-                    selected_weapon = 2
+                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3) and input_allowed and weapon_cooldown <= 0:
+                    idx = event.key - pygame.K_1
+                    if idx < len(weapon_list):
+                        selected_weapon = idx
+                        wk = weapon_list[idx]
+                        if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
+                            weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
                 if event.key == pygame.K_f and input_allowed:
                     for door in breakable_doors:
@@ -201,10 +202,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             lore_display_text  = random.choice(maps.loreDrop)
                             lore_display_timer = 300
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed:
-                if weapon_cooldown <= 0 and selected_weapon < len(weapon_list):
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed and weapon_cooldown <= 0:
+                if selected_weapon < len(weapon_list):
                     wk = weapon_list[selected_weapon]
-                    if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts):
+                    if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
                         weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
         keys = pygame.key.get_pressed()
@@ -597,7 +598,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # ── TOP HINT BAR ──
         hints = [("A/D","move"), ("SPACE","jump"), ("E/Q","elevator"),
-                ("F","action"), ("CLICK","fire"), ("1-3","weapon"), ("ESC","quit")]
+                ("F","action"), ("1-3","use weapon"), ("ESC","quit")]
         hint_parts = []
         for key, action in hints:
             hint_parts.append((key, (100, 180, 140)))

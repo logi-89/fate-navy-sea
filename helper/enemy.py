@@ -66,7 +66,7 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
                 enemy["dir"] = -1
 
         if player_rect.colliderect(enemy["rect"]):
-            if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].centery:
+            if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].top + 10:
                 enemies.remove(enemy)
                 return -12.0
     return None
