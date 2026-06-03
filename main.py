@@ -6,7 +6,8 @@ from levels import menu
 
 pygame.init()
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+#screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption("Fate: navy sea")
 
 clock = pygame.time.Clock()

@@ -1,6 +1,6 @@
 # Window Size
-WIDTH = 1400
-HEIGHT = 850
+WIDTH = 1500
+HEIGHT = 900
 
 # Colors
 BLACK      = (0,   0,   0)

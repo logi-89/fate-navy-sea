@@ -3,7 +3,7 @@ import pygame
 import constants
 import math
 
-#constants.dev_mode = True
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -54,8 +54,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top + 150
 
         if constants.dev_mode == True:
-            spawn_x = spawn_x + 7600
-            spawn_y = spawn_y - 467
+            #spawn_x = spawn_x + 7600
+            #spawn_y = spawn_y - 467
+            print("in dev mode")
 
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
@@ -580,51 +581,113 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             if lore_display_timer == 0:
                 lore_display_text = None
 
-        # HUD / TEXT DATA 
-        clips_total = len(paperclips)
+        # ── HUD ────────────────────────────────────────────────────────────────────
+        ui_font_sm  = pygame.font.Font(None, 22)
+        ui_font_xs  = pygame.font.Font(None, 18)
+        hud_dark    = (4, 10, 18, 200)
+        hud_border  = (60, 180, 110, 60)
+        hud_green   = (80, 220, 150)
+        hud_dim     = (80, 140, 110)
+
+        def draw_panel(surf, x, y, w, h, alpha=200):
+            s = pygame.Surface((w, h), pygame.SRCALPHA)
+            s.fill((4, 12, 20, alpha))
+            pygame.draw.rect(s, (60, 180, 110, 55), (0, 0, w, h), 1, border_radius=5)
+            surf.blit(s, (x, y))
+
+        # ── TOP HINT BAR ──
+        hints = [("A/D","move"), ("SPACE","jump"), ("E/Q","elevator"),
+                ("F","action"), ("CLICK","fire"), ("1-3","weapon"), ("ESC","quit")]
+        hint_parts = []
+        for key, action in hints:
+            hint_parts.append((key, (100, 180, 140)))
+            hint_parts.append((f" {action}", (60, 130, 100)))
+            hint_parts.append(("  │  ", (40, 80, 60)))
+        hint_parts = hint_parts[:-1]  # trim last separator
+
+        hint_total_w = sum(ui_font_xs.size(t)[0] for t, _ in hint_parts)
+        draw_panel(screen, 14, 12, hint_total_w + 20, 22, alpha=170)
+        cx = 24
+        for text, col in hint_parts:
+            s = ui_font_xs.render(text, True, col)
+            screen.blit(s, (cx, 16))
+            cx += s.get_width()
+
+        # ── COORDS (subtle) ──
+        coord_s = ui_font_xs.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (60, 110, 80))
+        screen.blit(coord_s, (18, 38))
+
+        # ── HEALTH PANEL ──
+        PNL_X, PNL_Y, PNL_W, PNL_H = 14, HEIGHT - 100, 190, 56
+        draw_panel(screen, PNL_X, PNL_Y, PNL_W, PNL_H)
+        lbl = ui_font_xs.render("INTEGRITY", True, (80, 140, 100))
+        screen.blit(lbl, (PNL_X + 10, PNL_Y + 8))
+
+        bar_x, bar_y = PNL_X + 10, PNL_Y + 24
+        bar_w, bar_h = PNL_W - 20, 8
+        hp_ratio = max(0.0, player_hp / PLAYER_MAX_HP)
+        hp_color = (56, 200, 122) if hp_ratio > 0.4 else (220, 140, 40) if hp_ratio > 0.2 else (210, 60, 60)
+        pygame.draw.rect(screen, (20, 45, 30), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
+        pygame.draw.rect(screen, hp_color, (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=4)
+        pygame.draw.rect(screen, (60, 140, 90, 80), (bar_x, bar_y, bar_w, bar_h), 1, border_radius=4)
+
+        hp_val = ui_font_xs.render(f"{player_hp} / {PLAYER_MAX_HP}", True, (100, 220, 160))
+        screen.blit(hp_val, (PNL_X + 10, PNL_Y + 38))
+
+        # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        
-        TEXT_COLOR = (120, 220, 190)
-        
-        hint = ui_font.render("A/D – Move   |   SPACE/W – Jump   |   E/Q – Elevator   |  1-3 – Weapon   |  Click – Fire   |  F – Action   |  ESC – Quit", True, TEXT_COLOR)
-        pos_txt = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (90, 160, 175))
-        clip_txt = ui_font.render(f"Contraband Picks Found: {clips_collected}/{clips_total}", True, TEXT_COLOR)
+        clips_total = len(paperclips)
+        has_pick = constants.player_inventory_clips >= 1
 
-        if constants.player_inventory_clips >= 1:
-            inv_txt = ui_font.render("Lock Pick: READY", True, (80, 255, 140))
-        else:
-            inv_txt = ui_font.render("Lock Pick: NEED PAPERCLIP", True, (245, 110, 110))
+        CL_X, CL_Y, CL_W, CL_H = 14, HEIGHT - 38, 190, 28
+        draw_panel(screen, CL_X, CL_Y, CL_W, CL_H)
 
-        screen.blit(hint, (20, 20))
-        screen.blit(pos_txt, (20, 50))
-        screen.blit(clip_txt, (20, 80))
-        screen.blit(inv_txt, (20, 110))
+        # dots
+        for i in range(min(clips_total, 5)):
+            dot_col = (80, 210, 140) if i < clips_collected else (30, 70, 50)
+            pygame.draw.circle(screen, dot_col, (CL_X + 14 + i * 14, CL_Y + 14), 4)
 
-        # HEALTH BAR
-        bar_x, bar_y = 20, 548
-        bar_w, bar_h = 200, 18
-        hp_ratio = max(0, player_hp / PLAYER_MAX_HP)
-        pygame.draw.rect(screen, (30, 10, 10), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
-        pygame.draw.rect(screen, (40, 180, 80), (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=4)
-        pygame.draw.rect(screen, (80, 220, 140), (bar_x, bar_y, bar_w, bar_h), 2, border_radius=4)
-        hp_txt = ui_font.render(f"HP: {player_hp}/{PLAYER_MAX_HP}", True, (180, 255, 210))
-        screen.blit(hp_txt, (bar_x + bar_w + 12, bar_y - 2))
+        pick_col  = (60, 230, 140) if has_pick else (200, 80, 70)
+        pick_text = "READY" if has_pick else "NO PICK"
+        p_surf = ui_font_xs.render(pick_text, True, pick_col)
+        screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - 8, CL_Y + 8))
 
-        # WEAPON HUD
-        y_off = 140
+        # ── WEAPON SLOTS ──
+        slot_w, slot_h = 160, 24
+        slot_gap = 4
         for wi, wk in enumerate(weapon_list):
-            defs = WEAPON_DEFS[wk]
-            prefix = ">" if wi == selected_weapon else " "
-            ammo = ammo_counts.get(wk, defs["ammo"])
-            ammo_str = "INF" if defs["ammo"] < 0 else str(ammo)
-            col = (80, 220, 200) if wi == selected_weapon else (100, 140, 150)
-            w_txt = ui_font.render(f"{prefix} [{wi+1}] {defs['name']}: {ammo_str}", True, col)
-            screen.blit(w_txt, (20, y_off))
-            y_off += 24
+            defs   = WEAPON_DEFS[wk]
+            active = wi == selected_weapon
+            sx = WIDTH - slot_w - 14
+            sy = HEIGHT - 38 - (len(weapon_list) - 1 - wi) * (slot_h + slot_gap)
 
+            bg_alpha = 210 if active else 150
+            draw_panel(screen, sx, sy, slot_w, slot_h, alpha=bg_alpha)
+            if active:
+                pygame.draw.rect(screen, (60, 200, 120, 100), (sx, sy, slot_w, slot_h), 1, border_radius=5)
+                pygame.draw.circle(screen, (60, 230, 130), (sx + 8, sy + 12), 3)
+
+            key_col  = (80, 190, 130) if active else (50, 110, 80)
+            name_col = (140, 230, 180) if active else (90, 150, 120)
+            ammo_col = (80, 210, 150) if active else (60, 110, 90)
+
+            ammo    = ammo_counts.get(wk, defs["ammo"])
+            ammo_s  = "∞" if defs["ammo"] < 0 else str(ammo)
+
+            k_surf = ui_font_xs.render(str(wi + 1), True, key_col)
+            n_surf = ui_font_xs.render(defs["name"].lower(), True, name_col)
+            a_surf = ui_font_xs.render(ammo_s, True, ammo_col)
+
+            screen.blit(k_surf, (sx + 14, sy + 5))
+            screen.blit(n_surf, (sx + 28, sy + 5))
+            screen.blit(a_surf, (sx + slot_w - a_surf.get_width() - 8, sy + 5))
+
+        # ── LOW AMMO / NO PICK WARNING ──
         if show_warning_frames > 0:
-            warn_txt = ui_font.render("Find a paperclip first to pick this wall lock!", True, (255, 100, 100))
-            screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
+            warn_s = ui_font.render("Find a paperclip first!", True, (255, 100, 100))
+            wx = WIDTH // 2 - warn_s.get_width() // 2
+            draw_panel(screen, wx - 12, HEIGHT // 2 - 118, warn_s.get_width() + 24, 30)
+            screen.blit(warn_s, (wx, HEIGHT // 2 - 112))
             show_warning_frames -= 1
 
         pygame.display.flip()
