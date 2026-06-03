@@ -91,7 +91,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
 
             elif ch =='~':
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
-                lore.append({"rect": rect, "collected": False})
+                water.append(rect)
                 col += 1
 
             elif ch.isdigit():
