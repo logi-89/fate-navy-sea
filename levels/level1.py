@@ -1,6 +1,7 @@
 import maps
 import pygame
 import constants
+import math
 
 #constants.dev_mode = True
 
@@ -422,6 +423,34 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pr = pygame.Rect(player_rect.x - camera_x, player_rect.y - camera_y, player_rect.width, player_rect.height)
         pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
+
+        # WATER RENDERING
+        water_time = pygame.time.get_ticks() / 1000.0
+        for w in water:
+            vx = w.x - camera_x
+            vy = w.y - camera_y
+            if vx + w.width < 0 or vx > WIDTH or vy + w.height < 0 or vy > HEIGHT:
+                continue
+
+            # Deep water body
+            pygame.draw.rect(screen, (10, 40, 80), (vx, vy + 6, w.width, w.height - 6))
+
+            # Animated surface wave strip
+            wave_surf = pygame.Surface((w.width, 10), pygame.SRCALPHA)
+            for wx_off in range(0, w.width, 4):
+                wave_y = int(3 + 3 * math.sin((wx_off / 18.0) + water_time * 2.5))
+                pygame.draw.circle(wave_surf, (40, 140, 210, 180), (wx_off, wave_y), 3)
+            screen.blit(wave_surf, (vx, vy))
+
+            # Shimmer lines
+            for shimmer_i in range(3):
+                sx = int(vx + (w.width * (0.2 + shimmer_i * 0.3)) +
+                        10 * math.sin(water_time * 1.4 + shimmer_i * 2.1))
+                sy = int(vy + 10 + shimmer_i * 8)
+                shimmer_alpha = int(60 + 40 * math.sin(water_time * 2.0 + shimmer_i))
+                shimmer_surf = pygame.Surface((30, 3), pygame.SRCALPHA)
+                shimmer_surf.fill((120, 210, 255, shimmer_alpha))
+                screen.blit(shimmer_surf, (sx, sy)) 
 
         # WATER-THEMED LORE POPUP
         if lore_display_text and lore_display_timer > 0:
