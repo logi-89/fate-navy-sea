@@ -70,6 +70,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     coyote_frames          = 0
     can_double_jump        = True
     idle_frames = [pygame.image.load(f"idle/idle_frame_{i}.png") for i in range(1, 9)]
+    running_raw = [
+        pygame.image.load("Running/fame_r_1.png"),
+        pygame.image.load("Running/frame_r_2.png"),
+        pygame.image.load("Running/fame_r_3.png"),
+    ]
+    run_h = idle_frames[0].get_height()
+    run_w_scale = int(running_raw[0].get_width() * run_h / running_raw[0].get_height())
+    running_frames = [pygame.transform.scale(f, (run_w_scale, run_h)) for f in running_raw]
     shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
     shopkeeper_img = pygame.transform.scale(shopkeeper_img, (80, 95))
     camera_x               = 0
@@ -518,8 +526,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, vy, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (120, 180, 255), (vx, vy, door["rect"].width, door["rect"].height), 3)
 
-        frame_idx = (pygame.time.get_ticks() // 120) % len(idle_frames)
-        frame = idle_frames[frame_idx]
+        if move_x != 0 and input_allowed:
+            run_idx = (pygame.time.get_ticks() // 100) % len(running_frames)
+            frame = running_frames[run_idx]
+        else:
+            frame_idx = (pygame.time.get_ticks() // 120) % len(idle_frames)
+            frame = idle_frames[frame_idx]
         if player_facing < 0:
             frame = pygame.transform.flip(frame, True, False)
         screen.blit(frame, (player_rect.x - camera_x - 24, player_rect.y - camera_y - 44))
