@@ -15,6 +15,7 @@ from helper import weapons
 
 import levels
 from levels import level2
+from levels import menu
 
 clock = None
 
@@ -43,6 +44,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     world_w         = mapGeneration.map_world_width(tile_map)
     water           = map_data["water"]
     enemies         = map_data.get("enemies", [])
+    coins           = map_data.get("coins", [])
+    shop_triggers   = map_data.get("shop_triggers", [])
     
     # Safely track map height
     world_h         = len(tile_map) * physics.TILE_SIZE
@@ -67,6 +70,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     coyote_frames          = 0
     can_double_jump        = True
     idle_frames = [pygame.image.load(f"idle/idle_frame_{i}.png") for i in range(1, 9)]
+    shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
+    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
@@ -297,6 +302,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     levels.level2.intro(screen, clock)
                     return
 
+        for shop_t in shop_triggers:
+            if player_rect.colliderect(shop_t["rect"]):
+                menu.shop_(screen, clock, "Tidal Trader")
+                break
+
         all_solids = static_solids + [e["rect"] for e in elevators]
 
         # Resolve Floors and Ceilings
@@ -331,7 +341,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         for lorey in lore_drop:
             if not lorey["collected"] and player_rect.colliderect(lorey["rect"]):
-                lorey["collected"] = True   
+                lorey["collected"] = True
+
+        for c in coins:
+            if not c["collected"] and player_rect.colliderect(c["rect"]):
+                c["collected"] = True
+                constants.player_coins += 1
 
         if is_grounded:
             coyote_frames = 6
@@ -441,6 +456,19 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.circle(screen, COLOR_PAPERCLIP, (cx, cy), 8)
             pygame.draw.circle(screen, (240, 240, 255), (cx, cy), 8, 2)
 
+        for c in coins:
+            if c["collected"]:
+                continue
+            vx = c["rect"].x - camera_x
+            vy = c["rect"].y - camera_y
+            if vx + c["rect"].width < 0 or vx > WIDTH or vy + c["rect"].height < 0 or vy > HEIGHT:
+                continue
+            cx = int(vx + c["rect"].width // 2)
+            cy = int(vy + c["rect"].height // 2)
+            pygame.draw.circle(screen, (255, 215, 0), (cx, cy), 8)
+            pygame.draw.circle(screen, (255, 240, 150), (cx, cy), 8, 2)
+            pygame.draw.circle(screen, (200, 160, 0), (cx, cy), 3)
+
         for lorey in lore_drop:
             vx = lorey["rect"].x - camera_x
             vy = lorey["rect"].y - camera_y
@@ -487,6 +515,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         if player_facing < 0:
             frame = pygame.transform.flip(frame, True, False)
         screen.blit(frame, (player_rect.x - camera_x - 24, player_rect.y - camera_y - 44))
+
+        for shop_t in shop_triggers:
+            sx = shop_t["rect"].x - camera_x
+            sy = shop_t["rect"].y - camera_y - 25
+            if -60 < sx < WIDTH and -75 < sy < HEIGHT:
+                screen.blit(shopkeeper_img, (sx, sy))
 
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
         weapons.render(screen, projectiles, camera_x, camera_y)
@@ -634,7 +668,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pick_col  = (60, 230, 140) if has_pick else (200, 80, 70)
         pick_text = "READY" if has_pick else "NO PICK"
         p_surf = ui_font_xs.render(pick_text, True, pick_col)
-        screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - 8, CL_Y + 8))
+        screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - 8, CL_Y + 3))
+
+        coins_collected = sum(1 for c in coins if c["collected"])
+        coins_total = len(coins)
+        coin_surf = ui_font_xs.render(f"¢ {coins_collected}/{coins_total}", True, (255, 215, 0))
+        screen.blit(coin_surf, (CL_X + CL_W - coin_surf.get_width() - 8, CL_Y + 14))
 
         # ── WEAPON SLOTS ──
         slot_w, slot_h = 160, 24

@@ -24,6 +24,10 @@ PINK       = (220, 80,  140)
 GREY       = (120, 130, 140)
 LIGHT_GREY = (180, 190, 200)
 
+COLOR_DOOR_INTACT  = (30, 100, 160)   # deep sea blue door
+COLOR_DOOR_DAMAGED = (60, 150, 200)   # lighter cracked blue
+COLOR_PAPERCLIP    = (160, 240, 220)  # seafoam silver
+
 # LOREEEE DROOOP!
 lore_display_text  = None   # currently shown lore string (None = hidden)
 lore_display_timer = 0      # frames remaining to show it
@@ -74,10 +78,6 @@ WEAPON_DEFS = {
     "water_balloon": {"name": "Water Balloon", "dmg": 25, "speed": 9,  "cooldown": 35, "ammo": 20, "color": (60, 180, 220)},
 }
 
-COLOR_DOOR_INTACT  = (30, 100, 160)   # deep sea blue door
-COLOR_DOOR_DAMAGED = (60, 150, 200)   # lighter cracked blue
-COLOR_PAPERCLIP    = (160, 240, 220)  # seafoam silver
-
 # Player settings
 player_size = 150
 player_x = WIDTH // 2 - player_size // 2
@@ -87,6 +87,7 @@ player_velocity_y = 0
 jump_height = -15
 gravity = 1
 player_inventory_clips = 0
+player_coins = 0
 
 #shop names
 SHOP_NAME_HM = "Harbor Market"

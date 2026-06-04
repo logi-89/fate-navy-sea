@@ -1,4 +1,5 @@
 import pygame
+import constants
 from constants import *
 from helper.graphics import *
 from helper.music import Music
@@ -75,11 +76,8 @@ def shop_(screen, clock, name):
         title = font_title.render(name, True, WHITE)
         screen.blit(title, title.get_rect(center=(WIDTH // 2, 70)))
 
-        # # Coins
-        # coins_text = font_item.render(
-        #     f"Gold: {player.gold}", True, (255, 230, 100)
-        # )
-        # screen.blit(coins_text, (40, 30))
+        coins_text = font_item.render(f"¢ {constants.player_coins}", True, (255, 215, 0))
+        screen.blit(coins_text, (40, 30))
 
         # Shop items
         for i, item in enumerate(shop.SHOP_ITEMS):

@@ -21,6 +21,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     lore = []
     water = []
     enemies = []
+    coins = []
+    shop_triggers = []
 
     for row_idx, row in enumerate(tile_map):
         y   = row_idx * tile_size
@@ -87,6 +89,11 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 paperclips.append({"rect": rect, "collected": False})
                 col += 1
 
+            elif ch == '$':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                coins.append({"rect": rect, "collected": False})
+                col += 1
+
             elif ch == '?':
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 lore.append({"rect": rect, "collected": False})
@@ -115,13 +122,17 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 })
                 col += 1
 
+            elif ch == 'S':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                shop_triggers.append({"rect": rect})
+                col += 1
+
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
                 target = int(ch)
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 level_triggers.append({"rect": rect, "target_level": target})
                 col += 1
-
 
             else:
                 col += 1
@@ -136,6 +147,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "lore":            lore,
         "water":           water,
         "enemies":         enemies,
+        "coins":           coins,
+        "shop_triggers":   shop_triggers,
     }
 
 def map_world_width(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
