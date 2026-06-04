@@ -79,7 +79,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     run_w_scale = int(running_raw[0].get_width() * run_h / running_raw[0].get_height())
     running_frames = [pygame.transform.scale(f, (run_w_scale, run_h)) for f in running_raw]
     shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
-    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (80, 95))
+    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
+    spear_frames_raw = [
+        pygame.image.load(f"spear/s{i}.png") for i in range(1, 5)
+    ]
+    spear_h = idle_frames[0].get_height()
+    spear_w_scale = [int(f.get_width() * spear_h / f.get_height()) for f in spear_frames_raw]
+    spear_frames = [pygame.transform.scale(f, (spear_w_scale[i], spear_h)) for i, f in enumerate(spear_frames_raw)]
+    attack_anim_start = 0
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
@@ -188,12 +195,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         can_double_jump = False
                         riding_elev     = None
 
-                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3) and input_allowed and weapon_cooldown <= 0:
+                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3) and input_allowed:
                     idx = event.key - pygame.K_1
                     if idx < len(weapon_list):
                         selected_weapon = idx
                         wk = weapon_list[idx]
-                        if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
+                        if wk == "spear":
+                            attack_anim_start = pygame.time.get_ticks()
+                        if weapon_cooldown <= 0 and weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
                             weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
                 if event.key == pygame.K_f and input_allowed:
@@ -219,10 +228,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         if player_rect.inflate(40, 20).colliderect(lorey["rect"]):
                             lore_display_text = random.choice(maps.loreDrop)
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed and weapon_cooldown <= 0:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed:
                 if selected_weapon < len(weapon_list):
                     wk = weapon_list[selected_weapon]
-                    if weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
+                    if wk == "spear":
+                        attack_anim_start = pygame.time.get_ticks()
+                    if weapon_cooldown <= 0 and weapons.fire(wk, player_rect, player_facing, projectiles, ammo_counts, enemies):
                         weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
         keys = pygame.key.get_pressed()
@@ -526,11 +537,18 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, vy, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (120, 180, 255), (vx, vy, door["rect"].width, door["rect"].height), 3)
 
-        if move_x != 0 and input_allowed:
-            run_idx = (pygame.time.get_ticks() // 100) % len(running_frames)
+        SPEAR_ANIM_DURATION = 400
+        if attack_anim_start and pygame.time.get_ticks() - attack_anim_start < SPEAR_ANIM_DURATION:
+            elapsed = pygame.time.get_ticks() - attack_anim_start
+            idx = int(elapsed / (SPEAR_ANIM_DURATION / len(spear_frames)))
+            if idx >= len(spear_frames):
+                idx = len(spear_frames) - 1
+            frame = spear_frames[idx]
+        elif move_x != 0 and input_allowed:
+            run_idx = (pygame.time.get_ticks() // 150) % len(running_frames)
             frame = running_frames[run_idx]
         else:
-            frame_idx = (pygame.time.get_ticks() // 120) % len(idle_frames)
+            frame_idx = (pygame.time.get_ticks() // 180) % len(idle_frames)
             frame = idle_frames[frame_idx]
         if player_facing < 0:
             frame = pygame.transform.flip(frame, True, False)
