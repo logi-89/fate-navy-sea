@@ -1,7 +1,7 @@
 import pygame
-
 from constants import *
 from helper.graphics import *
+from helper.music import Music
 import levels.level1
 import levels.level2
 
@@ -65,6 +65,7 @@ def shop_(screen, clock, name):
     running = True
     font_title = pygame.font.Font(None, 80)
     font_item = pygame.font.Font(None, 36)
+    music = Music("escalator music.mp3", True)
 
     while running:
         draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
@@ -114,6 +115,7 @@ def shop_(screen, clock, name):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    music.stop()
                     return
 
         pygame.display.flip()

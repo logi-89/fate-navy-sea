@@ -3,7 +3,7 @@ import pygame
 import constants
 import math
 
-constants.dev_mode = True
+#constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
