@@ -2,8 +2,9 @@ import maps
 import pygame
 import constants
 import math
+import random
 
-#constants.dev_mode = True
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -65,6 +66,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     is_grounded            = False
     coyote_frames          = 0
     can_double_jump        = True
+    idle_frames = [pygame.image.load(f"idle/idle_frame_{i}.png") for i in range(1, 9)]
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
@@ -79,7 +81,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
     # LORE POPUP STATE 
     lore_display_text  = None   
-    lore_display_timer = 0      
 
     SNAP_TOLERANCE = 8
     ui_font   = pygame.font.Font(None, 30)
@@ -194,13 +195,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
                                 door["open"] = True
 
-                    import random
                     for lorey in lore_drop:
                         if not lorey["collected"]:
                             continue
                         if player_rect.inflate(40, 20).colliderect(lorey["rect"]):
-                            lore_display_text  = random.choice(maps.loreDrop)
-                            lore_display_timer = 300
+                            lore_display_text = random.choice(maps.loreDrop)
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed and weapon_cooldown <= 0:
                 if selected_weapon < len(weapon_list):
@@ -483,9 +482,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.rect(screen, COLOR_ANIM_DOOR, (vx, vy, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (120, 180, 255), (vx, vy, door["rect"].width, door["rect"].height), 3)
 
-        pr = pygame.Rect(player_rect.x - camera_x, player_rect.y - camera_y, player_rect.width, player_rect.height)
-        pygame.draw.rect(screen, (255, 140, 0), pr, border_radius=4)
-        pygame.draw.rect(screen, (255, 200, 0), pr, 3, border_radius=4)
+        frame_idx = (pygame.time.get_ticks() // 120) % len(idle_frames)
+        frame = idle_frames[frame_idx]
+        if player_facing < 0:
+            frame = pygame.transform.flip(frame, True, False)
+        screen.blit(frame, (player_rect.x - camera_x - 24, player_rect.y - camera_y - 44))
 
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
         weapons.render(screen, projectiles, camera_x, camera_y)
@@ -518,14 +519,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 shimmer_surf.fill((120, 210, 255, shimmer_alpha))
                 screen.blit(shimmer_surf, (sx, sy)) 
 
-        # WATER-THEMED LORE POPUP
-        if lore_display_text and lore_display_timer > 0:
-            lore_display_timer -= 1
-
-            alpha = 255
-            if lore_display_timer < 60:
-                alpha = int(255 * lore_display_timer / 60)
-
+        # LORE POPUP
+        if lore_display_text:
             pad_x, pad_y = 28, 18
             max_text_w   = 680
             words        = lore_display_text.split()
@@ -543,44 +538,32 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
             line_h   = lore_font.get_height() + 4
             panel_w  = max_text_w + pad_x * 2
-            panel_h  = line_h * len(lines) + pad_y * 2 + 36   
+            panel_h  = line_h * len(lines) + pad_y * 2 + 36
 
             panel_x  = WIDTH  // 2 - panel_w // 2
             panel_y  = HEIGHT // 2 - panel_h // 2
 
             surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-            bg_col = (8, 28, 44, min(210, alpha))
-            pygame.draw.rect(surf, bg_col, (0, 0, panel_w, panel_h), border_radius=10)
+            pygame.draw.rect(surf, (8, 28, 44, 210), (0, 0, panel_w, panel_h), border_radius=10)
 
             for band_i, band_y_off in enumerate(range(0, panel_h, 18)):
-                band_alpha = int(12 * (1 - band_i / (panel_h // 18 + 1)) * alpha / 255)
-                band_col   = (40, 140, 160, band_alpha)
-                pygame.draw.rect(surf, band_col, (0, band_y_off, panel_w, 9), border_radius=4)
+                band_alpha = int(12 * (1 - band_i / (panel_h // 18 + 1)))
+                pygame.draw.rect(surf, (40, 140, 160, band_alpha), (0, band_y_off, panel_w, 9), border_radius=4)
 
-            border_col = (80, 200, 185, min(220, alpha))
-            pygame.draw.rect(surf, border_col, (0, 0, panel_w, panel_h), 2, border_radius=10)
+            pygame.draw.rect(surf, (80, 200, 185, 220), (0, 0, panel_w, panel_h), 2, border_radius=10)
+            pygame.draw.line(surf, (160, 255, 240, 80), (12, 3), (panel_w - 12, 3), 1)
 
-            glint_col = (160, 255, 240, min(80, alpha))
-            pygame.draw.line(surf, glint_col, (12, 3), (panel_w - 12, 3), 1)
-
-            header_font = pygame.font.Font(None, 22)
-            header_surf = header_font.render("~  T R A N S M I S S I O N  ~", True, (100, 220, 200))
-            header_surf.set_alpha(alpha)
+            header_surf = pygame.font.Font(None, 22).render("~  T R A N S M I S S I O N  ~", True, (100, 220, 200))
             surf.blit(header_surf, (panel_w // 2 - header_surf.get_width() // 2, pad_y - 4))
 
             sep_y = pad_y + 20
-            pygame.draw.line(surf, (50, 140, 150, min(160, alpha)), (pad_x, sep_y), (panel_w - pad_x, sep_y), 1)
+            pygame.draw.line(surf, (50, 140, 150, 160), (pad_x, sep_y), (panel_w - pad_x, sep_y), 1)
 
-            text_col = (190, 240, 230)
             for li, line in enumerate(lines):
-                t_surf = lore_font.render(line, True, text_col)
-                t_surf.set_alpha(alpha)
+                t_surf = lore_font.render(line, True, (190, 240, 230))
                 surf.blit(t_surf, (pad_x, sep_y + 8 + li * line_h))
 
             screen.blit(surf, (panel_x, panel_y))
-
-            if lore_display_timer == 0:
-                lore_display_text = None
 
         # ── HUD ────────────────────────────────────────────────────────────────────
         ui_font_sm  = pygame.font.Font(None, 22)

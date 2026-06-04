@@ -1,10 +1,14 @@
 import pygame
 
+import constants
 from constants import WEAPON_DEFS, WIDTH, HEIGHT
 
 
 def get_available(dev_mode):
-    return ["spear", "water_gun", "water_balloon"] if dev_mode else []
+    return ["spear", "water_gun", "water_balloon"] if dev_mode else ["spear"]
+
+# def get_available_level_one():
+#     return ["spear"]
 
 
 def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemies=None):
@@ -12,10 +16,18 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
 
     melee_r = defs.get("melee_range", 0)
     if melee_r > 0:
+        hit_y = player_rect.y - 24
+        hit_h = player_rect.height + 24
         if player_facing > 0:
-            hit_rect = pygame.Rect(player_rect.right, player_rect.y, melee_r, player_rect.height)
+            hit_rect = pygame.Rect(player_rect.right, hit_y, melee_r, hit_h)
         else:
-            hit_rect = pygame.Rect(player_rect.left - melee_r, player_rect.y, melee_r, player_rect.height)
+            hit_rect = pygame.Rect(player_rect.left - melee_r, hit_y, melee_r, hit_h)
+        projectiles.append({
+            "rect": hit_rect,
+            "life": 6,
+            "weapon": "spear_slash",
+            "color": defs["color"],
+        })
         hit = False
         if enemies:
             for e in enemies[:]:
@@ -54,6 +66,9 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
 
 def update(projectiles, static_solids, enemies):
     for p in projectiles[:]:
+        if p["weapon"] == "spear_slash":
+            continue
+
         p["rect"].x += int(p["vx"])
         p["rect"].y += int(p["vy"])
 
@@ -84,13 +99,23 @@ def update(projectiles, static_solids, enemies):
 
 
 def render(screen, projectiles, camera_x, camera_y):
-    for p in projectiles:
+    for p in projectiles[:]:
         vx = p["rect"].x - camera_x
         vy = p["rect"].y - camera_y
         if vx + p["rect"].width < 0 or vx > WIDTH or vy + p["rect"].height < 0 or vy > HEIGHT:
             continue
 
-        if p["weapon"] == "water_gun":
+        if p["weapon"] == "spear_slash":
+            if constants.dev_mode:
+                alpha = int(200 * p["life"] / 6)
+                s = pygame.Surface((p["rect"].width, p["rect"].height), pygame.SRCALPHA)
+                s.fill((p["color"][0], p["color"][1], p["color"][2], alpha))
+                screen.blit(s, (vx, vy))
+                pygame.draw.rect(screen, (255, 220, 160, alpha), (vx, vy, p["rect"].width, p["rect"].height), 2)
+            p["life"] -= 1
+            if p["life"] <= 0:
+                projectiles.remove(p)
+        elif p["weapon"] == "water_gun":
             cx = int(vx + p["rect"].width // 2)
             cy = int(vy + p["rect"].height // 2)
             pygame.draw.circle(screen, p["color"], (cx, cy), 5)
