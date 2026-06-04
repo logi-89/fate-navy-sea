@@ -71,7 +71,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     can_double_jump        = True
     idle_frames = [pygame.image.load(f"idle/idle_frame_{i}.png") for i in range(1, 9)]
     shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
-    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
+    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (80, 95))
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
@@ -83,6 +83,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     ammo_counts            = {k: WEAPON_DEFS[k]["ammo"] for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
     projectiles            = []
     weapon_cooldown        = 0
+    shop_cooldown          = 0
 
     # LORE POPUP STATE 
     lore_display_text  = None   
@@ -159,6 +160,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    running = False
+                    pygame.quit()
+                    return
+                if event.key == pygame.K_p and constants.dev_mode:
                     running = False
                     pygame.quit()
                     return
@@ -302,10 +307,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     levels.level2.intro(screen, clock)
                     return
 
-        for shop_t in shop_triggers:
-            if player_rect.colliderect(shop_t["rect"]):
-                menu.shop_(screen, clock, "Tidal Trader")
-                break
+        if shop_cooldown <= 0:
+            for shop_t in shop_triggers:
+                if player_rect.colliderect(shop_t["rect"]):
+                    menu.shop_(screen, clock, SHOP_NAME_NE)
+                    shop_cooldown = 60
+                    break
 
         all_solids = static_solids + [e["rect"] for e in elevators]
 
@@ -394,6 +401,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # WEAPON UPDATES
         weapons.update(projectiles, static_solids, enemies)
         weapon_cooldown = max(0, weapon_cooldown - 1)
+        shop_cooldown = max(0, shop_cooldown - 1)
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
@@ -615,7 +623,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # ── TOP HINT BAR ──
         hints = [("A/D","move"), ("SPACE","jump"), ("E/Q","elevator"),
-                ("F","action"), ("1-3","use weapon"), ("ESC","quit")]
+                ("F","action"), ("1-3","use weapon"), ("P","quit (dev)"), ("ESC","quit")]
         hint_parts = []
         for key, action in hints:
             hint_parts.append((key, (100, 180, 140)))
