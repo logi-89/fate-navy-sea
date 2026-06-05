@@ -6,7 +6,12 @@ from helper.music import Music
 import levels.level1
 import levels.level2
 
-def show_title_screen(screen, clock):
+jukebox = None
+
+def show_title_screen(screen, clock, jukebox_object):
+    global jukebox
+
+    jukebox = jukebox_object
     running = True
     t = 0
 
@@ -63,6 +68,7 @@ def show_title_screen(screen, clock):
 
 
 def shop_(screen, clock, name):
+    global jukebox
     running = True
     font_title = pygame.font.Font(None, 80)
     font_item = pygame.font.Font(None, 36)
@@ -113,7 +119,8 @@ def shop_(screen, clock, name):
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    music.stop()
+                    music.unload()
+                    jukebox.resume()
                     return
 
         pygame.display.flip()

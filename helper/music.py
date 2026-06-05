@@ -2,10 +2,18 @@ import pygame.mixer
 
 class Music:
     def __init__(self, file, loop):
-        pygame.mixer.init()
+        # Check if an instance exist, if existed, do not init pygame mixer again
+        exist = False
+        if not exist:
+            pygame.mixer.init()
+
+        self.file = file
+        self.loop = loop
+
         self.mixer = pygame.mixer
-        self.mixer.music.load(file)
+        self.mixer.music.load(self.file)
         self.mixer.music.play(-1 if loop else 0)
+        exist = True
 
     def stop(self):
         self.mixer.music.stop()
@@ -14,7 +22,8 @@ class Music:
         self.mixer.music.pause()
 
     def resume(self):
-        self.mixer.music.unpause()
+        self.mixer.music.load(self.file)
+        self.mixer.music.play(self.loop)
 
     def unload(self):
         self.mixer.music.stop()

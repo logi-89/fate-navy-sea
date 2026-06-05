@@ -31,6 +31,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     elevators       = map_data["elevators"]
     animated_doors  = map_data["animated_doors"]
     world_w         = mapGeneration.map_world_width(tile_map)
+    lore_drop       = map_data.get("lore", [])
 
     # Cap elevator downward travel at the nearest platform below
     for elev in elevators:
@@ -188,6 +189,12 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                             if player_rect.inflate(30, 30).colliderect(door["rect"]):
                                 door["open"] = True
 
+                    for lorey in lore_drop:
+                        if not lorey["collected"] and player_rect.inflate(40, 20).colliderect(lorey["rect"]):
+                            constants.lore_display_text = random.choice(maps.loreDrop)
+                            constants.lore_display_timer = 300
+                            lorey["collected"] = True
+
         keys = pygame.key.get_pressed()
 
         #  ELEVATOR REGISTRATION 
@@ -311,6 +318,14 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
                 clip["collected"] = True
                 player_inventory_clips += 1
+
+        #  LORE DROP COLLECTION
+        for lorey in lore_drop:
+            if not lorey["collected"] and player_rect.colliderect(lorey["rect"]):
+                lorey["collected"] = True
+                if constants.lore_display_timer <= 0:
+                    constants.lore_display_text = random.choice(maps.loreDrop)
+                    constants.lore_display_timer = 300
 
         if is_grounded:
             coyote_frames = 6
@@ -450,6 +465,33 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             pygame.draw.rect(screen, (60, 140, 240),
                              (vx, door["rect"].y, door["rect"].width, door["rect"].height), 2)
 
+        #  Lore drops 
+        lore_font = pygame.font.Font(None, 26)
+        for lorey in lore_drop:
+            vx = lorey["rect"].x - camera_x
+            vy = lorey["rect"].y - camera_y
+            if vx + lorey["rect"].width < 0 or vx > WIDTH or vy + lorey["rect"].height < 0 or vy > HEIGHT:
+                continue
+            cx = int(vx + lorey["rect"].width // 2)
+            cy = int(vy + lorey["rect"].height // 2)
+
+            if not lorey["collected"]:
+                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0
+                radius = int(10 + pulse * 4)
+                alpha_surf = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
+                glow_col = (40, int(180 + pulse * 60), int(200 + pulse * 55), 90)
+                pygame.draw.circle(alpha_surf, glow_col, (radius + 2, radius + 2), radius + 2)
+                screen.blit(alpha_surf, (cx - radius - 2, cy - radius - 2))
+                pygame.draw.circle(screen, (80, 220, 210), (cx, cy), radius)
+                pygame.draw.circle(screen, (180, 255, 245), (cx, cy), radius, 2)
+                q_surf = lore_font.render("?", True, (10, 30, 40))
+                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
+                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
+                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
+            else:
+                pygame.draw.circle(screen, (30, 80, 90), (cx, cy), 6)
+                pygame.draw.circle(screen, (60, 140, 160), (cx, cy), 6, 1)
+
         #  Floating bubbles 
         for b in bubble_pool:
             b["y"] -= b["speed"]
@@ -486,7 +528,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         pos_txt  = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (80, 180, 200))
         clip_txt = ui_font.render(f"Paperclips: {clips_collected}/{clips_total}", True, (140, 200, 200))
         inv_col  = (80, 220, 130) if player_inventory_clips >= 1 else (200, 90, 90)
-        inv_lbl  = "Lock Pick: READY" if player_inventory_clips >= 1 else "Lock Pick: NEED PAPERCLIP"
+        inv_lbl  = "Lock Pick: READY"         if player_inventory_clips >= 1 else "Lock Pick: NEED PAPERCLIP"
         inv_txt  = ui_font.render(inv_lbl, True, inv_col)
         depth_txt = ui_font.render(
             f"NORTH WATERLINE — DEPTH {320 + int(10 * abs(math.sin(light_glow_t * 0.01)))}m",
@@ -503,6 +545,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 "Find a paperclip first to pick this wall lock!", True, (220, 80, 80))
             screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
             show_warning_frames -= 1
+
+        graphics.update_lore_display(screen)
 
         pygame.display.flip()
 

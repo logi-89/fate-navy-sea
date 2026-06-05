@@ -17,5 +17,5 @@ def run_shop():
     selected = 0
 
 jukebox = music.Music("F4T3_ navy sea.mp3", loop=True)
-menu.show_title_screen(screen, clock) 
+menu.show_title_screen(screen, clock, jukebox)
 #menu.shop_(screen, clock, "lentons")

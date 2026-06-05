@@ -46,10 +46,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     enemies         = map_data.get("enemies", [])
     coins           = map_data.get("coins", [])
     shop_triggers   = map_data.get("shop_triggers", [])
-    
+    lore_drop       = map_data["lore"]
+
     # Safely track map height
     world_h         = len(tile_map) * physics.TILE_SIZE
-    lore_drop = map_data["lore"]
+
     spawn_x, spawn_y = 400, 500
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
@@ -100,12 +101,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     weapon_cooldown        = 0
     shop_cooldown          = 0
 
-    # LORE POPUP STATE 
-    lore_display_text  = None   
+    # LORE POPUP STATE (uses constants.lore_display_text / constants.lore_display_timer)
 
     SNAP_TOLERANCE = 8
     ui_font   = pygame.font.Font(None, 30)
-    lore_font = pygame.font.Font(None, 26)   
+    lore_font = pygame.font.Font(None, 26)
 
     COLOR_ELEVATOR  = (25, 75, 75)
     COLOR_ANIM_DOOR = (45, 55, 65)
@@ -223,10 +223,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                                 door["open"] = True
 
                     for lorey in lore_drop:
-                        if not lorey["collected"]:
-                            continue
-                        if player_rect.inflate(40, 20).colliderect(lorey["rect"]):
-                            lore_display_text = random.choice(maps.loreDrop)
+                        if not lorey["collected"] and player_rect.inflate(40, 20).colliderect(lorey["rect"]):
+                            constants.lore_display_text = random.choice(maps.loreDrop)
+                            constants.lore_display_timer = 300
+                            lorey["collected"] = True
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed:
                 if selected_weapon < len(weapon_list):
@@ -368,6 +368,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for lorey in lore_drop:
             if not lorey["collected"] and player_rect.colliderect(lorey["rect"]):
                 lorey["collected"] = True
+                if constants.lore_display_timer <= 0:
+                    constants.lore_display_text = random.choice(maps.loreDrop)
+                    constants.lore_display_timer = 300
 
         for c in coins:
             if not c["collected"] and player_rect.colliderect(c["rect"]):
@@ -591,52 +594,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 shimmer_surf.fill((120, 210, 255, shimmer_alpha))
                 screen.blit(shimmer_surf, (sx, sy)) 
 
-        # LORE POPUP
-        if lore_display_text:
-            pad_x, pad_y = 28, 18
-            max_text_w   = 680
-            words        = lore_display_text.split()
-            lines        = []
-            cur_line     = ""
-            for word in words:
-                test = (cur_line + " " + word).strip()
-                if lore_font.size(test)[0] <= max_text_w:
-                    cur_line = test
-                else:
-                    lines.append(cur_line)
-                    cur_line = word
-            if cur_line:
-                lines.append(cur_line)
-
-            line_h   = lore_font.get_height() + 4
-            panel_w  = max_text_w + pad_x * 2
-            panel_h  = line_h * len(lines) + pad_y * 2 + 36
-
-            panel_x  = WIDTH  // 2 - panel_w // 2
-            panel_y  = HEIGHT // 2 - panel_h // 2
-
-            surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-            pygame.draw.rect(surf, (8, 28, 44, 210), (0, 0, panel_w, panel_h), border_radius=10)
-
-            for band_i, band_y_off in enumerate(range(0, panel_h, 18)):
-                band_alpha = int(12 * (1 - band_i / (panel_h // 18 + 1)))
-                pygame.draw.rect(surf, (40, 140, 160, band_alpha), (0, band_y_off, panel_w, 9), border_radius=4)
-
-            pygame.draw.rect(surf, (80, 200, 185, 220), (0, 0, panel_w, panel_h), 2, border_radius=10)
-            pygame.draw.line(surf, (160, 255, 240, 80), (12, 3), (panel_w - 12, 3), 1)
-
-            header_surf = pygame.font.Font(None, 22).render("~  T R A N S M I S S I O N  ~", True, (100, 220, 200))
-            surf.blit(header_surf, (panel_w // 2 - header_surf.get_width() // 2, pad_y - 4))
-
-            sep_y = pad_y + 20
-            pygame.draw.line(surf, (50, 140, 150, 160), (pad_x, sep_y), (panel_w - pad_x, sep_y), 1)
-
-            for li, line in enumerate(lines):
-                t_surf = lore_font.render(line, True, (190, 240, 230))
-                surf.blit(t_surf, (pad_x, sep_y + 8 + li * line_h))
-
-            screen.blit(surf, (panel_x, panel_y))
-
         # ── HUD ────────────────────────────────────────────────────────────────────
         ui_font_sm  = pygame.font.Font(None, 22)
         ui_font_xs  = pygame.font.Font(None, 18)
@@ -750,6 +707,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             draw_panel(screen, wx - 12, HEIGHT // 2 - 118, warn_s.get_width() + 24, 30)
             screen.blit(warn_s, (wx, HEIGHT // 2 - 112))
             show_warning_frames -= 1
+
+        graphics.update_lore_display(screen)
 
         pygame.display.flip()
 
