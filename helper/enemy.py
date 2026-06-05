@@ -2,6 +2,7 @@ import math
 import pygame
 
 from constants import WIDTH, HEIGHT
+import constants
 from helper import death_screen
 
 class Enemies:
@@ -91,6 +92,7 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
         if player_rect.colliderect(enemy["rect"]):
             if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].top + 10:
                 enemies.remove(enemy)
+                constants.player_coins += 150
                 return -12.0
     return None
 

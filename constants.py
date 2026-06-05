@@ -56,7 +56,6 @@ class shop:
         {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity", "cost": 20, "key": "balloon_ammo"},
         {"name": "Max HP +25", "desc": "Increase maximum health", "cost": 40, "key": "max_hp"},
         {"name": "Sea Boots", "desc": "+1 speed permanently", "cost": 50, "key": "speed"},
-        {"name": "Revive Token", "desc": "Auto-revive once with 30 HP", "cost": 80, "key": "revive"},
         {"name": "Spears", "desc": "spears", "cost": 80, "key": "Spears"},
     ]
 
@@ -88,6 +87,10 @@ jump_height = -15
 gravity = 1
 player_inventory_clips = 0
 player_coins = 0
+player_flasks = 0
+player_revive_tokens = 0
+player_owned_weapons = []
+player_balloon_ammo_bonus = 0
 
 #shop names
 SHOP_NAME_HM = "Harbor Market"
