@@ -118,7 +118,35 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "state": "patrol",
                     "hp": 100,
                     "max_hp": 100,
-                    "damage": 10,
+                    "damage": 15,
+                })
+                col += 1
+
+            elif ch == 'W':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append({
+                    "rect": rect,
+                    "speed": 1,
+                    "chase_speed": 1,
+                    "detect_range": 750,
+                    "state": "patrol",#fixed
+                    "hp": 150,
+                    "max_hp": 150,
+                    "damage": 5,
+                })
+                col += 1
+
+            elif ch == 'F':
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append({
+                    "rect": rect,
+                    "speed": 1,
+                    "chase_speed": 1,
+                    "detect_range": 750,
+                    "state": "patrol",#fixed
+                    "hp": 500,
+                    "max_hp": 500,
+                    "damage": 33,
                 })
                 col += 1
 
