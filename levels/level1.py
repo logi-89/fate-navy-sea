@@ -91,12 +91,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
-    player_hp              = PLAYER_MAX_HP
+    player_hp              = constants.PLAYER_MAX_HP
     invincible_timer       = 0
     player_facing          = 1
     weapon_list            = weapons.get_available(constants.dev_mode)
     selected_weapon        = 0
-    ammo_counts            = {k: WEAPON_DEFS[k]["ammo"] for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
     projectiles            = []
     weapon_cooldown        = 0
     shop_cooldown          = 0
@@ -228,6 +228,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             constants.lore_display_timer = 300
                             lorey["collected"] = True
 
+                if event.key == pygame.K_h and input_allowed and constants.player_flasks > 0 and player_hp < constants.PLAYER_MAX_HP:
+                    constants.player_flasks -= 1
+                    player_hp = min(player_hp + 40, constants.PLAYER_MAX_HP)
+
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and input_allowed:
                 if selected_weapon < len(weapon_list):
                     wk = weapon_list[selected_weapon]
@@ -331,6 +335,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 if player_rect.colliderect(shop_t["rect"]):
                     menu.shop_(screen, clock, SHOP_NAME_NE)
                     shop_cooldown = 60
+                    weapon_list = weapons.get_available(constants.dev_mode)
+                    ammo_counts = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+                    if selected_weapon >= len(weapon_list):
+                        selected_weapon = 0
                     break
 
         all_solids = static_solids + [e["rect"] for e in elevators]
@@ -375,7 +383,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for c in coins:
             if not c["collected"] and player_rect.colliderect(c["rect"]):
                 c["collected"] = True
-                constants.player_coins += 1
+                constants.player_coins += 50
 
         if is_grounded:
             coyote_frames = 6
@@ -610,7 +618,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # ── TOP HINT BAR ──
         hints = [("A/D","move"), ("SPACE","jump"), ("E/Q","elevator"),
-                ("F","action"), ("1-3","use weapon"), ("P","quit (dev)"), ("ESC","quit")]
+                ("F","action"), ("H","heal"), ("1-3","weapon"), ("P","quit (dev)"), ("ESC","quit")]
         hint_parts = []
         for key, action in hints:
             hint_parts.append((key, (100, 180, 140)))
@@ -638,14 +646,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         bar_x, bar_y = PNL_X + 10, PNL_Y + 24
         bar_w, bar_h = PNL_W - 20, 8
-        hp_ratio = max(0.0, player_hp / PLAYER_MAX_HP)
+        hp_ratio = max(0.0, player_hp / constants.PLAYER_MAX_HP)
         hp_color = (56, 200, 122) if hp_ratio > 0.4 else (220, 140, 40) if hp_ratio > 0.2 else (210, 60, 60)
         pygame.draw.rect(screen, (20, 45, 30), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
         pygame.draw.rect(screen, hp_color, (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=4)
         pygame.draw.rect(screen, (60, 140, 90, 80), (bar_x, bar_y, bar_w, bar_h), 1, border_radius=4)
 
-        hp_val = ui_font_xs.render(f"{player_hp} / {PLAYER_MAX_HP}", True, (100, 220, 160))
+        hp_val = ui_font_xs.render(f"{player_hp} / {constants.PLAYER_MAX_HP}", True, (100, 220, 160))
         screen.blit(hp_val, (PNL_X + 10, PNL_Y + 38))
+
+        flask_surf = ui_font_xs.render(f"⚕ {constants.player_flasks}", True, (140, 220, 100))
+        screen.blit(flask_surf, (PNL_X + PNL_W - flask_surf.get_width() - 8, PNL_Y + 38))
 
         # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])

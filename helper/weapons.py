@@ -5,7 +5,12 @@ from constants import WEAPON_DEFS, WIDTH, HEIGHT
 
 
 def get_available(dev_mode):
-    return ["spear", "water_gun", "water_balloon"] if dev_mode else ["spear"]
+    if dev_mode:
+        return ["spear", "water_gun", "water_balloon"]
+    avail = ["spear"]
+    if "Spears" in constants.player_owned_weapons:
+        avail.append("spear")
+    return avail
 
 # def get_available_level_one():
 #     return ["spear"]
@@ -35,6 +40,7 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
                     e["hp"] -= defs["dmg"]
                     if e["hp"] <= 0:
                         enemies.remove(e)
+                        constants.player_coins += 150
                     hit = True
         return hit
 
@@ -95,6 +101,7 @@ def update(projectiles, static_solids, enemies):
                     projectiles.remove(p)
                 if e["hp"] <= 0:
                     enemies.remove(e)
+                    constants.player_coins += 150
                 break
 
 
