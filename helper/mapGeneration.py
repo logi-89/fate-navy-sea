@@ -48,10 +48,10 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
             elif ch == '_':
                 rect = pygame.Rect(col * tile_size, y, tile_size * 2, tile_size // 2)
                 
-                # Scan upward for a # tile to set upper limit
+                # Scan upward for a - tile to set upper limit
                 min_y = float(y)  # default: don't move up at all
                 for scan_row in range(row_idx - 1, -1, -1):
-                    if col < len(tile_map[scan_row]) and tile_map[scan_row][col] == '#':
+                    if col < len(tile_map[scan_row]) and tile_map[scan_row][col] == '-':
                         min_y = float(scan_row * tile_size + tile_size)
                         break
                 
