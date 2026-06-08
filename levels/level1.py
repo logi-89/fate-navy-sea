@@ -60,9 +60,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top + 150
 
         if constants.dev_mode == True:
+            w_mode = False
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
+
+            if w_mode == True:
+                print("MOM, I JUST HIT A CLIP!!")
+                spawn_x = 4030
+                spawn_y = 150
+
+
 
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
@@ -436,6 +444,21 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         invincible_timer = max(0, invincible_timer - dt)
 
         # WEAPON UPDATES
+        weapons.update(projectiles, static_solids, enemies)
+
+        # Warden bullet vs. player
+        for p in projectiles[:]:
+            if p["weapon"] == "warden_bullet" and p["rect"].colliderect(player_rect):
+                player_hp -= p["dmg"]
+                projectiles.remove(p)
+                if player_hp <= 0:
+                        death_screen.show_death_screen_ENEMIES(
+                            screen, clock,
+                            lambda: levelONE(screen, tile_map),
+                            "You were killed by an enemy!"
+                        )
+                        return
+                    #break
         weapons.update(projectiles, static_solids, enemies, dt)
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)

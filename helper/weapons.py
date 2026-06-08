@@ -95,6 +95,8 @@ def update(projectiles, static_solids, enemies, dt=1.0):
             continue
 
         for e in enemies[:]:
+            if p["weapon"] == "warden_bullet":
+                break
             if p["rect"].colliderect(e["rect"]):
                 e["hp"] = e.get("hp", 1) - p["dmg"]
                 if p in projectiles:
@@ -127,6 +129,11 @@ def render(screen, projectiles, camera_x, camera_y, dt=1.0):
             cy = int(vy + p["rect"].height // 2)
             pygame.draw.circle(screen, p["color"], (cx, cy), 5)
             pygame.draw.circle(screen, (180, 240, 255), (cx, cy), 5, 1)
+        elif p["weapon"] == "warden_bullet":
+            cx = int(vx + p["rect"].width // 2)
+            cy = int(vy + p["rect"].height // 2)
+            pygame.draw.circle(screen, (255, 80, 80), (cx, cy), 4)
+            pygame.draw.circle(screen, (255, 180, 80), (cx, cy), 4, 1)
         else:
             cx = int(vx + p["rect"].width // 2)
             cy = int(vy + p["rect"].height // 2)

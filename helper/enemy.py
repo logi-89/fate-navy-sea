@@ -4,6 +4,17 @@ import pygame
 from constants import WIDTH, HEIGHT
 import constants
 from helper import death_screen
+import os
+
+_warden_sprite = None
+
+def _get_warden_sprite():
+    global _warden_sprite
+    if _warden_sprite is None:
+        path = os.path.join(os.path.dirname(__file__), "warden.png")
+        img = pygame.image.load(path)
+        _warden_sprite = pygame.transform.scale(img, (175, 215))
+    return _warden_sprite
 
 class Enemies:
     def __init__(self, name, health, damage):
@@ -23,7 +34,7 @@ class Enemies:
     def __str__(self):
         return f"{self.name} (HP: {self.health}, DMG: {self.damage})"
 
-def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms, screen, clock, restart_func, dt=1.0):
+def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms, screen, clock, restart_func, projectiles, dt=1.0):
     for enemy in enemies[:]:
         dx = player_rect.centerx - enemy["rect"].centerx
         dy = player_rect.centery - enemy["rect"].centery
@@ -39,7 +50,9 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
 
         enemy["state"] = "chase" if can_see else "patrol"
 
-        if enemy["state"] == "chase":
+        if enemy.get("type") == "warden":
+            move_x = 0
+        elif enemy["state"] == "chase":
             enemy["dir"] = 1 if dx > 0 else -1
             move_x = enemy["chase_speed"] * enemy["dir"] * dt
         else:
@@ -70,8 +83,8 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
         enemy["vy"] = enemy.get("vy", 0)
         enemy["on_ground"] = enemy.get("on_ground", False)
 
-        enemy["vy"] = min(enemy["vy"] + 0.8 * dt, 15)
-        enemy["rect"].y += int(enemy["vy"] * dt)
+        enemy["vy"] = min(enemy["vy"] + 0.8, 15)
+        enemy["rect"].y += int(enemy["vy"])
 
         enemy["on_ground"] = False
         for plat in static_solids:
@@ -89,6 +102,42 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
             enemy["vy"] = -14
             enemy["on_ground"] = False
 
+        # ── WARDEN SHOOTING ──
+        if enemy.get("type") == "warden":
+            enemy["dir"] = 1 if player_rect.centerx > enemy["rect"].centerx else -1
+            if enemy["state"] == "chase":
+                if enemy["reload_timer"] > 0:
+                    enemy["reload_timer"] -= 1
+                elif enemy["burst_remaining"] > 0:
+                    enemy["shoot_cooldown"] -= 1
+                    if enemy["shoot_cooldown"] <= 0:
+                        spawn_x = enemy["rect"].right if enemy["dir"] > 0 else enemy["rect"].left - 8
+                        spawn_y = enemy["rect"].centery - 4
+                        dx = player_rect.centerx - spawn_x
+                        dy = player_rect.centery - spawn_y
+                        dist = math.sqrt(dx*dx + dy*dy)
+                        if dist == 0:
+                            dist = 1
+                        speed = 8
+                        projectiles.append({
+                            "rect": pygame.Rect(spawn_x, spawn_y, 6, 6),
+                            "vx": int(speed * dx / dist),
+                            "vy": int(speed * dy / dist),
+                            "weapon": "warden_bullet",
+                            "dmg": 20,
+                            "color": (255, 60, 60),
+                            "life": 120,
+                        })
+                        enemy["burst_remaining"] -= 1
+                        enemy["shoot_cooldown"] = 15
+                if enemy["burst_remaining"] <= 0 and enemy["reload_timer"] <= 0:
+                    enemy["reload_timer"] = 150
+                    enemy["burst_remaining"] = 4
+            else:
+                enemy["burst_remaining"] = 4
+                enemy["reload_timer"] = 0
+                enemy["shoot_cooldown"] = 0
+
         if player_rect.colliderect(enemy["rect"]):
             if player_vel_y > 0 and player_rect.bottom - player_vel_y <= enemy["rect"].top + 10:
                 enemies.remove(enemy)
@@ -102,6 +151,15 @@ def render_enemies(screen, enemies, camera_x, camera_y):
         vx = enemy["rect"].x - camera_x
         vy = enemy["rect"].y - camera_y
         if vx + enemy["rect"].width < 0 or vx > WIDTH or vy + enemy["rect"].height < 0 or vy > HEIGHT:
+            continue
+
+        if enemy.get("type") == "warden":
+            sprite = _get_warden_sprite()
+            if enemy["dir"] < 0:
+                sprite = pygame.transform.flip(sprite, True, False)
+            sx = vx - (sprite.get_width() - enemy["rect"].width) // 2
+            sy = vy + enemy["rect"].height - sprite.get_height() + 35
+            screen.blit(sprite, (sx, sy))
             continue
 
         col = (200, 50, 50) if enemy["state"] == "chase" else (160, 70, 50)
