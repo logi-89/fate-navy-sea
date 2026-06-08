@@ -126,6 +126,10 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 enemies.append({
                     "rect": rect,
+                    "start_x": float(rect.x),
+                    "patrol_left": float(rect.x - 150),
+                    "patrol_right": float(rect.x + 150),
+                    "dir": random.choice([-1, 1]),
                     "speed": 1,
                     "chase_speed": 1,
                     "detect_range": 750,
@@ -140,6 +144,10 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 enemies.append({
                     "rect": rect,
+                    "start_x": float(rect.x),
+                    "patrol_left": float(rect.x - 150),
+                    "patrol_right": float(rect.x + 150),
+                    "dir": random.choice([-1, 1]),
                     "speed": 1,
                     "chase_speed": 1,
                     "detect_range": 750,
