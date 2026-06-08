@@ -34,6 +34,7 @@ def intro(screen, set_clock):
 def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     global clock
 
+    WIDTH, HEIGHT = screen.get_size()
     running = True
     map_data        = mapGeneration.build_platforms_from_map(tile_map)
     platforms       = map_data["platforms"]
@@ -603,8 +604,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 screen.blit(shimmer_surf, (sx, sy)) 
 
         # ── HUD ────────────────────────────────────────────────────────────────────
-        ui_font_sm  = pygame.font.Font(None, 22)
-        ui_font_xs  = pygame.font.Font(None, 18)
+        hs = constants.settings["hud_scale"] / 100
+        ui_font_sm  = pygame.font.Font(None, int(22 * hs))
+        ui_font_xs  = pygame.font.Font(None, int(18 * hs))
         hud_dark    = (4, 10, 18, 200)
         hud_border  = (60, 180, 110, 60)
         hud_green   = (80, 220, 150)
@@ -612,8 +614,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         def draw_panel(surf, x, y, w, h, alpha=200):
             s = pygame.Surface((w, h), pygame.SRCALPHA)
-            s.fill((4, 12, 20, alpha))
-            pygame.draw.rect(s, (60, 180, 110, 55), (0, 0, w, h), 1, border_radius=5)
+            br = max(1, int(5 * hs))
+            pygame.draw.rect(s, (4, 12, 20, alpha), (0, 0, w, h), border_radius=br)
+            pygame.draw.rect(s, (60, 180, 110, 55), (0, 0, w, h), 1, border_radius=br)
             surf.blit(s, (x, y))
 
         # ── TOP HINT BAR ──
@@ -624,77 +627,77 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             hint_parts.append((key, (100, 180, 140)))
             hint_parts.append((f" {action}", (60, 130, 100)))
             hint_parts.append(("  │  ", (40, 80, 60)))
-        hint_parts = hint_parts[:-1]  # trim last separator
+        hint_parts = hint_parts[:-1]
 
         hint_total_w = sum(ui_font_xs.size(t)[0] for t, _ in hint_parts)
-        draw_panel(screen, 14, 12, hint_total_w + 20, 22, alpha=170)
-        cx = 24
+        draw_panel(screen, int(14 * hs), int(12 * hs), int((hint_total_w + 20) * hs), int(22 * hs), alpha=170)
+        cx = int(24 * hs)
         for text, col in hint_parts:
             s = ui_font_xs.render(text, True, col)
-            screen.blit(s, (cx, 16))
+            screen.blit(s, (cx, int(16 * hs)))
             cx += s.get_width()
 
         # ── COORDS (subtle) ──
         coord_s = ui_font_xs.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (60, 110, 80))
-        screen.blit(coord_s, (18, 38))
+        screen.blit(coord_s, (int(18 * hs), int(38 * hs)))
 
         # ── HEALTH PANEL ──
-        PNL_X, PNL_Y, PNL_W, PNL_H = 14, HEIGHT - 100, 190, 56
+        PNL_X, PNL_Y, PNL_W, PNL_H = int(14 * hs), HEIGHT - int(100 * hs), int(190 * hs), int(56 * hs)
         draw_panel(screen, PNL_X, PNL_Y, PNL_W, PNL_H)
         lbl = ui_font_xs.render("INTEGRITY", True, (80, 140, 100))
-        screen.blit(lbl, (PNL_X + 10, PNL_Y + 8))
+        screen.blit(lbl, (PNL_X + int(10 * hs), PNL_Y + int(8 * hs)))
 
-        bar_x, bar_y = PNL_X + 10, PNL_Y + 24
-        bar_w, bar_h = PNL_W - 20, 8
+        bar_x, bar_y = PNL_X + int(10 * hs), PNL_Y + int(24 * hs)
+        bar_w, bar_h = PNL_W - int(20 * hs), max(1, int(8 * hs))
         hp_ratio = max(0.0, player_hp / constants.PLAYER_MAX_HP)
         hp_color = (56, 200, 122) if hp_ratio > 0.4 else (220, 140, 40) if hp_ratio > 0.2 else (210, 60, 60)
-        pygame.draw.rect(screen, (20, 45, 30), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
-        pygame.draw.rect(screen, hp_color, (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=4)
-        pygame.draw.rect(screen, (60, 140, 90, 80), (bar_x, bar_y, bar_w, bar_h), 1, border_radius=4)
+        pygame.draw.rect(screen, (20, 45, 30), (bar_x, bar_y, bar_w, bar_h), border_radius=max(1, int(4 * hs)))
+        pygame.draw.rect(screen, hp_color, (bar_x, bar_y, int(bar_w * hp_ratio), bar_h), border_radius=max(1, int(4 * hs)))
+        pygame.draw.rect(screen, (60, 140, 90, 80), (bar_x, bar_y, bar_w, bar_h), 1, border_radius=max(1, int(4 * hs)))
 
         hp_val = ui_font_xs.render(f"{player_hp} / {constants.PLAYER_MAX_HP}", True, (100, 220, 160))
-        screen.blit(hp_val, (PNL_X + 10, PNL_Y + 38))
+        screen.blit(hp_val, (PNL_X + int(10 * hs), PNL_Y + int(38 * hs)))
 
         flask_surf = ui_font_xs.render(f"⚕ {constants.player_flasks}", True, (140, 220, 100))
-        screen.blit(flask_surf, (PNL_X + PNL_W - flask_surf.get_width() - 8, PNL_Y + 38))
+        screen.blit(flask_surf, (PNL_X + PNL_W - flask_surf.get_width() - int(8 * hs), PNL_Y + int(38 * hs)))
 
         # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])
         clips_total = len(paperclips)
         has_pick = constants.player_inventory_clips >= 1
 
-        CL_X, CL_Y, CL_W, CL_H = 14, HEIGHT - 38, 190, 28
+        CL_X, CL_Y, CL_W, CL_H = int(14 * hs), HEIGHT - int(38 * hs), int(190 * hs), int(28 * hs)
         draw_panel(screen, CL_X, CL_Y, CL_W, CL_H)
 
-        # dots
         for i in range(min(clips_total, 5)):
             dot_col = (80, 210, 140) if i < clips_collected else (30, 70, 50)
-            pygame.draw.circle(screen, dot_col, (CL_X + 14 + i * 14, CL_Y + 14), 4)
+            pygame.draw.circle(screen, dot_col, (CL_X + int(14 * hs) + i * int(14 * hs), CL_Y + int(14 * hs)), max(1, int(4 * hs)))
 
         pick_col  = (60, 230, 140) if has_pick else (200, 80, 70)
         pick_text = "READY" if has_pick else "NO PICK"
         p_surf = ui_font_xs.render(pick_text, True, pick_col)
-        screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - 8, CL_Y + 3))
+        screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - int(8 * hs), CL_Y + int(3 * hs)))
 
         coins_collected = sum(1 for c in coins if c["collected"])
         coins_total = len(coins)
         coin_surf = ui_font_xs.render(f"¢ {coins_collected}/{coins_total}", True, (255, 215, 0))
-        screen.blit(coin_surf, (CL_X + CL_W - coin_surf.get_width() - 8, CL_Y + 14))
+        screen.blit(coin_surf, (CL_X + CL_W - coin_surf.get_width() - int(8 * hs), CL_Y + int(14 * hs)))
 
         # ── WEAPON SLOTS ──
-        slot_w, slot_h = 160, 24
-        slot_gap = 4
+        slot_w, slot_h = int(160 * hs), int(24 * hs)
+        slot_gap = int(4 * hs)
         for wi, wk in enumerate(weapon_list):
             defs   = WEAPON_DEFS[wk]
             active = wi == selected_weapon
-            sx = WIDTH - slot_w - 14
-            sy = HEIGHT - 38 - (len(weapon_list) - 1 - wi) * (slot_h + slot_gap)
+            sx = WIDTH - slot_w - int(14 * hs)
+            sy = HEIGHT - int(38 * hs) - (len(weapon_list) - 1 - wi) * (slot_h + slot_gap)
 
             bg_alpha = 210 if active else 150
             draw_panel(screen, sx, sy, slot_w, slot_h, alpha=bg_alpha)
             if active:
-                pygame.draw.rect(screen, (60, 200, 120, 100), (sx, sy, slot_w, slot_h), 1, border_radius=5)
-                pygame.draw.circle(screen, (60, 230, 130), (sx + 8, sy + 12), 3)
+                br = max(1, int(5 * hs))
+                pygame.draw.rect(screen, (60, 200, 120, 100), (sx, sy, slot_w, slot_h), 1, border_radius=br)
+                pygame.draw.circle(screen, (60, 230, 130), (sx + int(8 * hs), sy + int(12 * hs)), max(1, int(3 * hs)))
 
             key_col  = (80, 190, 130) if active else (50, 110, 80)
             name_col = (140, 230, 180) if active else (90, 150, 120)
@@ -707,16 +710,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             n_surf = ui_font_xs.render(defs["name"].lower(), True, name_col)
             a_surf = ui_font_xs.render(ammo_s, True, ammo_col)
 
-            screen.blit(k_surf, (sx + 14, sy + 5))
-            screen.blit(n_surf, (sx + 28, sy + 5))
-            screen.blit(a_surf, (sx + slot_w - a_surf.get_width() - 8, sy + 5))
+            screen.blit(k_surf, (sx + int(14 * hs), sy + int(5 * hs)))
+            screen.blit(n_surf, (sx + int(28 * hs), sy + int(5 * hs)))
+            screen.blit(a_surf, (sx + slot_w - a_surf.get_width() - int(8 * hs), sy + int(5 * hs)))
 
         # ── LOW AMMO / NO PICK WARNING ──
         if show_warning_frames > 0:
-            warn_s = ui_font.render("Find a paperclip first!", True, (255, 100, 100))
+            warn_font = pygame.font.Font(None, int(30 * hs))
+            warn_s = warn_font.render("Find a paperclip first!", True, (255, 100, 100))
             wx = WIDTH // 2 - warn_s.get_width() // 2
-            draw_panel(screen, wx - 12, HEIGHT // 2 - 118, warn_s.get_width() + 24, 30)
-            screen.blit(warn_s, (wx, HEIGHT // 2 - 112))
+            draw_panel(screen, wx - int(12 * hs), HEIGHT // 2 - int(118 * hs), warn_s.get_width() + int(24 * hs), int(30 * hs))
+            screen.blit(warn_s, (wx, HEIGHT // 2 - int(112 * hs)))
             show_warning_frames -= 1
 
         graphics.update_lore_display(screen)

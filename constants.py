@@ -92,6 +92,26 @@ player_revive_tokens = 0
 player_owned_weapons = []
 player_balloon_ammo_bonus = 0
 
+# Settings
+settings = {
+    "master_volume": 50,
+    "hud_scale": 100,
+    "display_w": 1500,
+    "display_h": 900,
+    "display_mode": "fullscreen",
+}
+
+AVAILABLE_RESOLUTIONS = [
+    (1280, 720),
+    (1366, 768),
+    (1500, 900),
+    (1600, 900),
+    (1920, 1080),
+    (2560, 1440),
+]
+
+DISPLAY_MODES = ["fullscreen", "borderless", "windowed"]
+
 #shop names
 SHOP_NAME_HM = "Harbor Market"
 SHOP_NAME_PKS = "Pearlkeeper's Shop"

@@ -15,20 +15,25 @@ def show_title_screen(screen, clock, jukebox_object):
     running = True
     t = 0
 
+    WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
     title_font = pygame.font.Font(None, 110)
     sub_font = pygame.font.Font(None, 44)
     button_font = pygame.font.Font(None, 56)
 
-    start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 80, 240, 70)
+    start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 40, 240, 60)
+    settings_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 120, 240, 60)
 
     while running:
+        WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
         mouse_pos = pygame.mouse.get_pos()
-        hovered = start_button.collidepoint(mouse_pos)
+        hovered_start = start_button.collidepoint(mouse_pos)
+        hovered_settings = settings_button.collidepoint(mouse_pos)
 
         draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
         pygame.draw.circle(screen, (160, 220, 255), (WIDTH // 2, 180), 90)
         pygame.draw.circle(screen, (200, 245, 255), (WIDTH // 2, 180), 55)
-        pygame.draw.rect(screen, (10, 45, 75), (0, 430, WIDTH, 270))
+        ocean_top = HEIGHT - 320
+        pygame.draw.rect(screen, (10, 45, 75), (0, ocean_top, WIDTH, HEIGHT - ocean_top))
         draw_waves(screen, t)
 
         title_text = title_font.render("Fate: Navy Sea", True, WHITE)
@@ -39,29 +44,220 @@ def show_title_screen(screen, clock, jukebox_object):
         sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 65))
         screen.blit(sub_text, sub_rect)
 
-        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered else title_screen.BUTTON_COLOR, start_button, border_radius=18)
+        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_start else title_screen.BUTTON_COLOR, start_button, border_radius=18)
         pygame.draw.rect(screen, WHITE, start_button, 3, border_radius=18)
-
-        start_text = button_font.render("Start", True,WHITE)
+        start_text = button_font.render("Start", True, WHITE)
         start_rect = start_text.get_rect(center=start_button.center)
         screen.blit(start_text, start_rect)
+
+        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_settings else title_screen.BUTTON_COLOR, settings_button, border_radius=18)
+        pygame.draw.rect(screen, WHITE, settings_button, 3, border_radius=18)
+        settings_text = button_font.render("Settings", True, WHITE)
+        settings_rect = settings_text.get_rect(center=settings_button.center)
+        screen.blit(settings_text, settings_rect)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return False
+                return screen
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    return False
+                    return screen
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.collidepoint(event.pos):
                     levels.level1.intro(screen, clock)
-                    return True
+                    return screen
+                if settings_button.collidepoint(event.pos):
+                    screen = settings_menu(screen, clock)
 
         pygame.display.flip()
         clock.tick(60)
         t += 0.03
+
+    return screen
+
+
+def settings_menu(screen, clock):
+    global jukebox
+    running = True
+    font_title = pygame.font.Font(None, 80)
+    font_item = pygame.font.Font(None, 40)
+    font_value = pygame.font.Font(None, 30)
+
+    res_index = 0
+    for i, (rw, rh) in enumerate(constants.AVAILABLE_RESOLUTIONS):
+        if rw == constants.settings["display_w"] and rh == constants.settings["display_h"]:
+            res_index = i
+            break
+
+    mode_index = 0
+    for i, m in enumerate(constants.DISPLAY_MODES):
+        if m == constants.settings["display_mode"]:
+            mode_index = i
+            break
+
+    dragging_volume = False
+    dragging_hud = False
+
+    button_back = pygame.Rect(constants.WIDTH // 2 - 100, constants.HEIGHT - 100, 200, 55)
+
+    def get_slider_rect(center_y):
+        return pygame.Rect(constants.WIDTH // 2 - 170, center_y - 6, 340, 12)
+
+    def value_from_pos(slider, mouse_x, max_val=100):
+        ratio = (mouse_x - slider.x) / slider.w
+        return int(max(0, min(max_val, ratio * max_val)))
+
+    def apply_display():
+        nonlocal screen
+        mode = constants.settings["display_mode"]
+        dw = constants.settings["display_w"]
+        dh = constants.settings["display_h"]
+        if mode == "fullscreen":
+            screen = pygame.display.set_mode((dw, dh), pygame.FULLSCREEN)
+        elif mode == "borderless":
+            info = pygame.display.Info()
+            screen = pygame.display.set_mode((info.current_w, info.current_h), pygame.NOFRAME)
+            dw, dh = info.current_w, info.current_h
+        else:
+            screen = pygame.display.set_mode((dw, dh))
+        constants.WIDTH = screen.get_width()
+        constants.HEIGHT = screen.get_height()
+
+    while running:
+        WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
+        mouse_pos = pygame.mouse.get_pos()
+
+        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+
+        title = font_title.render("Settings", True, WHITE)
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, 60)))
+
+        labels = [
+            ("Master Volume", 180, constants.settings["master_volume"], 100),
+            ("HUD Scale", 270, constants.settings["hud_scale"], 200),
+        ]
+
+        for label, cy, val, max_val in labels:
+            lbl = font_item.render(label, True, (180, 220, 240))
+            screen.blit(lbl, (WIDTH // 2 - 340, cy - 14))
+
+            val_text = font_value.render(f"{val}%", True, (100, 220, 180))
+            screen.blit(val_text, (WIDTH // 2 + 190, cy - 10))
+
+            slider = get_slider_rect(cy)
+            pygame.draw.rect(screen, (20, 50, 70), slider, border_radius=6)
+            ratio = val / max_val
+            fill_w = int(slider.w * ratio)
+            if fill_w > 0:
+                fill = pygame.Rect(slider.x, slider.y, fill_w, slider.h)
+                pygame.draw.rect(screen, (60, 200, 160), fill, border_radius=6)
+            handle_x = slider.x + int(slider.w * ratio)
+            pygame.draw.circle(screen, (180, 255, 230), (handle_x, slider.centery), 9)
+            pygame.draw.circle(screen, (60, 200, 160), (handle_x, slider.centery), 9, 2)
+
+        # Resolution selector
+        res_lbl = font_item.render("Resolution", True, (180, 220, 240))
+        screen.blit(res_lbl, (WIDTH // 2 - 340, 340))
+        rw, rh = constants.AVAILABLE_RESOLUTIONS[res_index]
+        res_text = font_item.render(f"{rw} x {rh}", True, WHITE)
+        res_rect = pygame.Rect(WIDTH // 2 - 100, 325, 200, 40)
+        pygame.draw.rect(screen, (25, 65, 95), res_rect, border_radius=8)
+        pygame.draw.rect(screen, (60, 160, 200), res_rect, 2, border_radius=8)
+        screen.blit(res_text, res_text.get_rect(center=res_rect.center))
+
+        left_arr = pygame.Rect(WIDTH // 2 - 130, 335, 22, 22)
+        right_arr = pygame.Rect(WIDTH // 2 + 110, 335, 22, 22)
+        pygame.draw.polygon(screen, (120, 220, 200), [(left_arr.right, left_arr.y), (left_arr.x, left_arr.centery), (left_arr.right, left_arr.bottom)])
+        pygame.draw.polygon(screen, (120, 220, 200), [(right_arr.x, right_arr.y), (right_arr.right, right_arr.centery), (right_arr.x, right_arr.bottom)])
+
+        # Display mode selector
+        mode_lbl = font_item.render("Display Mode", True, (180, 220, 240))
+        screen.blit(mode_lbl, (WIDTH // 2 - 340, 410))
+        mode_text = font_item.render(constants.DISPLAY_MODES[mode_index].capitalize(), True, WHITE)
+        mode_rect = pygame.Rect(WIDTH // 2 - 100, 395, 200, 40)
+        pygame.draw.rect(screen, (25, 65, 95), mode_rect, border_radius=8)
+        pygame.draw.rect(screen, (60, 160, 200), mode_rect, 2, border_radius=8)
+        screen.blit(mode_text, mode_text.get_rect(center=mode_rect.center))
+
+        mode_left = pygame.Rect(WIDTH // 2 - 130, 405, 22, 22)
+        mode_right = pygame.Rect(WIDTH // 2 + 110, 405, 22, 22)
+        pygame.draw.polygon(screen, (120, 220, 200), [(mode_left.right, mode_left.y), (mode_left.x, mode_left.centery), (mode_left.right, mode_left.bottom)])
+        pygame.draw.polygon(screen, (120, 220, 200), [(mode_right.x, mode_right.y), (mode_right.right, mode_right.centery), (mode_right.x, mode_right.bottom)])
+
+        # Back button
+        hovered_back = button_back.collidepoint(mouse_pos)
+        pygame.draw.rect(screen, (60, 110, 170) if hovered_back else (40, 80, 120), button_back, border_radius=12)
+        pygame.draw.rect(screen, WHITE, button_back, 2, border_radius=12)
+        back_text = font_item.render("BACK", True, WHITE)
+        screen.blit(back_text, back_text.get_rect(center=button_back.center))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return screen
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                vol_slider = get_slider_rect(180)
+                if vol_slider.collidepoint(event.pos):
+                    dragging_volume = True
+                    val = value_from_pos(vol_slider, event.pos[0])
+                    constants.settings["master_volume"] = val
+                    if jukebox:
+                        jukebox.set_volume(val / 100.0)
+
+                hud_slider = get_slider_rect(270)
+                if hud_slider.collidepoint(event.pos):
+                    dragging_hud = True
+                    val = value_from_pos(hud_slider, event.pos[0], 200)
+                    constants.settings["hud_scale"] = val
+
+                if left_arr.collidepoint(event.pos):
+                    res_index = (res_index - 1) % len(constants.AVAILABLE_RESOLUTIONS)
+                    constants.settings["display_w"], constants.settings["display_h"] = constants.AVAILABLE_RESOLUTIONS[res_index]
+                    apply_display()
+                if right_arr.collidepoint(event.pos):
+                    res_index = (res_index + 1) % len(constants.AVAILABLE_RESOLUTIONS)
+                    constants.settings["display_w"], constants.settings["display_h"] = constants.AVAILABLE_RESOLUTIONS[res_index]
+                    apply_display()
+
+                if mode_left.collidepoint(event.pos):
+                    mode_index = (mode_index - 1) % len(constants.DISPLAY_MODES)
+                    constants.settings["display_mode"] = constants.DISPLAY_MODES[mode_index]
+                    apply_display()
+                if mode_right.collidepoint(event.pos):
+                    mode_index = (mode_index + 1) % len(constants.DISPLAY_MODES)
+                    constants.settings["display_mode"] = constants.DISPLAY_MODES[mode_index]
+                    apply_display()
+
+                if button_back.collidepoint(event.pos):
+                    running = False
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                dragging_volume = False
+                dragging_hud = False
+
+            if event.type == pygame.MOUSEMOTION:
+                if dragging_volume:
+                    vol_slider = get_slider_rect(180)
+                    val = value_from_pos(vol_slider, event.pos[0])
+                    constants.settings["master_volume"] = val
+                    if jukebox:
+                        jukebox.set_volume(val / 100.0)
+                if dragging_hud:
+                    hud_slider = get_slider_rect(270)
+                    val = value_from_pos(hud_slider, event.pos[0], 200)
+                    constants.settings["hud_scale"] = val
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    return screen
 
 
 def shop_(screen, clock, name):

@@ -5,22 +5,25 @@ import constants
 from constants import *
 
 def draw_waves(surface, offset):
+    surf_w, surf_h = surface.get_size()
+    base_y = surf_h - 300
     for i in range(10):
-        y = 470 + i * 22
+        y = base_y + i * 22
         points = []
-        for x in range(0, WIDTH + 20, 20):
+        for x in range(0, surf_w + 20, 20):
             wave = math.sin((x * 0.015) + offset + i * 0.4) * 8
             points.append((x, y + wave))
         if len(points) > 1:
             pygame.draw.aalines(surface, (170, 230, 255), False, points)
 
 def draw_vertical_gradient(surface, top_color, bottom_color):
-    for y in range(HEIGHT):
-        t = y / HEIGHT
+    surf_w, surf_h = surface.get_size()
+    for y in range(surf_h):
+        t = y / surf_h
         r = int(top_color[0] + (bottom_color[0] - top_color[0]) * t)
         g = int(top_color[1] + (bottom_color[1] - top_color[1]) * t)
         b = int(top_color[2] + (bottom_color[2] - top_color[2]) * t)
-        pygame.draw.line(surface, (r, g, b), (0, y), (WIDTH, y))
+        pygame.draw.line(surface, (r, g, b), (0, y), (surf_w, y))
 
 
 def update_lore_display(screen):
@@ -57,8 +60,9 @@ def lore_display(screen, lore_display_text, alpha=255):
     panel_w  = max_text_w + pad_x * 2
     panel_h  = line_h * len(lines) + pad_y * 2 + 36
 
-    panel_x  = WIDTH  // 2 - panel_w // 2
-    panel_y  = HEIGHT // 2 - panel_h // 2
+    scr_w, scr_h = screen.get_size()
+    panel_x  = scr_w // 2 - panel_w // 2
+    panel_y  = scr_h // 2 - panel_h // 2
 
     surf = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
     pygame.draw.rect(surf, (8, 28, 44, 210), (0, 0, panel_w, panel_h), border_radius=10)

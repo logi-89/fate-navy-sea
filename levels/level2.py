@@ -23,6 +23,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     print("level 2...")
     global clock
 
+    WIDTH, HEIGHT = screen.get_size()
     running = True
     map_data        = mapGeneration.build_platforms_from_map(tile_map)
     platforms       = map_data["platforms"]
@@ -515,35 +516,38 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.draw.rect(screen, (220, 100, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 195, 0), pr, 2, border_radius=4)
 
-        #  HUD 
-        hud_surf = pygame.Surface((WIDTH, 20), pygame.SRCALPHA)
+        # HUD
+        hs = constants.settings["hud_scale"] / 100
+        hud_font = pygame.font.Font(None, int(30 * hs))
+
+        hud_surf = pygame.Surface((WIDTH, int(20 * hs)), pygame.SRCALPHA)
         hud_surf.fill((10, 80, 70, 50))
         screen.blit(hud_surf, (0, 0))
 
         clips_total     = len(paperclips)
         clips_collected = sum(1 for c in paperclips if c["collected"])
-        hint    = ui_font.render(
+        hint    = hud_font.render(
             "A/D – Move  |  SPACE/W – Jump  |  E/Q – Elevator  |  F – Action  |  ESC – Quit",
             True, (80, 200, 170))
-        pos_txt  = ui_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (80, 180, 200))
-        clip_txt = ui_font.render(f"Paperclips: {clips_collected}/{clips_total}", True, (140, 200, 200))
+        pos_txt  = hud_font.render(f"x:{player_rect.x}  y:{player_rect.y}", True, (80, 180, 200))
+        clip_txt = hud_font.render(f"Paperclips: {clips_collected}/{clips_total}", True, (140, 200, 200))
         inv_col  = (80, 220, 130) if player_inventory_clips >= 1 else (200, 90, 90)
         inv_lbl  = "Lock Pick: READY"         if player_inventory_clips >= 1 else "Lock Pick: NEED PAPERCLIP"
-        inv_txt  = ui_font.render(inv_lbl, True, inv_col)
-        depth_txt = ui_font.render(
+        inv_txt  = hud_font.render(inv_lbl, True, inv_col)
+        depth_txt = hud_font.render(
             f"NORTH WATERLINE — DEPTH {320 + int(10 * abs(math.sin(light_glow_t * 0.01)))}m",
             True, (50, 160, 190))
 
-        screen.blit(hint,      (20, 20))
-        screen.blit(pos_txt,   (20, 50))
-        screen.blit(clip_txt,  (20, 80))
-        screen.blit(inv_txt,   (20, 110))
-        screen.blit(depth_txt, (WIDTH - depth_txt.get_width() - 20, 20))
+        screen.blit(hint,      (int(20 * hs), int(20 * hs)))
+        screen.blit(pos_txt,   (int(20 * hs), int(50 * hs)))
+        screen.blit(clip_txt,  (int(20 * hs), int(80 * hs)))
+        screen.blit(inv_txt,   (int(20 * hs), int(110 * hs)))
+        screen.blit(depth_txt, (WIDTH - depth_txt.get_width() - int(20 * hs), int(20 * hs)))
 
         if show_warning_frames > 0:
-            warn_txt = ui_font.render(
+            warn_txt = hud_font.render(
                 "Find a paperclip first to pick this wall lock!", True, (220, 80, 80))
-            screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - 100))
+            screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - int(100 * hs)))
             show_warning_frames -= 1
 
         graphics.update_lore_display(screen)

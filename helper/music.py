@@ -29,6 +29,9 @@ class Music:
         self.mixer.music.stop()
         self.mixer.music.unload()
 
+    def set_volume(self, volume):
+        self.mixer.music.set_volume(max(0.0, min(volume, 1.0)))
+
     def volume_up(self):
         current_volume = self.mixer.music.get_volume()
         new_volume = min(current_volume + 0.1, 1.0)
