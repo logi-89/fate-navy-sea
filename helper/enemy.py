@@ -23,7 +23,7 @@ class Enemies:
     def __str__(self):
         return f"{self.name} (HP: {self.health}, DMG: {self.damage})"
 
-def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms, screen, clock, restart_func):
+def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms, screen, clock, restart_func, dt=1.0):
     for enemy in enemies[:]:
         dx = player_rect.centerx - enemy["rect"].centerx
         dy = player_rect.centery - enemy["rect"].centery
@@ -41,9 +41,9 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
 
         if enemy["state"] == "chase":
             enemy["dir"] = 1 if dx > 0 else -1
-            move_x = enemy["chase_speed"] * enemy["dir"]
+            move_x = enemy["chase_speed"] * enemy["dir"] * dt
         else:
-            move_x = enemy["speed"] * enemy["dir"]
+            move_x = enemy["speed"] * enemy["dir"] * dt
 
         enemy["rect"].x += int(move_x)
 
@@ -70,8 +70,8 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
         enemy["vy"] = enemy.get("vy", 0)
         enemy["on_ground"] = enemy.get("on_ground", False)
 
-        enemy["vy"] = min(enemy["vy"] + 0.8, 15)
-        enemy["rect"].y += int(enemy["vy"])
+        enemy["vy"] = min(enemy["vy"] + 0.8 * dt, 15)
+        enemy["rect"].y += int(enemy["vy"] * dt)
 
         enemy["on_ground"] = False
         for plat in static_solids:

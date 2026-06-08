@@ -154,7 +154,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     input_allowed = False
 
     while running:
-        dt = clock.tick(60)
+        target_fps = constants.settings["fps"]
+        if target_fps > 0:
+            ms = clock.tick(target_fps)
+        else:
+            ms = clock.tick()
+        dt = max(0.01, ms / 16.666667)
 
         if not input_allowed:
             key_state = pygame.key.get_pressed()
@@ -258,7 +263,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             prev_y = elev["float_y"]
             
             if elev is riding_elev:
-                elev_speed = abs(elev["speed"])
+                elev_speed = abs(elev["speed"]) * dt
                 if keys[pygame.K_e] and input_allowed:
                     elev["float_y"] -= elev_speed
                     if elev["float_y"] < elev["min_y"]:
@@ -279,7 +284,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # ANIMATED DOORS 
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
-                door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
+                door["offset_y"] = min(door["offset_y"] + 4 * dt, door["max_open"])
                 door["rect"].y = door["origin_y"] + door["offset_y"]
                 door["rect"].height = door["max_open"] - door["offset_y"]
 
@@ -288,8 +293,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS
         move_x = 0
-        if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:  move_x -= physics.PLAYER_SPEED
-        if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed: move_x += physics.PLAYER_SPEED
+        if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:  move_x -= physics.PLAYER_SPEED * dt
+        if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed: move_x += physics.PLAYER_SPEED * dt
         if move_x > 0: player_facing = 1
         elif move_x < 0: player_facing = -1
 
@@ -309,8 +314,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS 
         if riding_elev is None:
-            player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
-            player_y += player_vel_y
+            player_vel_y = min(player_vel_y + physics.GRAVITY * dt, physics.MAX_FALL_SPEED)
+            player_y += player_vel_y * dt
             player_rect.y = int(player_y)
 
         # CRUSH / SQUISH DETECTION UNDER ELEVATOR 
@@ -348,15 +353,15 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         is_grounded = False
         for plat in all_solids:
             if player_rect.colliderect(plat):
-                if player_vel_y >= 0: 
-                    if player_rect.bottom - player_vel_y <= plat.top + SNAP_TOLERANCE:
+                if player_vel_y >= 0:
+                    if player_rect.bottom - player_vel_y * dt <= plat.top + SNAP_TOLERANCE:
                         player_rect.bottom = plat.top
                         player_y           = float(player_rect.y)
                         player_vel_y       = 0.0
                         is_grounded        = True
                         can_double_jump    = True
-                elif player_vel_y < 0: 
-                    if player_rect.top - player_vel_y >= plat.bottom - SNAP_TOLERANCE:
+                elif player_vel_y < 0:
+                    if player_rect.top - player_vel_y * dt >= plat.bottom - SNAP_TOLERANCE:
                         player_rect.top = plat.bottom
                         player_y        = float(player_rect.y)
                         player_vel_y    = 0.0
@@ -389,7 +394,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         if is_grounded:
             coyote_frames = 6
         else:
-            coyote_frames = max(0, coyote_frames - 1)
+            coyote_frames = max(0, coyote_frames - dt)
 
         if player_rect.y > HEIGHT + 190:
             player_x      = float(spawn_x)
@@ -402,7 +407,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         enemy_result = enemies_module.update_enemies(
             enemies, player_rect, player_vel_y,
             static_solids, platforms, screen, clock,
-            lambda: levelONE(screen, tile_map)
+            lambda: levelONE(screen, tile_map),
+            dt
         )
         if enemy_result is not None:
             player_vel_y = enemy_result
@@ -416,7 +422,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_hp -= dmg
                     invincible_timer = INVINCIBLE_FRAMES
                     kb = 10 if player_rect.centerx < enemy["rect"].centerx else -10
-                    player_x += kb
+                    player_x += kb * dt
                     player_rect.x = int(player_x)
                     player_vel_y = -8
                     if player_hp <= 0:
@@ -427,12 +433,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         )
                         return
                     break
-        invincible_timer = max(0, invincible_timer - 1)
+        invincible_timer = max(0, invincible_timer - dt)
 
         # WEAPON UPDATES
-        weapons.update(projectiles, static_solids, enemies)
-        weapon_cooldown = max(0, weapon_cooldown - 1)
-        shop_cooldown = max(0, shop_cooldown - 1)
+        weapons.update(projectiles, static_solids, enemies, dt)
+        weapon_cooldown = max(0, weapon_cooldown - dt)
+        shop_cooldown = max(0, shop_cooldown - dt)
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
@@ -459,6 +465,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         cam_iy = int(camera_y)
 
         # ART RENDERING LAYER
+        render_scale = constants.settings["render_scale"]
+        if render_scale != 1.0:
+            render_w = int(WIDTH * render_scale)
+            render_h = int(HEIGHT * render_scale)
+            render_surf = pygame.Surface((render_w, render_h))
+            orig_screen = screen
+            screen = render_surf
+
         graphics.draw_vertical_gradient(screen, (4, 8, 15), (14, 42, 54))
 
         for plat in platforms:
@@ -517,7 +531,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             cy = int(vy + lorey["rect"].height // 2)
 
             if not lorey["collected"]:
-                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0   
+                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0
                 radius = int(10 + pulse * 4)
                 alpha_surf = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
                 glow_col = (40, int(180 + pulse * 60), int(200 + pulse * 55), 90)
@@ -525,10 +539,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 screen.blit(alpha_surf, (cx - radius - 2, cy - radius - 2))
                 pygame.draw.circle(screen, (80, 220, 210), (cx, cy), radius)
                 pygame.draw.circle(screen, (180, 255, 245), (cx, cy), radius, 2)
-                q_surf = lore_font.render("?", True, (10, 30, 40))
-                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
-                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
-                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
             else:
                 pygame.draw.circle(screen, (30, 80, 90), (cx, cy), 6)
                 pygame.draw.circle(screen, (60, 140, 160), (cx, cy), 6, 1)
@@ -573,7 +583,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 screen.blit(shopkeeper_img, (sx, sy))
 
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
-        weapons.render(screen, projectiles, camera_x, camera_y)
+        weapons.render(screen, projectiles, camera_x, camera_y, dt)
 
         # WATER RENDERING
         water_time = pygame.time.get_ticks() / 1000.0
@@ -602,6 +612,26 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 shimmer_surf = pygame.Surface((30, 3), pygame.SRCALPHA)
                 shimmer_surf.fill((120, 210, 255, shimmer_alpha))
                 screen.blit(shimmer_surf, (sx, sy)) 
+
+        if render_scale != 1.0:
+            pygame.transform.smoothscale(screen, (WIDTH, HEIGHT), orig_screen)
+            screen = orig_screen
+
+        # Lore drop text (crisp, not supersampled)
+        for lorey in lore_drop:
+            vx = lorey["rect"].x - camera_x
+            vy = lorey["rect"].y - camera_y
+            if vx + lorey["rect"].width < 0 or vx > WIDTH or vy + lorey["rect"].height < 0 or vy > HEIGHT:
+                continue
+            cx = int(vx + lorey["rect"].width // 2)
+            cy = int(vy + lorey["rect"].height // 2)
+            if not lorey["collected"]:
+                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0
+                radius = int(10 + pulse * 4)
+                q_surf = lore_font.render("?", True, (10, 30, 40))
+                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
+                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
+                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
 
         # ── HUD ────────────────────────────────────────────────────────────────────
         hs = constants.settings["hud_scale"] / 100
@@ -721,9 +751,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             wx = WIDTH // 2 - warn_s.get_width() // 2
             draw_panel(screen, wx - int(12 * hs), HEIGHT // 2 - int(118 * hs), warn_s.get_width() + int(24 * hs), int(30 * hs))
             screen.blit(warn_s, (wx, HEIGHT // 2 - int(112 * hs)))
-            show_warning_frames -= 1
+            show_warning_frames -= dt
 
-        graphics.update_lore_display(screen)
+        graphics.update_lore_display(screen, dt)
 
         pygame.display.flip()
 

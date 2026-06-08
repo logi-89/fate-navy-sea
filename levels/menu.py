@@ -97,13 +97,25 @@ def settings_menu(screen, clock):
             mode_index = i
             break
 
+    fps_index = 0
+    for i, fps in enumerate(constants.FPS_OPTIONS):
+        if fps == constants.settings["fps"]:
+            fps_index = i
+            break
+
+    rs_index = 0
+    for i, rs in enumerate(constants.RENDER_SCALE_OPTIONS):
+        if rs == constants.settings["render_scale"]:
+            rs_index = i
+            break
+
     dragging_volume = False
     dragging_hud = False
 
     button_back = pygame.Rect(constants.WIDTH // 2 - 100, constants.HEIGHT - 100, 200, 55)
 
     def get_slider_rect(center_y):
-        return pygame.Rect(constants.WIDTH // 2 - 170, center_y - 6, 340, 12)
+        return pygame.Rect(constants.WIDTH // 2 - 100, center_y - 6, 340, 12)
 
     def value_from_pos(slider, mouse_x, max_val=100):
         ratio = (mouse_x - slider.x) / slider.w
@@ -143,8 +155,8 @@ def settings_menu(screen, clock):
             lbl = font_item.render(label, True, (180, 220, 240))
             screen.blit(lbl, (WIDTH // 2 - 340, cy - 14))
 
-            val_text = font_value.render(f"{val}%", True, (100, 220, 180))
-            screen.blit(val_text, (WIDTH // 2 + 190, cy - 10))
+            val_text = font_value.render(f"{round(val/100,1)}", True, (100, 220, 180))
+            screen.blit(val_text, (WIDTH // 2 + 250, cy - 10))
 
             slider = get_slider_rect(cy)
             pygame.draw.rect(screen, (20, 50, 70), slider, border_radius=6)
@@ -185,6 +197,21 @@ def settings_menu(screen, clock):
         mode_right = pygame.Rect(WIDTH // 2 + 110, 405, 22, 22)
         pygame.draw.polygon(screen, (120, 220, 200), [(mode_left.right, mode_left.y), (mode_left.x, mode_left.centery), (mode_left.right, mode_left.bottom)])
         pygame.draw.polygon(screen, (120, 220, 200), [(mode_right.x, mode_right.y), (mode_right.right, mode_right.centery), (mode_right.x, mode_right.bottom)])
+
+        # FPS selector
+        fps_lbl = font_item.render("FPS", True, (180, 220, 240))
+        screen.blit(fps_lbl, (WIDTH // 2 - 340, 480))
+        fps_val = constants.FPS_OPTIONS[fps_index]
+        fps_text = font_item.render(f"{fps_val if fps_val > 0 else 'Uncapped'}", True, WHITE)
+        fps_rect = pygame.Rect(WIDTH // 2 - 100, 465, 200, 40)
+        pygame.draw.rect(screen, (25, 65, 95), fps_rect, border_radius=8)
+        pygame.draw.rect(screen, (60, 160, 200), fps_rect, 2, border_radius=8)
+        screen.blit(fps_text, fps_text.get_rect(center=fps_rect.center))
+
+        fps_left = pygame.Rect(WIDTH // 2 - 130, 475, 22, 22)
+        fps_right = pygame.Rect(WIDTH // 2 + 110, 475, 22, 22)
+        pygame.draw.polygon(screen, (120, 220, 200), [(fps_left.right, fps_left.y), (fps_left.x, fps_left.centery), (fps_left.right, fps_left.bottom)])
+        pygame.draw.polygon(screen, (120, 220, 200), [(fps_right.x, fps_right.y), (fps_right.right, fps_right.centery), (fps_right.x, fps_right.bottom)])
 
         # Back button
         hovered_back = button_back.collidepoint(mouse_pos)
@@ -235,6 +262,12 @@ def settings_menu(screen, clock):
                     constants.settings["display_mode"] = constants.DISPLAY_MODES[mode_index]
                     apply_display()
 
+                if fps_left.collidepoint(event.pos):
+                    fps_index = (fps_index - 1) % len(constants.FPS_OPTIONS)
+                    constants.settings["fps"] = constants.FPS_OPTIONS[fps_index]
+                if fps_right.collidepoint(event.pos):
+                    fps_index = (fps_index + 1) % len(constants.FPS_OPTIONS)
+                    constants.settings["fps"] = constants.FPS_OPTIONS[fps_index]
                 if button_back.collidepoint(event.pos):
                     running = False
 

@@ -26,18 +26,16 @@ def draw_vertical_gradient(surface, top_color, bottom_color):
         pygame.draw.line(surface, (r, g, b), (0, y), (surf_w, y))
 
 
-def update_lore_display(screen):
+def update_lore_display(screen, dt=1.0):
     if constants.lore_display_timer > 0 and constants.lore_display_text:
-        # Countdown one frame for fade effect
         fade_threshold = 60
         alpha = 255
 
-        # Fading effect
         if constants.lore_display_timer <= fade_threshold:
             alpha = int((constants.lore_display_timer / fade_threshold) * 255)
 
         lore_display(screen, constants.lore_display_text, alpha)
-        constants.lore_display_timer -= 1
+        constants.lore_display_timer -= dt
 
 def lore_display(screen, lore_display_text, alpha=255):
     lore_font = pygame.font.Font(None, 26)

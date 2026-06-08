@@ -99,7 +99,12 @@ settings = {
     "display_w": 1500,
     "display_h": 900,
     "display_mode": "fullscreen",
+    "fps": 60,
+    "render_scale": 1.0,
 }
+
+RENDER_SCALE_OPTIONS = [1.0, 1.5, 2.0, 3.0]
+FPS_OPTIONS = [30, 60, 90, 120, 240, 0]
 
 AVAILABLE_RESOLUTIONS = [
     (1280, 720),

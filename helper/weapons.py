@@ -70,17 +70,17 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
     return True
 
 
-def update(projectiles, static_solids, enemies):
+def update(projectiles, static_solids, enemies, dt=1.0):
     for p in projectiles[:]:
         if p["weapon"] == "spear_slash":
             continue
 
-        p["rect"].x += int(p["vx"])
-        p["rect"].y += int(p["vy"])
+        p["rect"].x += int(p["vx"] * dt)
+        p["rect"].y += int(p["vy"] * dt)
 
-        p["vy"] = min(p["vy"] + 0.4, 12)
+        p["vy"] = min(p["vy"] + 0.4 * dt, 12)
 
-        p["life"] -= 1
+        p["life"] -= dt
         if p["life"] <= 0:
             projectiles.remove(p)
             continue
@@ -105,7 +105,7 @@ def update(projectiles, static_solids, enemies):
                 break
 
 
-def render(screen, projectiles, camera_x, camera_y):
+def render(screen, projectiles, camera_x, camera_y, dt=1.0):
     for p in projectiles[:]:
         vx = p["rect"].x - camera_x
         vy = p["rect"].y - camera_y
@@ -119,7 +119,7 @@ def render(screen, projectiles, camera_x, camera_y):
                 s.fill((p["color"][0], p["color"][1], p["color"][2], alpha))
                 screen.blit(s, (vx, vy))
                 pygame.draw.rect(screen, (255, 220, 160, alpha), (vx, vy, p["rect"].width, p["rect"].height), 2)
-            p["life"] -= 1
+            p["life"] -= dt
             if p["life"] <= 0:
                 projectiles.remove(p)
         elif p["weapon"] == "water_gun":

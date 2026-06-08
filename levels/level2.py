@@ -132,7 +132,12 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     input_allowed = False
 
     while running:
-        dt = clock.tick(60)
+        target_fps = constants.settings["fps"]
+        if target_fps > 0:
+            ms = clock.tick(target_fps)
+        else:
+            ms = clock.tick()
+        dt = max(0.01, ms / 16.666667)
 
         # Wait for all keys to be released before allowing input
         if not input_allowed:
@@ -213,8 +218,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             prev_y = elev["float_y"]
             
             if elev is riding_elev:
-                elev_speed = abs(elev["speed"])
-                
+                elev_speed = abs(elev["speed"]) * dt
+
                 # E=UP / Q=DOWN (standardised across both levels)
                 if keys[pygame.K_e] and input_allowed:
                     elev["float_y"] -= elev_speed
@@ -235,8 +240,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         # ANIMATED DOORS 
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
-                door["offset_y"] = min(door["offset_y"] + 4, door["max_open"])
-                door["rect"].y -= 4
+                door["offset_y"] = min(door["offset_y"] + 4 * dt, door["max_open"])
+                door["rect"].y -= 4 * dt
                 door["rect"].height = max(4, door["max_open"] - door["offset_y"])
 
         static_solids = platforms + [d["rect"] for d in breakable_doors if not d["broken"]] + \
@@ -245,9 +250,9 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS 
         move_x = 0
         if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:
-            move_x -= physics.PLAYER_SPEED
+            move_x -= physics.PLAYER_SPEED * dt
         if keys[pygame.K_d] and input_allowed or keys[pygame.K_RIGHT] and input_allowed:
-            move_x += physics.PLAYER_SPEED
+            move_x += physics.PLAYER_SPEED * dt
 
         player_x = max(0.0, min(player_x + move_x, world_w - player_rect.width))
         player_rect.x = int(player_x)
@@ -274,8 +279,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         #  VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS
         if riding_elev is None:
-            player_vel_y = min(player_vel_y + physics.GRAVITY, physics.MAX_FALL_SPEED)
-            player_y += player_vel_y
+            player_vel_y = min(player_vel_y + physics.GRAVITY * dt, physics.MAX_FALL_SPEED)
+            player_y += player_vel_y * dt
             player_rect.y = int(player_y)
 
         # ── CRUSH / SQUISH DETECTION UNDER ELEVATOR
@@ -294,15 +299,15 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         is_grounded = False
         for plat in all_solids:
             if player_rect.colliderect(plat):
-                if player_vel_y >= 0: 
-                    if player_rect.bottom - player_vel_y <= plat.top + SNAP_TOLERANCE:
+                if player_vel_y >= 0:
+                    if player_rect.bottom - player_vel_y * dt <= plat.top + SNAP_TOLERANCE:
                         player_rect.bottom = plat.top
                         player_y           = float(player_rect.y)
                         player_vel_y       = 0.0
                         is_grounded        = True
                         can_double_jump    = True
-                elif player_vel_y < 0: 
-                    if player_rect.top - player_vel_y >= plat.bottom - SNAP_TOLERANCE:
+                elif player_vel_y < 0:
+                    if player_rect.top - player_vel_y * dt >= plat.bottom - SNAP_TOLERANCE:
                         player_rect.top = plat.bottom
                         player_y        = float(player_rect.y)
                         player_vel_y    = 0.0
@@ -331,7 +336,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         if is_grounded:
             coyote_frames = 6
         else:
-            coyote_frames = max(0, coyote_frames - 1)
+            coyote_frames = max(0, coyote_frames - dt)
 
         if player_rect.y > HEIGHT + 190:
             player_x      = float(spawn_x)
@@ -342,8 +347,16 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         camera_x = max(0, min(player_rect.x - WIDTH // 2, world_w - WIDTH))
 
-        # ART RENDERING LAYER 
-        light_glow_t += 1
+        # ART RENDERING LAYER
+        render_scale = constants.settings["render_scale"]
+        if render_scale != 1.0:
+            render_w = int(WIDTH * render_scale)
+            render_h = int(HEIGHT * render_scale)
+            render_surf = pygame.Surface((render_w, render_h))
+            orig_screen = screen
+            screen = render_surf
+
+        light_glow_t += dt
 
         bg_surf = pygame.Surface((WIDTH, HEIGHT))
         for scanline in range(HEIGHT):
@@ -371,7 +384,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         # Fast speed particles
         for p in particle_pool:
-            p["x"] -= p["speed"]
+            p["x"] -= p["speed"] * dt
             if p["x"] + p["len"] < camera_x:
                 p["x"] = camera_x + WIDTH + p["len"]
                 p["y"] = 30 + random.random() * 55
@@ -385,7 +398,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         # Kelp on ground 
         ground_y = HEIGHT - 80   
         for k in kelp_pool:
-            k["phase"] += 0.022
+            k["phase"] += 0.022 * dt
             kx_screen = k["bx"] - camera_x
             if -20 < kx_screen < WIDTH + 20:
                 segs = 6
@@ -485,18 +498,14 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 screen.blit(alpha_surf, (cx - radius - 2, cy - radius - 2))
                 pygame.draw.circle(screen, (80, 220, 210), (cx, cy), radius)
                 pygame.draw.circle(screen, (180, 255, 245), (cx, cy), radius, 2)
-                q_surf = lore_font.render("?", True, (10, 30, 40))
-                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
-                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
-                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
             else:
                 pygame.draw.circle(screen, (30, 80, 90), (cx, cy), 6)
                 pygame.draw.circle(screen, (60, 140, 160), (cx, cy), 6, 1)
 
         #  Floating bubbles 
         for b in bubble_pool:
-            b["y"] -= b["speed"]
-            b["x"] += b["drift"]
+            b["y"] -= b["speed"] * dt
+            b["x"] += b["drift"] * dt
             if b["y"] + b["r"] < 0:
                 b["y"] = HEIGHT + b["r"]
                 b["x"] = camera_x + random.random() * world_w # Use random.random()
@@ -515,6 +524,26 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         screen.blit(shadow_s, (pr.x - 5, pr.bottom + 2))
         pygame.draw.rect(screen, (220, 100, 0), pr, border_radius=4)
         pygame.draw.rect(screen, (255, 195, 0), pr, 2, border_radius=4)
+
+        if render_scale != 1.0:
+            pygame.transform.smoothscale(screen, (WIDTH, HEIGHT), orig_screen)
+            screen = orig_screen
+
+        # Lore drop text (crisp, not supersampled)
+        for lorey in lore_drop:
+            vx = lorey["rect"].x - camera_x
+            vy = lorey["rect"].y - camera_y
+            if vx + lorey["rect"].width < 0 or vx > WIDTH or vy + lorey["rect"].height < 0 or vy > HEIGHT:
+                continue
+            cx = int(vx + lorey["rect"].width // 2)
+            cy = int(vy + lorey["rect"].height // 2)
+            if not lorey["collected"]:
+                pulse = abs(pygame.time.get_ticks() % 1200 - 600) / 600.0
+                radius = int(10 + pulse * 4)
+                q_surf = lore_font.render("?", True, (10, 30, 40))
+                screen.blit(q_surf, (cx - q_surf.get_width() // 2, cy - q_surf.get_height() // 2))
+                f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
+                screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
 
         # HUD
         hs = constants.settings["hud_scale"] / 100
@@ -548,9 +577,9 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             warn_txt = hud_font.render(
                 "Find a paperclip first to pick this wall lock!", True, (220, 80, 80))
             screen.blit(warn_txt, (WIDTH // 2 - warn_txt.get_width() // 2, HEIGHT // 2 - int(100 * hs)))
-            show_warning_frames -= 1
+            show_warning_frames -= dt
 
-        graphics.update_lore_display(screen)
+        graphics.update_lore_display(screen, dt)
 
         pygame.display.flip()
 
