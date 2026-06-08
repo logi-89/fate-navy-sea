@@ -53,7 +53,6 @@ jobs:
           mode: app
           output-dir: build
           output-file: fate-navy-sea
-          include-data-files: "*.png=."
           enable-console: true
 
       - name: Build with PyInstaller
@@ -65,7 +64,6 @@ jobs:
             *) sep=":" ;;
           esac
           pyinstaller --onefile --name "fate-navy-sea" \
-            --add-data "WH.png${sep}." \
             --hidden-import pygame \
             main.py
 
