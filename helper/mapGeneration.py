@@ -4,6 +4,7 @@ from constants import *
 import pygame
 
 def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_SIZE):
+
     """
         # -> wall / solid platform
         @ -> paper clip pickup
@@ -12,6 +13,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         ^ -> animated door (opens upward)
         num -> #level
     """
+
     platforms       = []
     breakable_doors = []
     paperclips      = []
@@ -118,7 +120,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "state": "patrol",
                     "hp": 100,
                     "max_hp": 100,
-                    "damage": 15,
+                    "damage": 7,
                 })
                 col += 1
 
@@ -133,10 +135,14 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                     "speed": 1,
                     "chase_speed": 1,
                     "detect_range": 750,
-                    "state": "patrol",#fixed
+                    "state": "patrol",
                     "hp": 150,
                     "max_hp": 150,
                     "damage": 5,
+                    "type": "warden",
+                    "shoot_cooldown": 0,
+                    "burst_remaining": 4,
+                    "reload_timer": 0,
                 })
                 col += 1
 
