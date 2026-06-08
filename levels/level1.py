@@ -4,7 +4,7 @@ import constants
 import math
 import random
 
-constants.dev_mode = True
+#constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -731,9 +731,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         p_surf = ui_font_xs.render(pick_text, True, pick_col)
         screen.blit(p_surf, (CL_X + CL_W - p_surf.get_width() - int(8 * hs), CL_Y + int(3 * hs)))
 
-        coins_collected = sum(1 for c in coins if c["collected"])
-        coins_total = len(coins)
-        coin_surf = ui_font_xs.render(f"¢ {coins_collected}/{coins_total}", True, (255, 215, 0))
+        coin_surf = ui_font_xs.render(f"¢ {constants.player_coins}", True, (255, 215, 0))
         screen.blit(coin_surf, (CL_X + CL_W - coin_surf.get_width() - int(8 * hs), CL_Y + int(14 * hs)))
 
         # ── WEAPON SLOTS ──
