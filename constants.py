@@ -52,11 +52,11 @@ class physics:
 class shop:
     # SHOP SCREEN
     SHOP_ITEMS = [
-        {"name": "Health Flask", "desc": "+1 flask (heals 40 HP when used)", "cost": 15, "key": "flask"},
-        {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity", "cost": 20, "key": "balloon_ammo"},
-        {"name": "Max HP +25", "desc": "Increase maximum health", "cost": 40, "key": "max_hp"},
-        {"name": "Sea Boots", "desc": "+1 speed permanently", "cost": 50, "key": "speed"},
-        {"name": "Spears", "desc": "spears", "cost": 80, "key": "Spears"},
+        {"name": "Health Flask", "desc": "+1 flask (heals 40 HP when used)", "cost": 115, "key": "flask"},
+        {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity",         "cost": 120, "key": "balloon_ammo"},
+        {"name": "Max HP +25", "desc": "Increase maximum health",            "cost": 140, "key": "max_hp"},
+        {"name": "Sea Boots", "desc": "+1 speed permanently",                "cost": 150, "key": "speed"},
+        {"name": "Spears", "desc": "spears",                                 "cost": 180, "key": "Spears"},
     ]
 
 # Sea gel palette
