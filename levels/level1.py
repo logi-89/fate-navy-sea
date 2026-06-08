@@ -5,7 +5,6 @@ import math
 import random
 
 constants.dev_mode = True
-w_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -61,6 +60,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top + 150
 
         if constants.dev_mode == True:
+            w_mode = False
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
@@ -442,20 +442,18 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         weapons.update(projectiles, static_solids, enemies)
 
         # Warden bullet vs. player
-        if invincible_timer <= 0:
-            for p in projectiles[:]:
-                if p["weapon"] == "warden_bullet" and p["rect"].colliderect(player_rect):
-                    player_hp -= p["dmg"]
-                    invincible_timer = INVINCIBLE_FRAMES
-                    projectiles.remove(p)
-                    if player_hp <= 0:
+        for p in projectiles[:]:
+            if p["weapon"] == "warden_bullet" and p["rect"].colliderect(player_rect):
+                player_hp -= p["dmg"]
+                projectiles.remove(p)
+                if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
                             screen, clock,
                             lambda: levelONE(screen, tile_map),
                             "You were killed by an enemy!"
                         )
                         return
-                    break
+                    #break
 
         weapon_cooldown = max(0, weapon_cooldown - 1)
         shop_cooldown = max(0, shop_cooldown - 1)
