@@ -25,6 +25,8 @@ def intro(screen, set_clock):
     global clock
 
     clock = set_clock
+    if constants.player_inventory_clips < 1:
+        constants.player_inventory_clips = 1
     introLORE(screen)
     print("[DEBUG] Show intro")
     levelTWO(screen, maps.L2)
@@ -414,6 +416,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             if not c["collected"] and player_rect.colliderect(c["rect"]):
                 c["collected"] = True
                 constants.player_coins += 50
+                constants.total_score += 50
 
         if is_grounded:
             coyote_frames = 6

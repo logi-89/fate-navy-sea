@@ -13,25 +13,19 @@ from helper import death_screen
 from helper import enemy as enemies_module
 from helper import weapons
 
-import levels
-from levels import level2
 from levels import menu
 
 clock = None
 
-def introLORE(screen: pygame.Surface) -> None:
-    screen.fill(BLACK)
 
 def intro(screen, set_clock):
     global clock
-
     clock = set_clock
-    introLORE(screen)
-    print("[DEBUG] Show intro")
-    levelONE(screen, maps.L1)
+    if constants.player_inventory_clips < 1:
+        constants.player_inventory_clips = 1
+    levelFOUR(screen, maps.L_Lab)
 
-
-def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -57,7 +51,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x + 215
-        spawn_y = best.top + 150
+        spawn_y = best.top - 450
 
         if constants.dev_mode == True:
             w_mode = True
@@ -333,16 +327,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
-                            death_screen.show_death_screen(screen, clock, lambda: levelONE(screen, tile_map))
+                            death_screen.show_death_screen(screen, clock, lambda: levelFOUR(screen, tile_map))
                             return
-
-        # LEVEL TRANSITION TRIGGER
-        for trigger in map_data.get("level_triggers", []):
-            if player_rect.colliderect(trigger["rect"]):
-                if trigger["target_level"] == 2:
-                    print("TOOOOOO LEVEL 2 !!!!!!!!!!!!")
-                    levels.level2.intro(screen, clock)
-                    return
 
         if shop_cooldown <= 0:
             for shop_t in shop_triggers:
@@ -416,7 +402,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         enemy_result = enemies_module.update_enemies(
             enemies, player_rect, player_vel_y,
             static_solids, platforms, screen, clock,
-            lambda: levelONE(screen, tile_map),
+            lambda: levelFOUR(screen, tile_map),
             projectiles, dt
         )
         if enemy_result is not None:
@@ -437,7 +423,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
                             screen, clock,
-                            lambda: levelONE(screen, tile_map),
+                            lambda: levelFOUR(screen, tile_map),
                             "You were killed by an enemy!"
                         )
                         return
@@ -445,8 +431,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         invincible_timer = max(0, invincible_timer - dt)
 
         # WEAPON UPDATES
-        weapons.update(projectiles, static_solids, enemies)
-
         weapons.update(projectiles, static_solids, enemies, dt)
 
         # Warden bullet vs. player
@@ -457,7 +441,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
                             screen, clock,
-                            lambda: levelONE(screen, tile_map),
+                            lambda: levelFOUR(screen, tile_map),
                             "You were killed by an enemy!"
                         )
                         return
@@ -465,19 +449,15 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
 
-        # SMOOTH  CAMERA LERP TRACKING
-        max_cam_x = max(0, world_w - WIDTH)
-        max_cam_y = max(0, world_h - HEIGHT)
-
+        # SMOOTH CAMERA LaRP (LERP) TRACKING
         target_cam_x = player_rect.centerx - WIDTH // 2
         target_cam_y = player_rect.centery - HEIGHT // 2
 
-        target_cam_x = max(0, min(target_cam_x, max_cam_x))
-        target_cam_y = max(0, min(target_cam_y, max_cam_y))
+        LERP_X = 0.12
+        LERP_Y = 0.14  # slightly snappier vertically feels more responsive
 
-        LARP = 0.12
-        camera_x += (target_cam_x - camera_x) * LARP
-        camera_y += (target_cam_y - camera_y) * LARP
+        camera_x += (target_cam_x - camera_x) * LERP_X
+        camera_y += (target_cam_y - camera_y) * LERP_Y
 
         # Snap to avoid sub-pixel drift when very close
         if abs(camera_x - target_cam_x) < 0.5:
@@ -681,7 +661,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for key, action in hints:
             hint_parts.append((key, (100, 180, 140)))
             hint_parts.append((f" {action}", (60, 130, 100)))
-            hint_parts.append(("  |  ", (40, 80, 60)))
+            hint_parts.append(("  │  ", (40, 80, 60)))
         hint_parts = hint_parts[:-1]
 
         hint_total_w = sum(ui_font_xs.size(t)[0] for t, _ in hint_parts)
@@ -715,10 +695,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         flask_surf = ui_font_xs.render(f"⚕ {constants.player_flasks}", True, (140, 220, 100))
         screen.blit(flask_surf, (PNL_X + PNL_W - flask_surf.get_width() - int(8 * hs), PNL_Y + int(38 * hs)))
-
-        # ── SCORE ──
-        score_surf = ui_font_xs.render(f"SCORE: {constants.total_score}", True, (255, 215, 0))
-        screen.blit(score_surf, (int(14 * hs), int(58 * hs)))
 
         # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])

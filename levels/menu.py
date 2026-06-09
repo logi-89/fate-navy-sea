@@ -7,6 +7,7 @@ import maps
 import levels.level1
 import levels.level2
 import levels.level3
+import levels.level4
 
 jukebox = None
 
@@ -80,8 +81,12 @@ def show_title_screen(screen, clock, jukebox_object):
                     return screen
                 if chapters_button.collidepoint(event.pos):
                     screen = chapter_select(screen, clock)
+                    if not pygame.get_init():
+                        return screen
                 if settings_button.collidepoint(event.pos):
                     screen = settings_menu(screen, clock)
+                    if not pygame.get_init():
+                        return screen
 
         pygame.display.flip()
         clock.tick(60)
@@ -101,6 +106,7 @@ def chapter_select(screen, clock):
         ("Chapter 1", "The Depths", levels.level1.intro),
         ("Chapter 2", "The Train", lambda s, c: levels.level2.intro(s, c)),
         ("Chapter 3", "The Laboratory", levels.level3.intro),
+        ("Chapter 4", "The Lab", levels.level4.intro),
     ]
 
     while running:
