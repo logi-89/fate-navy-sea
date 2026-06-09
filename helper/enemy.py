@@ -4,7 +4,6 @@ import pygame
 from constants import WIDTH, HEIGHT
 import constants
 from helper import death_screen
-import os
 
 _warden_idle = None
 _warden_shoot = []
@@ -12,12 +11,11 @@ _warden_shoot = []
 def _get_warden_sprites():
     global _warden_idle, _warden_shoot
     if _warden_idle is None:
-        base = os.path.join(os.path.dirname(__file__), "..")
-        img = pygame.image.load(os.path.join(base, "Warden Idle", "warden_shock_trooper(base).png"))
+        img = pygame.image.load(constants.resource_path(os.path.join("Warden Idle", "warden_shock_trooper(base).png")))
         _warden_idle = pygame.transform.scale(img, (175, 215))
         _warden_shoot = []
         for fname in ("warden_shock_shooter_frame_1.png", "warden_shock_shooter_frame_2.png"):
-            img = pygame.image.load(os.path.join(base, "Warden Shoot", fname))
+            img = pygame.image.load(constants.resource_path(os.path.join("Warden Shoot", fname)))
             _warden_shoot.append(pygame.transform.scale(img, (175, 215)))
     return _warden_idle, _warden_shoot
 
