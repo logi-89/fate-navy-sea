@@ -13,24 +13,17 @@ from helper import death_screen
 from helper import enemy as enemies_module
 from helper import weapons
 
-import levels
 from levels import menu
 
 clock = None
 
-# def introLORE(screen: pygame.Surface) -> None:
-#     screen.fill(BLACK)
 
-# def intro(screen, set_clock):
-#     global clock
+def intro(screen, set_clock):
+    global clock
+    clock = set_clock
+    levelTHREE(screen, maps.L3)
 
-#     clock = set_clock
-#     introLORE(screen)
-#     print("[DEBUG] Show intro")
-#     levelTWO(screen, maps.L2)
-
-
-def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -115,8 +108,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     ui_font   = pygame.font.Font(None, 30)
     lore_font = pygame.font.Font(None, 26)
 
-    COLOR_ELEVATOR  = (80, 210, 190)
-    COLOR_ANIM_DOOR = (50, 80, 160)
+    COLOR_ELEVATOR  = (25, 75, 75)
+    COLOR_ANIM_DOOR = (45, 55, 65)
     # Cap elevator downward travel at the nearest platform below
     for elev in elevators:
         floor_y = None
@@ -131,32 +124,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         else:
             elev["max_y"] = elev["origin_y"] + elev["range"]
 
-    light_glow_t = 0   
-    bubble_pool = [
-        {
-            "x": random.random() * world_w, 
-            "y": random.random() * HEIGHT,
-            "r": 1 + random.random() * 4, 
-            "speed": 0.4 + random.random() * 1.2,
-            "drift": (random.random() - 0.5) * 0.3
-        } for _ in range(80)
-    ]
-    particle_pool = [
-        {
-            "x": random.random() * world_w,
-            "y": 30 + random.random() * 55,   
-            "len": 12 + random.random() * 40, 
-            "speed": 5 + random.random() * 9,
-            "alpha": 0.15 + random.random() * 0.35
-        } for _ in range(120)
-    ]
-    kelp_pool = [
-        {
-            "bx": x, 
-            "phase": random.random() * 6.28,
-            "h": 28 + random.random() * 38
-        } for x in range(0, world_w, 55)
-    ]
     # Nudge spawn upward if it overlaps a platform
     for plat in platforms:
         if player_rect.colliderect(plat):
@@ -358,15 +325,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_rect.bottom = elev["rect"].bottom
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
-                            death_screen.show_death_screen(screen, clock, lambda: levelTWO(screen, tile_map))
+                            death_screen.show_death_screen(screen, clock, lambda: levelTHREE(screen, tile_map))
                             return
-
-        # LEVEL TRANSITION TRIGGER
-        for trigger in map_data.get("level_triggers", []):
-            if player_rect.colliderect(trigger["rect"]):
-                if trigger["target_level"] == 3:
-                    levels.level3.intro(screen, clock)
-                    return
 
         if shop_cooldown <= 0:
             for shop_t in shop_triggers:
@@ -439,7 +399,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         enemy_result = enemies_module.update_enemies(
             enemies, player_rect, player_vel_y,
             static_solids, platforms, screen, clock,
-            lambda: levelTWO(screen, tile_map),
+            lambda: levelTHREE(screen, tile_map),
             projectiles, dt
         )
         if enemy_result is not None:
@@ -460,7 +420,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
                             screen, clock,
-                            lambda: levelTWO(screen, tile_map),
+                            lambda: levelTHREE(screen, tile_map),
                             "You were killed by an enemy!"
                         )
                         return
@@ -468,8 +428,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         invincible_timer = max(0, invincible_timer - dt)
 
         # WEAPON UPDATES
-        weapons.update(projectiles, static_solids, enemies)
-
         weapons.update(projectiles, static_solids, enemies, dt)
 
         # Warden bullet vs. player
@@ -480,7 +438,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
                             screen, clock,
-                            lambda: levelTWO(screen, tile_map),
+                            lambda: levelTHREE(screen, tile_map),
                             "You were killed by an enemy!"
                         )
                         return
@@ -539,7 +497,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             vy = door["rect"].y - camera_y
             if vx + door["rect"].width < 0 or vx > WIDTH or vy + door["rect"].height < 0 or vy > HEIGHT:
                 continue
-            color = (18, 40, 80) if door["hp"] >= 3 else (50, 18, 18)
+            color = COLOR_DOOR_DAMAGED if door["hp"] < 3 else COLOR_DOOR_INTACT
             pygame.draw.rect(screen, color, (vx, vy, door["rect"].width, door["rect"].height))
             pygame.draw.rect(screen, (220, 160, 80), (vx, vy, door["rect"].width, door["rect"].height), 3)
             for i in range(door["hp"]):
@@ -591,28 +549,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 pygame.draw.circle(screen, (30, 80, 90), (cx, cy), 6)
                 pygame.draw.circle(screen, (60, 140, 160), (cx, cy), 6, 1)
 
-        #  Floating bubbles 
-        for b in bubble_pool:
-            b["y"] -= b["speed"] * dt
-            b["x"] += b["drift"] * dt
-            if b["y"] + b["r"] < 0:
-                b["y"] = HEIGHT + b["r"]
-                b["x"] = camera_x + random.random() * world_w # Use random.random()
-            vx_b = b["x"] - camera_x
-            if -10 < vx_b < WIDTH + 10:
-                bs = pygame.Surface((int(b["r"]*2+2), int(b["r"]*2+2)), pygame.SRCALPHA)
-                pygame.draw.circle(bs, (120, 200, 180, 55), (int(b["r"]), int(b["r"])), int(b["r"]))
-                pygame.draw.circle(bs, (160, 230, 210, 110), (int(b["r"]), int(b["r"])), int(b["r"]), 1)
-                screen.blit(bs, (int(vx_b - b["r"]), int(b["y"] - b["r"])))
-
-        #  Player 
-        pr = pygame.Rect(player_rect.x - camera_x, player_rect.y,
-                         player_rect.width, player_rect.height)
-        shadow_s = pygame.Surface((pr.width + 10, 6), pygame.SRCALPHA)
-        shadow_s.fill((20, 120, 100, 40))
-        screen.blit(shadow_s, (pr.x - 5, pr.bottom + 2))
-        pygame.draw.rect(screen, (220, 100, 0), pr, border_radius=4)
-        pygame.draw.rect(screen, (255, 195, 0), pr, 2, border_radius=4)
         for elev in elevators:
             vx = elev["rect"].x - camera_x
             vy = elev["rect"].y - camera_y

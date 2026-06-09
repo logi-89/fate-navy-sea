@@ -120,7 +120,7 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
                         spawn_y = enemy["rect"].centery - 4
                         speed = 8
                         projectiles.append({
-                            "rect": pygame.Rect(spawn_x, spawn_y, 6, 6),
+                            "rect": pygame.Rect(spawn_x, spawn_y, 4, 4),
                         "vx": speed * enemy["dir"],
                         "vy": 3,
                         "weapon": "warden_bullet",

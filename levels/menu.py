@@ -3,8 +3,10 @@ import constants
 from constants import *
 from helper.graphics import *
 from helper.music import Music
+import maps
 import levels.level1
 import levels.level2
+import levels.level3
 
 jukebox = None
 
@@ -21,12 +23,14 @@ def show_title_screen(screen, clock, jukebox_object):
     button_font = pygame.font.Font(None, 56)
 
     start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 40, 240, 60)
-    settings_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 120, 240, 60)
+    chapters_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 110, 240, 60)
+    settings_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 180, 240, 60)
 
     while running:
         WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
         mouse_pos = pygame.mouse.get_pos()
         hovered_start = start_button.collidepoint(mouse_pos)
+        hovered_chapters = chapters_button.collidepoint(mouse_pos)
         hovered_settings = settings_button.collidepoint(mouse_pos)
 
         draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
@@ -50,6 +54,12 @@ def show_title_screen(screen, clock, jukebox_object):
         start_rect = start_text.get_rect(center=start_button.center)
         screen.blit(start_text, start_rect)
 
+        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_chapters else title_screen.BUTTON_COLOR, chapters_button, border_radius=18)
+        pygame.draw.rect(screen, WHITE, chapters_button, 3, border_radius=18)
+        chapters_text = button_font.render("Chapters", True, WHITE)
+        chapters_rect = chapters_text.get_rect(center=chapters_button.center)
+        screen.blit(chapters_text, chapters_rect)
+
         pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_settings else title_screen.BUTTON_COLOR, settings_button, border_radius=18)
         pygame.draw.rect(screen, WHITE, settings_button, 3, border_radius=18)
         settings_text = button_font.render("Settings", True, WHITE)
@@ -68,6 +78,8 @@ def show_title_screen(screen, clock, jukebox_object):
                 if start_button.collidepoint(event.pos):
                     levels.level1.intro(screen, clock)
                     return screen
+                if chapters_button.collidepoint(event.pos):
+                    screen = chapter_select(screen, clock)
                 if settings_button.collidepoint(event.pos):
                     screen = settings_menu(screen, clock)
 
@@ -76,6 +88,67 @@ def show_title_screen(screen, clock, jukebox_object):
         t += 0.03
 
     return screen
+
+
+def chapter_select(screen, clock):
+    running = True
+    WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
+    font_title = pygame.font.Font(None, 80)
+    font_chapter = pygame.font.Font(None, 48)
+    font_desc = pygame.font.Font(None, 28)
+
+    chapters = [
+        ("Chapter 1", "The Depths", levels.level1.intro),
+        ("Chapter 2", "The Train", lambda s, c: levels.level2.levelTWO(s, maps.L2)),
+        ("Chapter 3", "The Laboratory", levels.level3.intro),
+    ]
+
+    while running:
+        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+
+        title = font_title.render("Select Chapter", True, WHITE)
+        screen.blit(title, title.get_rect(center=(WIDTH // 2, 60)))
+
+        for i, (name, desc, func) in enumerate(chapters):
+            y = 150 + i * 120
+            rect = pygame.Rect(WIDTH // 2 - 200, y, 400, 80)
+            hovered = rect.collidepoint(pygame.mouse.get_pos())
+
+            bg = title_screen.HOVER_COLOR if hovered else title_screen.BUTTON_COLOR
+            pygame.draw.rect(screen, bg, rect, border_radius=12)
+            pygame.draw.rect(screen, WHITE, rect, 2, border_radius=12)
+
+            n = font_chapter.render(name, True, WHITE)
+            screen.blit(n, (rect.x + 20, rect.y + 8))
+            d = font_desc.render(desc, True, (180, 220, 240))
+            screen.blit(d, (rect.x + 20, rect.y + 45))
+
+        back_rect = pygame.Rect(WIDTH // 2 - 80, HEIGHT - 70, 160, 50)
+        back_hovered = back_rect.collidepoint(pygame.mouse.get_pos())
+        pygame.draw.rect(screen, (50, 50, 70) if back_hovered else (40, 40, 55), back_rect, border_radius=10)
+        pygame.draw.rect(screen, WHITE, back_rect, 2, border_radius=10)
+        back_text = font_chapter.render("Back", True, WHITE)
+        screen.blit(back_text, back_text.get_rect(center=back_rect.center))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return screen
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return screen
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for i, (name, desc, func) in enumerate(chapters):
+                    y = 150 + i * 120
+                    rect = pygame.Rect(WIDTH // 2 - 200, y, 400, 80)
+                    if rect.collidepoint(event.pos):
+                        func(screen, clock)
+                        return screen
+                if back_rect.collidepoint(event.pos):
+                    return screen
+
+        pygame.display.flip()
+        clock.tick(60)
 
 
 def settings_menu(screen, clock):

@@ -131,8 +131,8 @@ def render(screen, projectiles, camera_x, camera_y, dt=1.0):
         elif p["weapon"] == "warden_bullet":
             cx = int(vx + p["rect"].width // 2)
             cy = int(vy + p["rect"].height // 2)
-            pygame.draw.circle(screen, (255, 80, 80), (cx, cy), 4)
-            pygame.draw.circle(screen, (255, 180, 80), (cx, cy), 4, 1)
+            pygame.draw.circle(screen, (60, 180, 255), (cx, cy), 3)
+            pygame.draw.circle(screen, (180, 230, 255), (cx, cy), 3, 1)
         else:
             cx = int(vx + p["rect"].width // 2)
             cy = int(vy + p["rect"].height // 2)
