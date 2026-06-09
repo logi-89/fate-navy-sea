@@ -116,9 +116,19 @@ loreDrop = [
     '"If immortal jellyfish can make you immortal, can giraffes make you taller?" asks a Lazarath Lab scientist.',
     'Squid teenager sent to the factory after using BubbleGPT to cheat in school. "Red is sus, I\'m not," he said when brought in for questioning.',
     'Thule edits go viral on Coral Media. "Never before has a scientist been so cool," says one random kid on the street.',
-    'when is doubt, vibe code it out',
-    'when is doubt, leave it out',
+    'when in doubt, vibe code it out',
+    'when in doubt, leave it out',
     'lebron inc',
-    'Radio 1: when is lunch?'
-    'Radio 67: ... '
+    'Radio 1: when is lunch?', 
+    'Radio 67: ... ', 
+    "Radio 87: Yo, I've got a containment breach over here...", 
+    "Radio 404: Radio not found.",
+    "Radio 21: What's 9 + 10?", 
+    "Radio 007: Hey man, my eye is looking pretty golden...",
+    "Radio 117: Yo chief, you might be the master at this game.", 
+    "Radio 64: Look sonion, I got you a Kinbendo, but I don't know what version it is",
+    "Radio 300: THIS... IS... HERACLION!"
+    "Radio 991: Hello, what crime can I help you with today..."
+    "Radio <('v')>: I believe I can swimmmmmmmmm, I believe I can swim to the skyyyyyyyyyyyyyy...",
+    "We da best com sci"
 ]
