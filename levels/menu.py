@@ -99,7 +99,7 @@ def chapter_select(screen, clock):
 
     chapters = [
         ("Chapter 1", "The Depths", levels.level1.intro),
-        ("Chapter 2", "The Train", lambda s, c: levels.level2.levelTWO(s, maps.L2)),
+        ("Chapter 2", "The Train", lambda s, c: levels.level2.intro(s, c)),
         ("Chapter 3", "The Laboratory", levels.level3.intro),
     ]
 

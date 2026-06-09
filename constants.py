@@ -64,7 +64,7 @@ GROUND_TOP  = (40, 180, 160)   # bright teal surface
 GROUND_SIDE = (20, 120, 110)   # deeper teal edge
 GROUND_DIRT = (10,  70,  80)   # dark ocean-floor fill
 
-dev_mode = True
+dev_mode = False
 
 PLAYER_MAX_HP = 100
 ENEMY_DAMAGE = 15

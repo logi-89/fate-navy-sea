@@ -49,7 +49,7 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x + 215
-        spawn_y = best.top + 150
+        spawn_y = best.top - 450
 
         if constants.dev_mode == True:
             w_mode = True
@@ -446,19 +446,15 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
 
-        # SMOOTH  CAMERA LERP TRACKING
-        max_cam_x = max(0, world_w - WIDTH)
-        max_cam_y = max(0, world_h - HEIGHT)
-
+        # SMOOTH CAMERA LaRP (LERP) TRACKING
         target_cam_x = player_rect.centerx - WIDTH // 2
         target_cam_y = player_rect.centery - HEIGHT // 2
 
-        target_cam_x = max(0, min(target_cam_x, max_cam_x))
-        target_cam_y = max(0, min(target_cam_y, max_cam_y))
+        LERP_X = 0.12
+        LERP_Y = 0.14  # slightly snappier vertically feels more responsive
 
-        LARP = 0.12
-        camera_x += (target_cam_x - camera_x) * LARP
-        camera_y += (target_cam_y - camera_y) * LARP
+        camera_x += (target_cam_x - camera_x) * LERP_X
+        camera_y += (target_cam_y - camera_y) * LERP_Y
 
         # Snap to avoid sub-pixel drift when very close
         if abs(camera_x - target_cam_x) < 0.5:
