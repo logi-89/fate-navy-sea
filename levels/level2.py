@@ -18,16 +18,16 @@ from levels import menu
 
 clock = None
 
-# def introLORE(screen: pygame.Surface) -> None:
-#     screen.fill(BLACK)
+def introLORE(screen: pygame.Surface) -> None:
+    screen.fill(BLACK)
 
-# def intro(screen, set_clock):
-#     global clock
+def intro(screen, set_clock):
+    global clock
 
-#     clock = set_clock
-#     introLORE(screen)
-#     print("[DEBUG] Show intro")
-#     levelTWO(screen, maps.L2)
+    clock = set_clock
+    introLORE(screen)
+    print("[DEBUG] Show intro")
+    levelTWO(screen, maps.L2)
 
 
 def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
@@ -56,20 +56,12 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
         spawn_x = best.x + 215
-        spawn_y = best.top + 150
+        spawn_y = best.top - 567
 
         if constants.dev_mode:
-            w_mode = True
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
-
-            if w_mode:
-                print("MOM, I JUST HIT A CLIP!!")
-                spawn_x = 4030
-                spawn_y = 150
-
-
 
     player_x               = float(spawn_x)
     player_y               = float(spawn_y)
@@ -825,4 +817,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         pygame.display.flip()
 
+
+    pygame.display.flip()
     pygame.quit()
