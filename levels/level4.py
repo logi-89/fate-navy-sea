@@ -696,6 +696,10 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
         flask_surf = ui_font_xs.render(f"⚕ {constants.player_flasks}", True, (140, 220, 100))
         screen.blit(flask_surf, (PNL_X + PNL_W - flask_surf.get_width() - int(8 * hs), PNL_Y + int(38 * hs)))
 
+        # ── SCORE ──
+        score_surf = ui_font_xs.render(f"SCORE: {constants.total_score}", True, (255, 215, 0))
+        screen.blit(score_surf, (int(14 * hs), int(58 * hs)))
+
         # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])
         clips_total = len(paperclips)
