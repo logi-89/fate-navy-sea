@@ -47,13 +47,22 @@ jobs:
 
       - name: Build with Nuitka
         if: steps.tool.outputs.name == 'nuitka'
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          script-name: main.py
-          mode: app
-          output-dir: build
-          output-file: fate-navy-sea
-          enable-console: true
+        run: |
+          pip install nuitka
+          # Collect data directories (those with uppercase letters)
+          DATA_ARGS=()
+          for dir in */; do
+            d="${dir%/}"
+            if echo "$d" | grep -qE '[A-Z]'; then
+              DATA_ARGS+=(--include-data-dir="$d=$d")
+            fi
+          done
+          DATA_ARGS+=(--include-data-files="helper/mr shopKeeper.png=helper/")
+          DATA_ARGS+=(--include-data-files="F4T3_ navy sea.mp3=./")
+          DATA_ARGS+=(--include-data-files="escalator music.mp3=./")
+          nuitka --standalone --enable-console \
+            --output-dir=build --output-file=fate-navy-sea \
+            "${DATA_ARGS[@]}" main.py
 
       - name: Build with PyInstaller
         if: steps.tool.outputs.name == 'pyinstaller'
@@ -63,8 +72,20 @@ jobs:
             Windows) sep=";" ;;
             *) sep=":" ;;
           esac
+          # Collect data directories (those with uppercase letters)
+          DATA_ARGS=()
+          for dir in */; do
+            d="${dir%/}"
+            if echo "$d" | grep -qE '[A-Z]'; then
+              DATA_ARGS+=(--add-data "$d${sep}$d")
+            fi
+          done
+          DATA_ARGS+=(--add-data "helper/mr shopKeeper.png${sep}helper")
+          DATA_ARGS+=(--add-data "F4T3_ navy sea.mp3${sep}.")
+          DATA_ARGS+=(--add-data "escalator music.mp3${sep}.")
           pyinstaller --onefile --name "fate-navy-sea" \
             --hidden-import pygame \
+            "${DATA_ARGS[@]}" \
             main.py
 
       - name: Upload artifact

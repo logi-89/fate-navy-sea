@@ -78,19 +78,19 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     is_grounded            = False
     coyote_frames          = 0
     can_double_jump        = True
-    idle_frames = [pygame.image.load(f"Death Knight Idle/idle_frame_{i}.png") for i in range(1, 9)]
+    idle_frames = [pygame.image.load(constants.resource_path(f"Death Knight Idle/idle_frame_{i}.png")) for i in range(1, 9)]
     running_raw = [
-        pygame.image.load("Death Knight Running/fame_r_1.png"),
-        pygame.image.load("Death Knight Running/frame_r_2.png"),
-        pygame.image.load("Death Knight Running/fame_r_3.png"),
+        pygame.image.load(constants.resource_path("Death Knight Running/fame_r_1.png")),
+        pygame.image.load(constants.resource_path("Death Knight Running/frame_r_2.png")),
+        pygame.image.load(constants.resource_path("Death Knight Running/fame_r_3.png")),
     ]
     run_h = idle_frames[0].get_height()
     run_w_scale = int(running_raw[0].get_width() * run_h / running_raw[0].get_height())
     running_frames = [pygame.transform.scale(f, (run_w_scale, run_h)) for f in running_raw]
-    shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
+    shopkeeper_img = pygame.image.load(constants.resource_path("helper/mr shopKeeper.png"))
     shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
     spear_frames_raw = [
-        pygame.image.load(f"Death Knight Spear/s{i}.png") for i in range(1, 5)
+        pygame.image.load(constants.resource_path(f"Death Knight Spear/s{i}.png")) for i in range(1, 5)
     ]
     spear_h = idle_frames[0].get_height()
     spear_w_scale = [int(f.get_width() * spear_h / f.get_height()) for f in spear_frames_raw]
