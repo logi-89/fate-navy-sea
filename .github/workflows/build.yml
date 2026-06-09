@@ -43,10 +43,12 @@ jobs:
 
       - name: Select build tool
         id: tool
+        shell: bash
         run: echo "name=${{ inputs.build-tool || 'nuitka' }}" >> $GITHUB_OUTPUT
 
       - name: Build with Nuitka
         if: steps.tool.outputs.name == 'nuitka'
+        shell: bash
         run: |
           pip install nuitka
           # Collect data directories (those with uppercase letters)
@@ -66,6 +68,7 @@ jobs:
 
       - name: Build with PyInstaller
         if: steps.tool.outputs.name == 'pyinstaller'
+        shell: bash
         run: |
           pip install pyinstaller
           case "$RUNNER_OS" in
@@ -93,6 +96,4 @@ jobs:
         with:
           name: fate-navy-sea-${{ steps.tool.outputs.name }}-${{ matrix.artifact-name }}
           path: |
-            *.app
-            main*
             dist/fate-navy-sea*
