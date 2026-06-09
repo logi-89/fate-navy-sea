@@ -60,8 +60,8 @@ jobs:
           DATA_ARGS+=(--include-data-files="helper/mr shopKeeper.png=helper/")
           DATA_ARGS+=(--include-data-files="F4T3_ navy sea.mp3=./")
           DATA_ARGS+=(--include-data-files="escalator music.mp3=./")
-          nuitka --standalone --enable-console \
-            --output-dir=build --output-file=fate-navy-sea \
+          nuitka --mode=app \
+            --output-file=fate-navy-sea \
             "${DATA_ARGS[@]}" main.py
 
       - name: Build with PyInstaller
