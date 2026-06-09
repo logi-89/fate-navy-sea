@@ -4,7 +4,7 @@ import constants
 import math
 import random
 
-#constants.dev_mode = True
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -60,7 +60,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_y = best.top + 150
 
         if constants.dev_mode == True:
-            w_mode = False
+            w_mode = True
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
@@ -79,11 +79,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     is_grounded            = False
     coyote_frames          = 0
     can_double_jump        = True
-    idle_frames = [pygame.image.load(f"idle/idle_frame_{i}.png") for i in range(1, 9)]
+    idle_frames = [pygame.image.load(f"Death Knight Idle/idle_frame_{i}.png") for i in range(1, 9)]
     running_raw = [
-        pygame.image.load("Running/fame_r_1.png"),
-        pygame.image.load("Running/frame_r_2.png"),
-        pygame.image.load("Running/fame_r_3.png"),
+        pygame.image.load("Death Knight Running/fame_r_1.png"),
+        pygame.image.load("Death Knight Running/frame_r_2.png"),
+        pygame.image.load("Death Knight Running/fame_r_3.png"),
     ]
     run_h = idle_frames[0].get_height()
     run_w_scale = int(running_raw[0].get_width() * run_h / running_raw[0].get_height())
@@ -91,7 +91,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
     shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
     spear_frames_raw = [
-        pygame.image.load(f"spear/s{i}.png") for i in range(1, 5)
+        pygame.image.load(f"Death Knight Spear/s{i}.png") for i in range(1, 5)
     ]
     spear_h = idle_frames[0].get_height()
     spear_w_scale = [int(f.get_width() * spear_h / f.get_height()) for f in spear_frames_raw]
@@ -416,7 +416,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             enemies, player_rect, player_vel_y,
             static_solids, platforms, screen, clock,
             lambda: levelONE(screen, tile_map),
-            dt
+            projectiles, dt
         )
         if enemy_result is not None:
             player_vel_y = enemy_result
@@ -446,6 +446,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         # WEAPON UPDATES
         weapons.update(projectiles, static_solids, enemies)
 
+        weapons.update(projectiles, static_solids, enemies, dt)
+
         # Warden bullet vs. player
         for p in projectiles[:]:
             if p["weapon"] == "warden_bullet" and p["rect"].colliderect(player_rect):
@@ -458,8 +460,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                             "You were killed by an enemy!"
                         )
                         return
-                    #break
-        weapons.update(projectiles, static_solids, enemies, dt)
+
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
 

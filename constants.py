@@ -54,9 +54,9 @@ class shop:
     SHOP_ITEMS = [
         {"name": "Health Flask", "desc": "+1 flask (heals 40 HP when used)", "cost": 115, "key": "flask"},
         {"name": "Water Gun Ammo +3", "desc": "+3 balloon capacity",         "cost": 120, "key": "balloon_ammo"},
-        {"name": "Max HP +25", "desc": "Increase maximum health",            "cost": 140, "key": "max_hp"},
-        {"name": "Sea Boots", "desc": "+1 speed permanently",                "cost": 150, "key": "speed"},
-        {"name": "Spears", "desc": "spears",                                 "cost": 180, "key": "Spears"},
+        {"name": "Max HP +25", "desc": "Increase maximum health",            "cost": 260, "key": "max_hp"},
+        {"name": "Sea Boots", "desc": "+1 speed permanently",                "cost": 200, "key": "speed"},
+        #{"name": "Spears", "desc": "spears",                                 "cost": 180, "key": "Spears"},
     ]
 
 # Sea gel palette
@@ -64,7 +64,7 @@ GROUND_TOP  = (40, 180, 160)   # bright teal surface
 GROUND_SIDE = (20, 120, 110)   # deeper teal edge
 GROUND_DIRT = (10,  70,  80)   # dark ocean-floor fill
 
-dev_mode = False
+dev_mode = True
 
 PLAYER_MAX_HP = 100
 ENEMY_DAMAGE = 15

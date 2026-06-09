@@ -11,7 +11,7 @@ _warden_sprite = None
 def _get_warden_sprite():
     global _warden_sprite
     if _warden_sprite is None:
-        path = os.path.join(os.path.dirname(__file__), "warden.png")
+        path = os.path.join(os.path.dirname(__file__), "..", "Warden Idle", "warden_shock_trooper(base).png")
         img = pygame.image.load(path)
         _warden_sprite = pygame.transform.scale(img, (175, 215))
     return _warden_sprite
@@ -113,16 +113,11 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
                     if enemy["shoot_cooldown"] <= 0:
                         spawn_x = enemy["rect"].right if enemy["dir"] > 0 else enemy["rect"].left - 8
                         spawn_y = enemy["rect"].centery - 4
-                        dx = player_rect.centerx - spawn_x
-                        dy = player_rect.centery - spawn_y
-                        dist = math.sqrt(dx*dx + dy*dy)
-                        if dist == 0:
-                            dist = 1
                         speed = 8
                         projectiles.append({
                             "rect": pygame.Rect(spawn_x, spawn_y, 6, 6),
-                            "vx": int(speed * dx / dist),
-                            "vy": int(speed * dy / dist),
+                            "vx": speed * enemy["dir"],
+                            "vy": 0,
                             "weapon": "warden_bullet",
                             "dmg": 20,
                             "color": (255, 60, 60),

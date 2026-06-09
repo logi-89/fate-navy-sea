@@ -51,12 +51,10 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
     if defs["ammo"] > 0:
         ammo_counts[weapon_key] = ammo - 1
 
-    spawn_x = player_rect.right if player_facing > 0 else player_rect.left - 8
-    spawn_y = player_rect.centery - 4
+    spawn_x = player_rect.centerx + (24 if player_facing > 0 else -24)
+    spawn_y = player_rect.y + 20
 
     vy = 0
-    if weapon_key == "water_balloon":
-        vy = -6
 
     projectiles.append({
         "rect": pygame.Rect(spawn_x, spawn_y, 8, 8),
@@ -78,7 +76,8 @@ def update(projectiles, static_solids, enemies, dt=1.0):
         p["rect"].x += int(p["vx"] * dt)
         p["rect"].y += int(p["vy"] * dt)
 
-        p["vy"] = min(p["vy"] + 0.4 * dt, 12)
+        if p["weapon"] not in ("warden_bullet", "water_gun", "water_balloon"):
+            p["vy"] = min(p["vy"] + 0.4 * dt, 12)
 
         p["life"] -= dt
         if p["life"] <= 0:

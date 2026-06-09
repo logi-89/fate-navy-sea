@@ -76,6 +76,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     coyote_frames          = 0
     can_double_jump        = True
     camera_x               = 0
+    camera_y               = 0
     player_inventory_clips = 0
     show_warning_frames    = 0
 
