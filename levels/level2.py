@@ -60,7 +60,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_x = best.x + 215
         spawn_y = best.top - 567
 
-        if constants.dev_mode == True:
+        if constants.dev_mode:
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
@@ -463,6 +463,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         invincible_timer = max(0, invincible_timer - dt)
 
         # WEAPON UPDATES
+        weapons.update(projectiles, static_solids, enemies)
 
         weapons.update(projectiles, static_solids, enemies, dt)
 
@@ -599,6 +600,14 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 pygame.draw.circle(bs, (160, 230, 210, 110), (int(b["r"]), int(b["r"])), int(b["r"]), 1)
                 screen.blit(bs, (int(vx_b - b["r"]), int(b["y"] - b["r"])))
 
+        #  Player 
+        pr = pygame.Rect(player_rect.x - camera_x, player_rect.y,
+                         player_rect.width, player_rect.height)
+        shadow_s = pygame.Surface((pr.width + 10, 6), pygame.SRCALPHA)
+        shadow_s.fill((20, 120, 100, 40))
+        screen.blit(shadow_s, (pr.x - 5, pr.bottom + 2))
+        pygame.draw.rect(screen, (220, 100, 0), pr, border_radius=4)
+        pygame.draw.rect(screen, (255, 195, 0), pr, 2, border_radius=4)
         for elev in elevators:
             vx = elev["rect"].x - camera_x
             vy = elev["rect"].y - camera_y

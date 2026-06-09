@@ -59,13 +59,13 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         spawn_x = best.x + 215
         spawn_y = best.top + 150
 
-        if constants.dev_mode == True:
+        if constants.dev_mode:
             w_mode = True
             #spawn_x = spawn_x + 7600
             #spawn_y = spawn_y - 467
             print("in dev mode")
 
-            if w_mode == True:
+            if w_mode:
                 print("MOM, I JUST HIT A CLIP!!")
                 spawn_x = 4030
                 spawn_y = 150
