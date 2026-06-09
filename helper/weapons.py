@@ -40,11 +40,9 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
                     e["hp"] -= defs["dmg"]
                     if e["hp"] <= 0:
                         enemies.remove(e)
-                    constants.player_coins += 150
-                    constants.total_score += 150
-                    constants.total_kills += 1
                         constants.total_score += 150
                         constants.total_kills += 1
+                    constants.player_coins += 150
                     hit = True
         return hit
 
@@ -107,6 +105,8 @@ def update(projectiles, static_solids, enemies, dt=1.0):
                 if e["hp"] <= 0:
                     enemies.remove(e)
                     constants.player_coins += 150
+                    constants.total_score += 150
+                    constants.total_kills += 1
                 break
 
 
