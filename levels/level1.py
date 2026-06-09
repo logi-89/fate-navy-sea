@@ -4,7 +4,7 @@ import constants
 import math
 import random
 
-constants.dev_mode = True
+#constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration

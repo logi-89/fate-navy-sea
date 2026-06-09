@@ -6,15 +6,20 @@ import constants
 from helper import death_screen
 import os
 
-_warden_sprite = None
+_warden_idle = None
+_warden_shoot = []
 
-def _get_warden_sprite():
-    global _warden_sprite
-    if _warden_sprite is None:
-        path = os.path.join(os.path.dirname(__file__), "..", "Warden Idle", "warden_shock_trooper(base).png")
-        img = pygame.image.load(path)
-        _warden_sprite = pygame.transform.scale(img, (175, 215))
-    return _warden_sprite
+def _get_warden_sprites():
+    global _warden_idle, _warden_shoot
+    if _warden_idle is None:
+        base = os.path.join(os.path.dirname(__file__), "..")
+        img = pygame.image.load(os.path.join(base, "Warden Idle", "warden_shock_trooper(base).png"))
+        _warden_idle = pygame.transform.scale(img, (175, 215))
+        _warden_shoot = []
+        for fname in ("warden_shock_shooter_frame_1.png", "warden_shock_shooter_frame_2.png"):
+            img = pygame.image.load(os.path.join(base, "Warden Shoot", fname))
+            _warden_shoot.append(pygame.transform.scale(img, (175, 215)))
+    return _warden_idle, _warden_shoot
 
 class Enemies:
     def __init__(self, name, health, damage):
@@ -116,11 +121,11 @@ def update_enemies(enemies, player_rect, player_vel_y, static_solids, platforms,
                         speed = 8
                         projectiles.append({
                             "rect": pygame.Rect(spawn_x, spawn_y, 6, 6),
-                            "vx": speed * enemy["dir"],
-                            "vy": 0,
-                            "weapon": "warden_bullet",
-                            "dmg": 20,
-                            "color": (255, 60, 60),
+                        "vx": speed * enemy["dir"],
+                        "vy": 3,
+                        "weapon": "warden_bullet",
+                        "dmg": 20,
+                        "color": (60, 180, 255),
                             "life": 120,
                         })
                         enemy["burst_remaining"] -= 1
@@ -149,7 +154,12 @@ def render_enemies(screen, enemies, camera_x, camera_y):
             continue
 
         if enemy.get("type") == "warden":
-            sprite = _get_warden_sprite()
+            idle_spr, shoot_frames = _get_warden_sprites()
+            if enemy["state"] == "chase" and (enemy["shoot_cooldown"] > 0 or enemy["burst_remaining"] < 4):
+                idx = (pygame.time.get_ticks() // 200) % len(shoot_frames)
+                sprite = shoot_frames[idx]
+            else:
+                sprite = idle_spr
             if enemy["dir"] < 0:
                 sprite = pygame.transform.flip(sprite, True, False)
             sx = vx - (sprite.get_width() - enemy["rect"].width) // 2
