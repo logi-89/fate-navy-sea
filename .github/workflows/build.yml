@@ -93,6 +93,6 @@ jobs:
         with:
           name: fate-navy-sea-${{ steps.tool.outputs.name }}-${{ matrix.artifact-name }}
           path: |
-            build/fate-navy-sea*
-            build/*.app
+            *.app
+            main*
             dist/fate-navy-sea*
