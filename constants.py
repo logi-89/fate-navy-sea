@@ -1,6 +1,18 @@
+import os
+import sys
+
 # Window Size
 WIDTH = 1500
 HEIGHT = 900
+
+def resource_path(relative_path):
+    try:
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+    except Exception:
+        pass
+    base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, relative_path)
 
 # Colors
 BLACK      = (0,   0,   0)
