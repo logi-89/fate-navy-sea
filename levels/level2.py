@@ -745,8 +745,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         shadow_s = pygame.Surface((pr.width + 10, 6), pygame.SRCALPHA)
         shadow_s.fill((20, 120, 100, 40))
         screen.blit(shadow_s, (pr.x - 5, pr.bottom + 2))
-        pygame.draw.rect(screen, (220, 100, 0), pr, border_radius=4)
-        pygame.draw.rect(screen, (255, 195, 0), pr, 2, border_radius=4)
         for elev in elevators:
             vx = elev["rect"].x - camera_x
             vy = elev["rect"].y - camera_y

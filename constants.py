@@ -89,7 +89,7 @@ class shop:
             "cost": 200,
             "key": "speed",
         },
-        # {"name": "Spears", "desc": "spears",                                 "cost": 180, "key": "Spears"},
+        # {"name": "Spears", "desc": "spears",  "cost": 180, "key": "Spears"},
     ]
 
 
@@ -117,7 +117,7 @@ WEAPON_DEFS = {
     },
     "water_gun": {
         "name": "Water Gun",
-        "dmg": 15,
+        "dmg": 60,
         "speed": 22,
         "cooldown": 8,
         "ammo": 50,
@@ -125,7 +125,7 @@ WEAPON_DEFS = {
     },
     "water_balloon": {
         "name": "Water Balloon",
-        "dmg": 25,
+        "dmg": 100,
         "speed": 9,
         "cooldown": 35,
         "ammo": 20,
