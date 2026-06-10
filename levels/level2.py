@@ -30,6 +30,8 @@ def intro(screen, set_clock):
     clock = set_clock
     if constants.player_inventory_clips < 1:
         constants.player_inventory_clips = 1
+    if "water_gun" not in constants.player_owned_weapons:
+        constants.player_owned_weapons.append("water_gun")
     introLORE(screen)
     print("[DEBUG] Show intro")
     levelTWO(screen, maps.L2)
@@ -57,11 +59,13 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     world_h = len(tile_map) * physics.TILE_SIZE
 
     spawn_x, spawn_y = 400, 500
+    #spawn_x, spawn_y = 2200, 690
+
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
-        best = min(grounded, key=lambda p: p.x)
-        spawn_x = best.x + 215
-        spawn_y = best.top - 567
+        best    = min(grounded, key=lambda p: p.x)
+        spawn_x = best.x + 2200
+        spawn_y = best.top - 214
 
         if constants.dev_mode:
             # spawn_x = spawn_x + 7600
@@ -102,26 +106,18 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         for i, f in enumerate(spear_frames_raw)
     ]
     attack_anim_start = 0
-    camera_x = 0
-    camera_y = 0
-    show_warning_frames = 0
-    player_hp = constants.PLAYER_MAX_HP
-    invincible_timer = 0
-    player_facing = 1
-    weapon_list = weapons.get_available(constants.dev_mode)
-    selected_weapon = 0
-    ammo_counts = {
-        k: (
-            WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus
-            if WEAPON_DEFS[k]["ammo"] > 0
-            else -1
-        )
-        for k in weapon_list
-        if WEAPON_DEFS[k]["ammo"] > 0
-    }
-    projectiles = []
-    weapon_cooldown = 0
-    shop_cooldown = 0
+    camera_x               = 0
+    camera_y               = 0
+    show_warning_frames    = 0
+    player_hp              = constants.player_current_hp
+    invincible_timer       = 0
+    player_facing          = 1
+    weapon_list            = weapons.get_available(constants.dev_mode)
+    selected_weapon        = 0
+    ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    projectiles            = []
+    weapon_cooldown        = 0
+    shop_cooldown          = 0
 
     # LORE POPUP STATE (uses constants.lore_display_text / constants.lore_display_timer)
 
@@ -579,6 +575,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
+        constants.player_current_hp = player_hp
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)

@@ -107,26 +107,18 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         for i, f in enumerate(spear_frames_raw)
     ]
     attack_anim_start = 0
-    camera_x = 0
-    camera_y = 0
-    show_warning_frames = 0
-    player_hp = constants.PLAYER_MAX_HP
-    invincible_timer = 0
-    player_facing = 1
-    weapon_list = weapons.get_available(constants.dev_mode)
-    selected_weapon = 0
-    ammo_counts = {
-        k: (
-            WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus
-            if WEAPON_DEFS[k]["ammo"] > 0
-            else -1
-        )
-        for k in weapon_list
-        if WEAPON_DEFS[k]["ammo"] > 0
-    }
-    projectiles = []
-    weapon_cooldown = 0
-    shop_cooldown = 0
+    camera_x               = 0
+    camera_y               = 0
+    show_warning_frames    = 0
+    player_hp              = constants.player_current_hp
+    invincible_timer       = 0
+    player_facing          = 1
+    weapon_list            = weapons.get_available(constants.dev_mode)
+    selected_weapon        = 0
+    ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    projectiles            = []
+    weapon_cooldown        = 0
+    shop_cooldown          = 0
 
     # LORE POPUP STATE (uses constants.lore_display_text / constants.lore_display_timer)
 
@@ -560,6 +552,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
+        constants.player_current_hp = player_hp
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)
