@@ -101,7 +101,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
-    player_hp              = constants.PLAYER_MAX_HP
+    player_hp              = constants.player_current_hp
     invincible_timer       = 0
     player_facing          = 1
     weapon_list            = weapons.get_available(constants.dev_mode)
@@ -466,6 +466,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
+        constants.player_current_hp = player_hp
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)

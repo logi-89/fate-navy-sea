@@ -10,6 +10,10 @@ def get_available(dev_mode):
     avail = ["spear"]
     if "Spears" in constants.player_owned_weapons:
         avail.append("spear")
+    if "water_gun" in constants.player_owned_weapons:
+        avail.append("water_gun")
+    if "water_balloon" in constants.player_owned_weapons:
+        avail.append("water_balloon")
     return avail
 
 # def get_available_level_one():

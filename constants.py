@@ -99,6 +99,7 @@ player_velocity_y = 0
 jump_height = -15
 gravity = 1
 player_inventory_clips = 0
+player_current_hp = PLAYER_MAX_HP
 player_coins = 0
 total_score = 0
 total_kills = 0
