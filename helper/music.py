@@ -1,5 +1,6 @@
 import pygame.mixer
 
+
 class Music:
     def __init__(self, file, loop):
         # Check if an instance exist, if existed, do not init pygame mixer again

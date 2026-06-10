@@ -2,8 +2,8 @@ import pygame
 
 from constants import *
 
+
 # Accepts a restart_func callback so crushed players respawn in the
-# correct level (not hardcoded to level1).
 def show_death_screen(screen, clock, restart_func):
     """Displays Game Over when crushed. Calls restart_func() on respawn."""
     running = True
@@ -24,11 +24,18 @@ def show_death_screen(screen, clock, restart_func):
         title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
         screen.blit(title_text, title_rect)
 
-        sub_text = sub_font.render("You were crushed by the elevator machinery!", True, (220, 180, 180))
+        sub_text = sub_font.render(
+            "You were crushed by the elevator machinery!", True, (220, 180, 180)
+        )
         sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 70))
         screen.blit(sub_text, sub_rect)
 
-        pygame.draw.rect(screen, (140, 30, 30) if hovered else (90, 20, 20), button_rect, border_radius=12)
+        pygame.draw.rect(
+            screen,
+            (140, 30, 30) if hovered else (90, 20, 20),
+            button_rect,
+            border_radius=12,
+        )
         pygame.draw.rect(screen, (255, 100, 100), button_rect, 2, border_radius=12)
 
         btn_text = button_font.render("Respawn (R)", True, WHITE)
@@ -55,7 +62,6 @@ def show_death_screen(screen, clock, restart_func):
         clock.tick(60)
 
 
-
 def show_death_screen_ENEMIES(screen, clock, restart_func, text):
     running = True
     title_font = pygame.font.Font(None, 100)
@@ -79,7 +85,12 @@ def show_death_screen_ENEMIES(screen, clock, restart_func, text):
         sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 70))
         screen.blit(sub_text, sub_rect)
 
-        pygame.draw.rect(screen, (140, 30, 30) if hovered else (90, 20, 20), button_rect, border_radius=12)
+        pygame.draw.rect(
+            screen,
+            (140, 30, 30) if hovered else (90, 20, 20),
+            button_rect,
+            border_radius=12,
+        )
         pygame.draw.rect(screen, (255, 100, 100), button_rect, 2, border_radius=12)
 
         btn_text = button_font.render("Respawn (R)", True, WHITE)
