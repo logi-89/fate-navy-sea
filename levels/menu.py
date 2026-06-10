@@ -391,7 +391,7 @@ def shop_(screen, clock, name):
     font_title = pygame.font.Font(None, 80)
     font_item = pygame.font.Font(None, 36)
     font_small = pygame.font.Font(None, 26)
-    music = Music(resource_path("escalator music.mp3"), True)
+    music = Music("escalator music.mp3", True)
 
     # Track owned keys for display
     def is_owned(key):

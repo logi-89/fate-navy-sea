@@ -17,7 +17,7 @@ def run_shop():
     graphics.draw_vertical_gradient(screen, (5, 20, 35), (15, 60, 90))
     selected = 0
 
-jukebox = music.Music(resource_path("F4T3_ navy sea.mp3"), loop=True)
+jukebox = music.Music("F4T3_ navy sea.mp3", loop=True)
 menu.jukebox = jukebox
 if dev_mode:
     levels.level1.intro(screen, clock)
