@@ -56,14 +56,14 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     # Safely track map height
     world_h         = len(tile_map) * physics.TILE_SIZE
 
-    # spawn_x, spawn_y = 400, 500
-    spawn_x, spawn_y = 2200, 690
+    spawn_x, spawn_y = 400, 500
+    #spawn_x, spawn_y = 2200, 690
 
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
-        spawn_x = best.x #+ 215 + 2100
-        spawn_y = best.top #- 567 - 250
+        spawn_x = best.x + 2200
+        spawn_y = best.top - 214
 
         if constants.dev_mode:
             #spawn_x = spawn_x + 7600
