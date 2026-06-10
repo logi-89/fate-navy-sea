@@ -356,6 +356,8 @@ def settings_menu(screen, clock):
             rs_index = i
             break
 
+    tutorial_on = constants.settings.get("show_tutorial", True)
+
     dragging_volume = False
     dragging_hud = False
 
@@ -433,6 +435,16 @@ def settings_menu(screen, clock):
             ("FPS",           490, constants.FPS_OPTIONS, fps_index,
              f"{constants.FPS_OPTIONS[fps_index]}" if constants.FPS_OPTIONS[fps_index] > 0 else "Uncapped"),
         ]
+
+        # Tutorial toggle
+        tut_label = font_item.render("Show Tutorial", True, (180, 220, 240))
+        screen.blit(tut_label, (cx - 310, 565))
+        tut_rect = pygame.Rect(cx - 85, 562, 170, 36)
+        tut_color = TEAL if tutorial_on else (60, 80, 100)
+        pygame.draw.rect(screen, (22, 55, 85), tut_rect, border_radius=8)
+        pygame.draw.rect(screen, tut_color, tut_rect, 2, border_radius=8)
+        tut_text = font_item.render("On" if tutorial_on else "Off", True, WHITE)
+        screen.blit(tut_text, tut_text.get_rect(center=tut_rect.center))
 
         for s_label, s_cy, s_options, s_index, s_text in selectors:
             lbl = font_item.render(s_label, True, (180, 220, 240))
@@ -513,6 +525,12 @@ def settings_menu(screen, clock):
                 if right.collidepoint(event.pos):
                     fps_index = (fps_index + 1) % len(constants.FPS_OPTIONS)
                     constants.settings["fps"] = constants.FPS_OPTIONS[fps_index]
+
+                # tutorial toggle
+                tut_rect = pygame.Rect(cx - 85, 562, 170, 36)
+                if tut_rect.collidepoint(event.pos):
+                    tutorial_on = not tutorial_on
+                    constants.settings["show_tutorial"] = tutorial_on
 
                 if button_back.collidepoint(event.pos):
                     running = False

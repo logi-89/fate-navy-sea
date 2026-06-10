@@ -161,6 +161,7 @@ settings = {
     "display_mode": "fullscreen",
     "fps": 60,
     "render_scale": 1.0,
+    "show_tutorial": True,
 }
 
 RENDER_SCALE_OPTIONS = [1.0, 1.5, 2.0, 3.0]

@@ -137,4 +137,9 @@ loreDrop = [
     "Radio 991: Hello, what crime can I help you with today...",
     "Radio <('v')>: I believe I can swimmmmmmmmm, I believe I can swim to the skyyyyyyyyyyyyyy...",
     "We da best com sci",
+    "Radio 617: when is dinner",
+    "Radio 316: For Immortal Jellyfish so loved the world that he gave his one and only Immortal Jellyfish, that whoever believes in him shall not perish but have eternal life.",
+    "Radio Lebron: le bron",
+    "Radio 618: W comp sci",
+    "Radio 617: W comp sci",
 ]

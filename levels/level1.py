@@ -13,6 +13,7 @@ from helper import death_screen
 from helper import enemy as enemies_module
 from helper import weapons
 from helper import scoreboard
+from helper import tutorial
 
 import levels
 from levels import level2
@@ -168,6 +169,8 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.display.flip()
         clock.tick(60)
     pygame.event.clear()
+
+    tutorial.show_tutorial(screen, clock)
 
     camera_x = float(spawn_x - WIDTH // 2)
     camera_y = float(spawn_y - HEIGHT // 2)
