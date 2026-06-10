@@ -16,11 +16,14 @@ def get_available(dev_mode):
         avail.append("water_balloon")
     return avail
 
+
 # def get_available_level_one():
 #     return ["spear"]
 
 
-def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemies=None):
+def fire(
+    weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemies=None
+):
     defs = WEAPON_DEFS[weapon_key]
 
     melee_r = defs.get("melee_range", 0)
@@ -31,12 +34,14 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
             hit_rect = pygame.Rect(player_rect.right, hit_y, melee_r, hit_h)
         else:
             hit_rect = pygame.Rect(player_rect.left - melee_r, hit_y, melee_r, hit_h)
-        projectiles.append({
-            "rect": hit_rect,
-            "life": 6,
-            "weapon": "spear_slash",
-            "color": defs["color"],
-        })
+        projectiles.append(
+            {
+                "rect": hit_rect,
+                "life": 6,
+                "weapon": "spear_slash",
+                "color": defs["color"],
+            }
+        )
         hit = False
         if enemies:
             for e in enemies[:]:
@@ -62,15 +67,17 @@ def fire(weapon_key, player_rect, player_facing, projectiles, ammo_counts, enemi
 
     vy = 0
 
-    projectiles.append({
-        "rect": pygame.Rect(spawn_x, spawn_y, 8, 8),
-        "vx": defs["speed"] * player_facing,
-        "vy": vy,
-        "weapon": weapon_key,
-        "dmg": defs["dmg"],
-        "color": defs["color"],
-        "life": 90,
-    })
+    projectiles.append(
+        {
+            "rect": pygame.Rect(spawn_x, spawn_y, 8, 8),
+            "vx": defs["speed"] * player_facing,
+            "vy": vy,
+            "weapon": weapon_key,
+            "dmg": defs["dmg"],
+            "color": defs["color"],
+            "life": 90,
+        }
+    )
     return True
 
 
@@ -118,7 +125,12 @@ def render(screen, projectiles, camera_x, camera_y, dt=1.0):
     for p in projectiles[:]:
         vx = p["rect"].x - camera_x
         vy = p["rect"].y - camera_y
-        if vx + p["rect"].width < 0 or vx > WIDTH or vy + p["rect"].height < 0 or vy > HEIGHT:
+        if (
+            vx + p["rect"].width < 0
+            or vx > WIDTH
+            or vy + p["rect"].height < 0
+            or vy > HEIGHT
+        ):
             continue
 
         if p["weapon"] == "spear_slash":
@@ -127,7 +139,12 @@ def render(screen, projectiles, camera_x, camera_y, dt=1.0):
                 s = pygame.Surface((p["rect"].width, p["rect"].height), pygame.SRCALPHA)
                 s.fill((p["color"][0], p["color"][1], p["color"][2], alpha))
                 screen.blit(s, (vx, vy))
-                pygame.draw.rect(screen, (255, 220, 160, alpha), (vx, vy, p["rect"].width, p["rect"].height), 2)
+                pygame.draw.rect(
+                    screen,
+                    (255, 220, 160, alpha),
+                    (vx, vy, p["rect"].width, p["rect"].height),
+                    2,
+                )
             p["life"] -= dt
             if p["life"] <= 0:
                 projectiles.remove(p)

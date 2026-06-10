@@ -1,4 +1,6 @@
 import pygame
+import math
+import random
 import constants
 from constants import *
 from helper.graphics import *
@@ -12,70 +14,202 @@ import levels.level4
 
 jukebox = None
 
+# ── Storm / ocean helpers ──────────────────────────────────────────────────
+
+def _ocean_waves(surface, t, ocean_top):
+    w, h = surface.get_size()
+    # deep ocean body
+    pygame.draw.rect(surface, (4, 14, 32), (0, ocean_top, w, h - ocean_top))
+
+    for layer, (color, amp, freq, speed, y_off) in enumerate([
+        ((14, 60, 90),   3, 0.028, 0.30, 0),
+        ((22, 90, 130),  5, 0.022, 0.50, 6),
+        ((36, 120, 165), 4, 0.018, 0.70, 14),
+    ]):
+        base_y = ocean_top + y_off
+        pts = [(x, base_y + math.sin(x * freq + t * speed + layer) * amp)
+               for x in range(0, w + 10, 10)]
+        pygame.draw.lines(surface, color, False, pts, 2) if len(pts) > 1 else None
+
+    # white foam crests
+    for x in range(0, w, 12):
+        cy = ocean_top + math.sin(x * 0.028 + t * 0.5) * 3
+        if math.sin(x * 0.12 + t * 2) > 0.65:
+            pygame.draw.circle(surface, (180, 225, 250), (x, int(cy)), 2)
+
+
+def _ship(surface, x, y, t, scale=1.0):
+    mast_top = y - 72 * scale
+    pygame.draw.line(surface, (20, 24, 35), (x, y), (x, mast_top), max(2, int(3 * scale)))
+
+    hull = [(x - 55*scale, y), (x + 55*scale, y),
+            (x + 70*scale, y + 16*scale + 2*math.sin(t*2)),
+            (x - 70*scale, y + 16*scale + 2*math.sin(t*2 + 1))]
+    pygame.draw.polygon(surface, (20, 24, 35), hull)
+
+    l_sail = [(x, mast_top + 4*scale), (x - 32*scale, y - 22*scale), (x - 4*scale, y - 22*scale)]
+    r_sail = [(x, mast_top + 4*scale), (x + 26*scale, y - 16*scale), (x + 4*scale, y - 16*scale)]
+    pygame.draw.polygon(surface, (38, 44, 55), l_sail)
+    pygame.draw.polygon(surface, (46, 52, 64), r_sail)
+
+    flag = [(x, mast_top), (x + 22*scale, mast_top + 9*scale), (x, mast_top + 18*scale)]
+    pygame.draw.polygon(surface, (70, 35, 35), flag)
+
+
+_raindrops = []
+
+
+def _init_rain(width, height, count=120):
+    global _raindrops
+    _raindrops = [[random.randint(0, width), random.randint(-height, 0),
+                   random.uniform(4, 8), random.uniform(0.5, 1.5)]
+                  for _ in range(count)]
+
+
+def _update_rain(width, height):
+    global _raindrops
+    for d in _raindrops:
+        d[0] -= d[3] * 1.8
+        d[1] += d[3] * 9
+        if d[1] > height:
+            d[0] = random.randint(0, width)
+            d[1] = random.randint(-20, -5)
+
+
+def _draw_rain(surface):
+    global _raindrops
+    ws = surface.get_size()
+    if not _raindrops or len(_raindrops) == 0:
+        _init_rain(ws[0], ws[1])
+    overlay = pygame.Surface(ws, pygame.SRCALPHA)
+    for x, y, ln, spd in _raindrops:
+        a = min(180, int(60 + spd * 40))
+        pygame.draw.line(overlay, (160, 210, 240, a),
+                         (x, y), (x - 3, y + ln), 1)
+    surface.blit(overlay, (0, 0))
+
+
+# ── Themed drawing helpers ─────────────────────────────────────────────────
+
+def _draw_glowing_text(surface, text, font, color, center, glow_color=(70, 200, 240), radius=4):
+    for r in range(radius, 0, -1):
+        a = max(20, 80 - r * 15)
+        g = font.render(text, True, glow_color)
+        g.set_alpha(a)
+        for dx, dy in ((r, 0), (-r, 0), (0, r), (0, -r), (r, r), (-r, -r)):
+            surface.blit(g, g.get_rect(center=(center[0] + dx, center[1] + dy)))
+    m = font.render(text, True, color)
+    surface.blit(m, m.get_rect(center=center))
+
+
+def _themed_button(surface, rect, text, font, hovered, accent=LIGHT_TEAL):
+    bg = (60, 110, 170) if hovered else (35, 70, 105)
+    pygame.draw.rect(surface, bg, rect, border_radius=14)
+    pygame.draw.rect(surface, accent, rect, 2, border_radius=14)
+    if hovered:
+        glow = pygame.Surface((rect.w + 8, rect.h + 8), pygame.SRCALPHA)
+        pygame.draw.rect(glow, (*accent[:3], 40), (4, 4, rect.w, rect.h), border_radius=16)
+        surface.blit(glow, (rect.x - 4, rect.y - 4))
+    t = font.render(text, True, WHITE)
+    surface.blit(t, t.get_rect(center=rect.center))
+
+
+def _storm_overlay(surface, t):
+    w, h = surface.get_size()
+    grad = pygame.Surface((w, h), pygame.SRCALPHA)
+    for y in range(h):
+        a = int(max(0, 55 * math.sin(y / h * math.pi * 0.6 + t * 0.05)))
+        if a > 0:
+            pygame.draw.line(grad, (100, 180, 230, a), (0, y), (w, y))
+    surface.blit(grad, (0, 0))
+
+
+# ── Title screen ────────────────────────────────────────────────────────────
+
 def show_title_screen(screen, clock, jukebox_object):
     global jukebox
-
     jukebox = jukebox_object
+
     running = True
-    t = 0
-
+    t = 0.0
+    lightning_timer = 0
+    lightning_alpha = 0
     WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
-    title_font = pygame.font.Font(None, 110)
-    sub_font = pygame.font.Font(None, 44)
-    button_font = pygame.font.Font(None, 56)
+    _init_rain(WIDTH, HEIGHT)
 
-    start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 40, 240, 60)
-    chapters_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 110, 240, 60)
-    settings_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 180, 240, 60)
-    highscores_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 250, 240, 60)
+    title_font = pygame.font.Font(None, 112)
+    sub_font = pygame.font.Font(None, 42)
+    button_font = pygame.font.Font(None, 54)
+
+    btn_w, btn_h, gap = 260, 58, 16
+    cx = WIDTH // 2
+    start_y = HEIGHT // 2 + 30
+    start_btn   = pygame.Rect(cx - btn_w // 2, start_y,               btn_w, btn_h)
+    chapt_btn   = pygame.Rect(cx - btn_w // 2, start_y + btn_h + gap,  btn_w, btn_h)
+    sets_btn    = pygame.Rect(cx - btn_w // 2, start_y + (btn_h + gap) * 2, btn_w, btn_h)
+    scores_btn  = pygame.Rect(cx - btn_w // 2, start_y + (btn_h + gap) * 3, btn_w, btn_h)
 
     while running:
         WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
         mouse_pos = pygame.mouse.get_pos()
-        hovered_start = start_button.collidepoint(mouse_pos)
-        hovered_chapters = chapters_button.collidepoint(mouse_pos)
-        hovered_settings = settings_button.collidepoint(mouse_pos)
-        hovered_scores = highscores_button.collidepoint(mouse_pos)
 
-        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
-        pygame.draw.circle(screen, (160, 220, 255), (WIDTH // 2, 180), 90)
-        pygame.draw.circle(screen, (200, 245, 255), (WIDTH // 2, 180), 55)
-        ocean_top = HEIGHT - 320
-        pygame.draw.rect(screen, (10, 45, 75), (0, ocean_top, WIDTH, HEIGHT - ocean_top))
-        draw_waves(screen, t)
+        # ── background ──
+        draw_vertical_gradient(screen, (3, 8, 22), (8, 30, 72))
 
-        title_text = title_font.render("Fate: Navy Sea", True, WHITE)
-        title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
-        screen.blit(title_text, title_rect)
+        # lightning
+        if lightning_timer > 0:
+            lightning_timer -= 1
+            lightning_alpha = random.randint(100, 200)
+        else:
+            lightning_alpha = max(0, lightning_alpha - 6)
+            if lightning_alpha <= 0 and random.random() < 0.002:
+                lightning_timer = random.randint(3, 8)
 
-        sub_text = sub_font.render("Set sail into the storm", True, (220, 245, 255))
-        sub_rect = sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 65))
-        screen.blit(sub_text, sub_rect)
+        # ocean
+        ocean_top = HEIGHT - 220
+        _ocean_waves(screen, t, ocean_top)
 
-        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_start else title_screen.BUTTON_COLOR, start_button, border_radius=18)
-        pygame.draw.rect(screen, WHITE, start_button, 3, border_radius=18)
-        start_text = button_font.render("Start", True, WHITE)
-        start_rect = start_text.get_rect(center=start_button.center)
-        screen.blit(start_text, start_rect)
+        # ship
+        ship_x = int(WIDTH * 0.25 + math.sin(t * 0.15) * 20)
+        ship_y = ocean_top + 10 + math.sin(t * 0.8) * 2
+        _ship(screen, ship_x, ship_y, t, scale=1.6)
+        # second smaller ship in the distance
+        _ship(screen, int(WIDTH * 0.78) + int(math.sin(t * 0.1 + 2) * 15),
+              ocean_top - 20 + math.sin(t * 0.6 + 1) * 1.5, t, scale=0.75)
 
-        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_chapters else title_screen.BUTTON_COLOR, chapters_button, border_radius=18)
-        pygame.draw.rect(screen, WHITE, chapters_button, 3, border_radius=18)
-        chapters_text = button_font.render("Chapters", True, WHITE)
-        chapters_rect = chapters_text.get_rect(center=chapters_button.center)
-        screen.blit(chapters_text, chapters_rect)
+        # rain
+        _update_rain(WIDTH, HEIGHT)
+        _draw_rain(screen)
 
-        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_settings else title_screen.BUTTON_COLOR, settings_button, border_radius=18)
-        pygame.draw.rect(screen, WHITE, settings_button, 3, border_radius=18)
-        settings_text = button_font.render("Settings", True, WHITE)
-        settings_rect = settings_text.get_rect(center=settings_button.center)
-        screen.blit(settings_text, settings_rect)
+        # storm overlay (subtle dark gradient)
+        _storm_overlay(screen, t)
 
-        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_scores else title_screen.BUTTON_COLOR, highscores_button, border_radius=18)
-        pygame.draw.rect(screen, WHITE, highscores_button, 3, border_radius=18)
-        scores_text = button_font.render("High Scores", True, WHITE)
-        scores_rect = scores_text.get_rect(center=highscores_button.center)
-        screen.blit(scores_text, scores_rect)
+        # lightning flash
+        if lightning_alpha > 0:
+            flash = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            flash.fill((180, 210, 255, lightning_alpha))
+            screen.blit(flash, (0, 0))
 
+        # ── title ──
+        title_center = (WIDTH // 2, HEIGHT // 3 - 10)
+        _draw_glowing_text(screen, "FATE: NAVY SEA", title_font, WHITE, title_center,
+                           glow_color=(70, 180, 240), radius=5)
+
+        sub_text = sub_font.render("Set sail into the storm", True, (180, 220, 240))
+        screen.blit(sub_text, sub_text.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 58)))
+
+        # ── buttons ──
+        h_start = start_btn.collidepoint(mouse_pos)
+        h_chapt = chapt_btn.collidepoint(mouse_pos)
+        h_sets  = sets_btn.collidepoint(mouse_pos)
+        h_score = scores_btn.collidepoint(mouse_pos)
+
+        _themed_button(screen, start_btn,  "Start",       button_font, h_start)
+        _themed_button(screen, chapt_btn,  "Chapters",    button_font, h_chapt)
+        _themed_button(screen, sets_btn,   "Settings",    button_font, h_sets)
+        _themed_button(screen, scores_btn, "High Scores", button_font, h_score)
+
+        # ── events ──
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -85,18 +219,18 @@ def show_title_screen(screen, clock, jukebox_object):
                     pygame.quit()
                     return screen
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if start_button.collidepoint(event.pos):
+                if start_btn.collidepoint(event.pos):
                     levels.level1.intro(screen, clock)
                     return screen
-                if chapters_button.collidepoint(event.pos):
+                if chapt_btn.collidepoint(event.pos):
                     screen = chapter_select(screen, clock)
                     if not pygame.get_init():
                         return screen
-                if settings_button.collidepoint(event.pos):
+                if sets_btn.collidepoint(event.pos):
                     screen = settings_menu(screen, clock)
                     if not pygame.get_init():
                         return screen
-                if highscores_button.collidepoint(event.pos):
+                if scores_btn.collidepoint(event.pos):
                     screen = scoreboard.show_high_scores(screen, clock)
                     if not pygame.get_init():
                         return screen
@@ -111,43 +245,63 @@ def show_title_screen(screen, clock, jukebox_object):
 def chapter_select(screen, clock):
     running = True
     WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
-    font_title = pygame.font.Font(None, 80)
-    font_chapter = pygame.font.Font(None, 48)
-    font_desc = pygame.font.Font(None, 28)
+    font_title = pygame.font.Font(None, 76)
+    font_chapter = pygame.font.Font(None, 40)
+    font_desc = pygame.font.Font(None, 26)
+    font_small = pygame.font.Font(None, 20)
 
     chapters = [
-        ("Chapter 1", "The Depths", levels.level1.intro),
-        ("Chapter 2", "The Train", lambda s, c: levels.level2.intro(s, c)),
-        ("Chapter 3", "The Laboratory", levels.level3.intro),
-        ("Chapter 4", "The Lab", levels.level4.intro),
+        ("Chapter 1", "The Depths", levels.level1.intro, "Descend into the abyss"),
+        ("Chapter 2", "The Train", lambda s, c: levels.level2.intro(s, c), "Board the phantom express"),
+        ("Chapter 3", "The Laboratory", levels.level3.intro, "Secrets beneath the waves"),
+        ("Chapter 4", "The Lab", levels.level4.intro, "Face the heart of the storm"),
     ]
+    t = 0.0
 
     while running:
-        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+        WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
+        mouse_pos = pygame.mouse.get_pos()
+        draw_vertical_gradient(screen, (3, 8, 22), (8, 30, 72))
 
-        title = font_title.render("Select Chapter", True, WHITE)
-        screen.blit(title, title.get_rect(center=(WIDTH // 2, 60)))
+        # subtle wave line at the top
+        for x in range(0, WIDTH + 10, 10):
+            y = 90 + math.sin(x * 0.03 + t * 0.5) * 3
+            pygame.draw.circle(screen, (30, 120, 160), (x, int(y)), 1)
 
-        for i, (name, desc, func) in enumerate(chapters):
-            y = 150 + i * 120
-            rect = pygame.Rect(WIDTH // 2 - 200, y, 400, 80)
-            hovered = rect.collidepoint(pygame.mouse.get_pos())
+        _draw_glowing_text(screen, "SELECT CHAPTER", font_title, WHITE,
+                           (WIDTH // 2, 50), glow_color=(50, 150, 200), radius=3)
 
-            bg = title_screen.HOVER_COLOR if hovered else title_screen.BUTTON_COLOR
+        for i, (name, desc, func, tagline) in enumerate(chapters):
+            y = 140 + i * 110
+            rect = pygame.Rect(WIDTH // 2 - 220, y, 440, 85)
+            hovered = rect.collidepoint(mouse_pos)
+
+            bg = (50, 95, 145) if hovered else (28, 55, 85)
+            border_c = LIGHT_TEAL if hovered else TEAL
             pygame.draw.rect(screen, bg, rect, border_radius=12)
-            pygame.draw.rect(screen, WHITE, rect, 2, border_radius=12)
+            pygame.draw.rect(screen, border_c, rect, 2, border_radius=12)
+
+            if hovered:
+                glow = pygame.Surface((rect.w + 8, rect.h + 8), pygame.SRCALPHA)
+                pygame.draw.rect(glow, (*LIGHT_TEAL[:3], 35), (4, 4, rect.w, rect.h), border_radius=14)
+                screen.blit(glow, (rect.x - 4, rect.y - 4))
+
+            # chapter number badge
+            badge = pygame.Rect(rect.x + 10, rect.y + 12, 40, 40)
+            pygame.draw.rect(screen, SEA_LIGHT, badge, border_radius=8)
+            num_surf = font_chapter.render(str(i + 1), True, WHITE)
+            screen.blit(num_surf, num_surf.get_rect(center=badge.center))
 
             n = font_chapter.render(name, True, WHITE)
-            screen.blit(n, (rect.x + 20, rect.y + 8))
-            d = font_desc.render(desc, True, (180, 220, 240))
-            screen.blit(d, (rect.x + 20, rect.y + 45))
+            screen.blit(n, (rect.x + 62, rect.y + 10))
+            d = font_desc.render(desc, True, (160, 210, 235))
+            screen.blit(d, (rect.x + 62, rect.y + 44))
+            tg = font_small.render(tagline, True, (100, 160, 190))
+            screen.blit(tg, (rect.x + 62, rect.y + 64))
 
-        back_rect = pygame.Rect(WIDTH // 2 - 80, HEIGHT - 70, 160, 50)
-        back_hovered = back_rect.collidepoint(pygame.mouse.get_pos())
-        pygame.draw.rect(screen, (50, 50, 70) if back_hovered else (40, 40, 55), back_rect, border_radius=10)
-        pygame.draw.rect(screen, WHITE, back_rect, 2, border_radius=10)
-        back_text = font_chapter.render("Back", True, WHITE)
-        screen.blit(back_text, back_text.get_rect(center=back_rect.center))
+        back_rect = pygame.Rect(WIDTH // 2 - 70, HEIGHT - 65, 140, 44)
+        back_hovered = back_rect.collidepoint(mouse_pos)
+        _themed_button(screen, back_rect, "BACK", font_desc, back_hovered, accent=TEAL)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -157,9 +311,9 @@ def chapter_select(screen, clock):
                 if event.key == pygame.K_ESCAPE:
                     return screen
             if event.type == pygame.MOUSEBUTTONDOWN:
-                for i, (name, desc, func) in enumerate(chapters):
-                    y = 150 + i * 120
-                    rect = pygame.Rect(WIDTH // 2 - 200, y, 400, 80)
+                for i, (name, desc, func, tagline) in enumerate(chapters):
+                    y = 140 + i * 110
+                    rect = pygame.Rect(WIDTH // 2 - 220, y, 440, 85)
                     if rect.collidepoint(event.pos):
                         func(screen, clock)
                         return screen
@@ -168,14 +322,15 @@ def chapter_select(screen, clock):
 
         pygame.display.flip()
         clock.tick(60)
+        t += 0.03
 
 
 def settings_menu(screen, clock):
     global jukebox
     running = True
-    font_title = pygame.font.Font(None, 80)
-    font_item = pygame.font.Font(None, 40)
-    font_value = pygame.font.Font(None, 30)
+    font_title = pygame.font.Font(None, 76)
+    font_item = pygame.font.Font(None, 36)
+    font_value = pygame.font.Font(None, 26)
 
     res_index = 0
     for i, (rw, rh) in enumerate(constants.AVAILABLE_RESOLUTIONS):
@@ -201,13 +356,15 @@ def settings_menu(screen, clock):
             rs_index = i
             break
 
+    tutorial_on = constants.settings.get("show_tutorial", True)
+
     dragging_volume = False
     dragging_hud = False
 
-    button_back = pygame.Rect(constants.WIDTH // 2 - 100, constants.HEIGHT - 100, 200, 55)
+    button_back = pygame.Rect(constants.WIDTH // 2 - 90, constants.HEIGHT - 90, 180, 48)
 
     def get_slider_rect(center_y):
-        return pygame.Rect(constants.WIDTH // 2 - 100, center_y - 6, 340, 12)
+        return pygame.Rect(constants.WIDTH // 2 - 90, center_y - 5, 300, 10)
 
     def value_from_pos(slider, mouse_x, max_val=100):
         ratio = (mouse_x - slider.x) / slider.w
@@ -229,89 +386,88 @@ def settings_menu(screen, clock):
         constants.WIDTH = screen.get_width()
         constants.HEIGHT = screen.get_height()
 
+    t = 0.0
     while running:
         WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
         mouse_pos = pygame.mouse.get_pos()
 
-        draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
+        draw_vertical_gradient(screen, (3, 8, 22), (8, 30, 72))
 
-        title = font_title.render("Settings", True, WHITE)
-        screen.blit(title, title.get_rect(center=(WIDTH // 2, 60)))
+        # subtle wave line at the top
+        for x in range(0, WIDTH + 10, 10):
+            y = 90 + math.sin(x * 0.03 + t * 0.5) * 3
+            pygame.draw.circle(screen, (30, 120, 160), (x, int(y)), 1)
 
+        _draw_glowing_text(screen, "SETTINGS", font_title, WHITE,
+                           (WIDTH // 2, 50), glow_color=(50, 150, 200), radius=3)
+
+        # ── sliders ──
         labels = [
-            ("Master Volume", 180, constants.settings["master_volume"], 100),
-            ("HUD Scale", 270, constants.settings["hud_scale"], 200),
+            ("Master Volume", 170, constants.settings["master_volume"], 100),
+            ("HUD Scale",     250, constants.settings["hud_scale"],     200),
         ]
 
         for label, cy, val, max_val in labels:
             lbl = font_item.render(label, True, (180, 220, 240))
-            screen.blit(lbl, (WIDTH // 2 - 340, cy - 14))
+            screen.blit(lbl, (WIDTH // 2 - 310, cy - 12))
 
-            val_text = font_value.render(f"{round(val/100,1)}", True, (100, 220, 180))
-            screen.blit(val_text, (WIDTH // 2 + 250, cy - 10))
+            val_text = font_value.render(f"{round(val/100,1)}", True, LIGHT_TEAL)
+            screen.blit(val_text, (WIDTH // 2 + 220, cy - 8))
 
             slider = get_slider_rect(cy)
-            pygame.draw.rect(screen, (20, 50, 70), slider, border_radius=6)
+            pygame.draw.rect(screen, (15, 40, 60), slider, border_radius=5)
             ratio = val / max_val
             fill_w = int(slider.w * ratio)
             if fill_w > 0:
                 fill = pygame.Rect(slider.x, slider.y, fill_w, slider.h)
-                pygame.draw.rect(screen, (60, 200, 160), fill, border_radius=6)
+                pygame.draw.rect(screen, TEAL, fill, border_radius=5)
             handle_x = slider.x + int(slider.w * ratio)
-            pygame.draw.circle(screen, (180, 255, 230), (handle_x, slider.centery), 9)
-            pygame.draw.circle(screen, (60, 200, 160), (handle_x, slider.centery), 9, 2)
+            pygame.draw.circle(screen, LIGHT_TEAL, (handle_x, slider.centery), 8)
+            pygame.draw.circle(screen, TEAL, (handle_x, slider.centery), 8, 2)
 
-        # Resolution selector
-        res_lbl = font_item.render("Resolution", True, (180, 220, 240))
-        screen.blit(res_lbl, (WIDTH // 2 - 340, 340))
-        rw, rh = constants.AVAILABLE_RESOLUTIONS[res_index]
-        res_text = font_item.render(f"{rw} x {rh}", True, WHITE)
-        res_rect = pygame.Rect(WIDTH // 2 - 100, 325, 200, 40)
-        pygame.draw.rect(screen, (25, 65, 95), res_rect, border_radius=8)
-        pygame.draw.rect(screen, (60, 160, 200), res_rect, 2, border_radius=8)
-        screen.blit(res_text, res_text.get_rect(center=res_rect.center))
+        # ── cycling selectors (resolution, display mode, fps) ──
+        cx = WIDTH // 2
+        selectors = [
+            ("Resolution",   330, constants.AVAILABLE_RESOLUTIONS, res_index,
+             f"{constants.AVAILABLE_RESOLUTIONS[res_index][0]} x {constants.AVAILABLE_RESOLUTIONS[res_index][1]}"),
+            ("Display Mode",  410, constants.DISPLAY_MODES, mode_index,
+             constants.DISPLAY_MODES[mode_index].capitalize()),
+            ("FPS",           490, constants.FPS_OPTIONS, fps_index,
+             f"{constants.FPS_OPTIONS[fps_index]}" if constants.FPS_OPTIONS[fps_index] > 0 else "Uncapped"),
+        ]
 
-        left_arr = pygame.Rect(WIDTH // 2 - 130, 335, 22, 22)
-        right_arr = pygame.Rect(WIDTH // 2 + 110, 335, 22, 22)
-        pygame.draw.polygon(screen, (120, 220, 200), [(left_arr.right, left_arr.y), (left_arr.x, left_arr.centery), (left_arr.right, left_arr.bottom)])
-        pygame.draw.polygon(screen, (120, 220, 200), [(right_arr.x, right_arr.y), (right_arr.right, right_arr.centery), (right_arr.x, right_arr.bottom)])
+        # Tutorial toggle
+        tut_label = font_item.render("Show Tutorial", True, (180, 220, 240))
+        screen.blit(tut_label, (cx - 310, 565))
+        tut_rect = pygame.Rect(cx - 85, 562, 170, 36)
+        tut_color = TEAL if tutorial_on else (60, 80, 100)
+        pygame.draw.rect(screen, (22, 55, 85), tut_rect, border_radius=8)
+        pygame.draw.rect(screen, tut_color, tut_rect, 2, border_radius=8)
+        tut_text = font_item.render("On" if tutorial_on else "Off", True, WHITE)
+        screen.blit(tut_text, tut_text.get_rect(center=tut_rect.center))
 
-        # Display mode selector
-        mode_lbl = font_item.render("Display Mode", True, (180, 220, 240))
-        screen.blit(mode_lbl, (WIDTH // 2 - 340, 410))
-        mode_text = font_item.render(constants.DISPLAY_MODES[mode_index].capitalize(), True, WHITE)
-        mode_rect = pygame.Rect(WIDTH // 2 - 100, 395, 200, 40)
-        pygame.draw.rect(screen, (25, 65, 95), mode_rect, border_radius=8)
-        pygame.draw.rect(screen, (60, 160, 200), mode_rect, 2, border_radius=8)
-        screen.blit(mode_text, mode_text.get_rect(center=mode_rect.center))
+        for s_label, s_cy, s_options, s_index, s_text in selectors:
+            lbl = font_item.render(s_label, True, (180, 220, 240))
+            screen.blit(lbl, (cx - 310, s_cy - 12))
 
-        mode_left = pygame.Rect(WIDTH // 2 - 130, 405, 22, 22)
-        mode_right = pygame.Rect(WIDTH // 2 + 110, 405, 22, 22)
-        pygame.draw.polygon(screen, (120, 220, 200), [(mode_left.right, mode_left.y), (mode_left.x, mode_left.centery), (mode_left.right, mode_left.bottom)])
-        pygame.draw.polygon(screen, (120, 220, 200), [(mode_right.x, mode_right.y), (mode_right.right, mode_right.centery), (mode_right.x, mode_right.bottom)])
+            rect = pygame.Rect(cx - 85, s_cy - 18, 170, 36)
+            pygame.draw.rect(screen, (22, 55, 85), rect, border_radius=8)
+            pygame.draw.rect(screen, TEAL, rect, 2, border_radius=8)
+            txt = font_item.render(s_text, True, WHITE)
+            screen.blit(txt, txt.get_rect(center=rect.center))
 
-        # FPS selector
-        fps_lbl = font_item.render("FPS", True, (180, 220, 240))
-        screen.blit(fps_lbl, (WIDTH // 2 - 340, 480))
-        fps_val = constants.FPS_OPTIONS[fps_index]
-        fps_text = font_item.render(f"{fps_val if fps_val > 0 else 'Uncapped'}", True, WHITE)
-        fps_rect = pygame.Rect(WIDTH // 2 - 100, 465, 200, 40)
-        pygame.draw.rect(screen, (25, 65, 95), fps_rect, border_radius=8)
-        pygame.draw.rect(screen, (60, 160, 200), fps_rect, 2, border_radius=8)
-        screen.blit(fps_text, fps_text.get_rect(center=fps_rect.center))
+            left  = pygame.Rect(cx - 112, s_cy - 12, 20, 20)
+            right = pygame.Rect(cx + 92,  s_cy - 12, 20, 20)
+            pygame.draw.polygon(screen, LIGHT_TEAL,
+                [(left.x, left.centery), (left.right, left.y), (left.right, left.bottom)])
+            pygame.draw.polygon(screen, LIGHT_TEAL,
+                [(right.right, right.centery), (right.x, right.y), (right.x, right.bottom)])
 
-        fps_left = pygame.Rect(WIDTH // 2 - 130, 475, 22, 22)
-        fps_right = pygame.Rect(WIDTH // 2 + 110, 475, 22, 22)
-        pygame.draw.polygon(screen, (120, 220, 200), [(fps_left.right, fps_left.y), (fps_left.x, fps_left.centery), (fps_left.right, fps_left.bottom)])
-        pygame.draw.polygon(screen, (120, 220, 200), [(fps_right.x, fps_right.y), (fps_right.right, fps_right.centery), (fps_right.x, fps_right.bottom)])
-
-        # Back button
+        # ── back ──
         hovered_back = button_back.collidepoint(mouse_pos)
-        pygame.draw.rect(screen, (60, 110, 170) if hovered_back else (40, 80, 120), button_back, border_radius=12)
-        pygame.draw.rect(screen, WHITE, button_back, 2, border_radius=12)
-        back_text = font_item.render("BACK", True, WHITE)
-        screen.blit(back_text, back_text.get_rect(center=button_back.center))
+        _themed_button(screen, button_back, "BACK", font_item, hovered_back, accent=TEAL)
 
+        # ── events (unchanged logic) ──
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -322,7 +478,7 @@ def settings_menu(screen, clock):
                     running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                vol_slider = get_slider_rect(180)
+                vol_slider = get_slider_rect(170)
                 if vol_slider.collidepoint(event.pos):
                     dragging_volume = True
                     val = value_from_pos(vol_slider, event.pos[0])
@@ -330,36 +486,52 @@ def settings_menu(screen, clock):
                     if jukebox:
                         jukebox.set_volume(val / 100.0)
 
-                hud_slider = get_slider_rect(270)
+                hud_slider = get_slider_rect(250)
                 if hud_slider.collidepoint(event.pos):
                     dragging_hud = True
                     val = value_from_pos(hud_slider, event.pos[0], 200)
                     constants.settings["hud_scale"] = val
 
-                if left_arr.collidepoint(event.pos):
+                # resolution arrows
+                left  = pygame.Rect(cx - 112, 330 - 12, 20, 20)
+                right = pygame.Rect(cx + 92,  330 - 12, 20, 20)
+                if left.collidepoint(event.pos):
                     res_index = (res_index - 1) % len(constants.AVAILABLE_RESOLUTIONS)
                     constants.settings["display_w"], constants.settings["display_h"] = constants.AVAILABLE_RESOLUTIONS[res_index]
                     apply_display()
-                if right_arr.collidepoint(event.pos):
+                if right.collidepoint(event.pos):
                     res_index = (res_index + 1) % len(constants.AVAILABLE_RESOLUTIONS)
                     constants.settings["display_w"], constants.settings["display_h"] = constants.AVAILABLE_RESOLUTIONS[res_index]
                     apply_display()
 
-                if mode_left.collidepoint(event.pos):
+                # display mode arrows
+                left  = pygame.Rect(cx - 112, 410 - 12, 20, 20)
+                right = pygame.Rect(cx + 92,  410 - 12, 20, 20)
+                if left.collidepoint(event.pos):
                     mode_index = (mode_index - 1) % len(constants.DISPLAY_MODES)
                     constants.settings["display_mode"] = constants.DISPLAY_MODES[mode_index]
                     apply_display()
-                if mode_right.collidepoint(event.pos):
+                if right.collidepoint(event.pos):
                     mode_index = (mode_index + 1) % len(constants.DISPLAY_MODES)
                     constants.settings["display_mode"] = constants.DISPLAY_MODES[mode_index]
                     apply_display()
 
-                if fps_left.collidepoint(event.pos):
+                # fps arrows
+                left  = pygame.Rect(cx - 112, 490 - 12, 20, 20)
+                right = pygame.Rect(cx + 92,  490 - 12, 20, 20)
+                if left.collidepoint(event.pos):
                     fps_index = (fps_index - 1) % len(constants.FPS_OPTIONS)
                     constants.settings["fps"] = constants.FPS_OPTIONS[fps_index]
-                if fps_right.collidepoint(event.pos):
+                if right.collidepoint(event.pos):
                     fps_index = (fps_index + 1) % len(constants.FPS_OPTIONS)
                     constants.settings["fps"] = constants.FPS_OPTIONS[fps_index]
+
+                # tutorial toggle
+                tut_rect = pygame.Rect(cx - 85, 562, 170, 36)
+                if tut_rect.collidepoint(event.pos):
+                    tutorial_on = not tutorial_on
+                    constants.settings["show_tutorial"] = tutorial_on
+
                 if button_back.collidepoint(event.pos):
                     running = False
 
@@ -369,18 +541,19 @@ def settings_menu(screen, clock):
 
             if event.type == pygame.MOUSEMOTION:
                 if dragging_volume:
-                    vol_slider = get_slider_rect(180)
+                    vol_slider = get_slider_rect(170)
                     val = value_from_pos(vol_slider, event.pos[0])
                     constants.settings["master_volume"] = val
                     if jukebox:
                         jukebox.set_volume(val / 100.0)
                 if dragging_hud:
-                    hud_slider = get_slider_rect(270)
+                    hud_slider = get_slider_rect(250)
                     val = value_from_pos(hud_slider, event.pos[0], 200)
                     constants.settings["hud_scale"] = val
 
         pygame.display.flip()
         clock.tick(60)
+        t += 0.03
 
     return screen
 
@@ -420,9 +593,11 @@ def shop_(screen, clock, name):
             constants.player_balloon_ammo_bonus += 3
         elif key == "max_hp":
             from constants import PLAYER_MAX_HP
+
             constants.PLAYER_MAX_HP += 25
         elif key == "speed":
             from constants import physics
+
             physics.PLAYER_SPEED += 1
         elif key == "Spears":
             pass
@@ -438,7 +613,9 @@ def shop_(screen, clock, name):
         title = font_title.render(name, True, WHITE)
         screen.blit(title, title.get_rect(center=(WIDTH // 2, 70)))
 
-        coins_text = font_item.render(f"¢ {constants.player_coins}", True, (255, 215, 0))
+        coins_text = font_item.render(
+            f"¢ {constants.player_coins}", True, (255, 215, 0)
+        )
         screen.blit(coins_text, (40, 30))
 
         item_rects = []
@@ -463,17 +640,25 @@ def shop_(screen, clock, name):
             pygame.draw.rect(screen, border_color, rect, 2, border_radius=10)
 
             if owned:
-                text = font_item.render(f"✓ {item['name']} — OWNED", True, (120, 200, 160))
+                text = font_item.render(
+                    f"✓ {item['name']} — OWNED", True, (120, 200, 160)
+                )
             elif stackable:
-                count = constants.player_flasks if item["key"] == "flask" else constants.player_balloon_ammo_bonus
+                count = (
+                    constants.player_flasks
+                    if item["key"] == "flask"
+                    else constants.player_balloon_ammo_bonus
+                )
                 text = font_item.render(
                     f"{item['name']} ({'owned: ' + str(count)}) — {item['cost']}g",
-                    True, (200, 220, 240) if constants.player_coins < item["cost"] else WHITE
+                    True,
+                    (200, 220, 240) if constants.player_coins < item["cost"] else WHITE,
                 )
             else:
                 text = font_item.render(
                     f"{item['name']} — {item['cost']}g",
-                    True, (200, 220, 240) if constants.player_coins < item["cost"] else WHITE
+                    True,
+                    (200, 220, 240) if constants.player_coins < item["cost"] else WHITE,
                 )
             desc = font_small.render(item["desc"], True, (160, 190, 210))
 
