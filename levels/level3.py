@@ -87,7 +87,7 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
         pygame.transform.scale(f, (run_w_scale, run_h)) for f in running_raw
     ]
     shopkeeper_img = pygame.image.load("helper/mr shopKeeper.png")
-    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (60, 75))
+    shopkeeper_img = pygame.transform.scale(shopkeeper_img, (80, 100))
     spear_frames_raw = [
         pygame.image.load(f"Death Knight Spear/s{i}.png") for i in range(1, 5)
     ]
@@ -728,9 +728,9 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
         )
 
         for shop_t in shop_triggers:
-            sx = shop_t["rect"].x - camera_x
-            sy = shop_t["rect"].y - camera_y - 25
-            if -60 < sx < WIDTH and -75 < sy < HEIGHT:
+            sx = shop_t["rect"].x - camera_x - 15
+            sy = shop_t["rect"].y - camera_y - 50
+            if -80 < sx < WIDTH and -100 < sy < HEIGHT:
                 screen.blit(shopkeeper_img, (sx, sy))
 
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)

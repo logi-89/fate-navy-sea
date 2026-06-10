@@ -25,4 +25,3 @@ if dev_mode:
     levels.level1.intro(screen, clock)
 else:
     screen = menu.show_title_screen(screen, clock, jukebox)
-# menu.shop_(screen, clock, "lentons")
