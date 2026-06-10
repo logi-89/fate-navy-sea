@@ -12,6 +12,7 @@ from helper import graphics
 from helper import death_screen
 from helper import enemy as enemies_module
 from helper import weapons
+from helper import scoreboard
 
 import levels
 from levels import menu
@@ -186,6 +187,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             ms = clock.tick(target_fps)
         else:
             ms = clock.tick()
+        constants.total_play_time += ms
         dt = max(0.01, ms / 16.666667)
 
         if not input_allowed:
@@ -208,8 +210,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    scoreboard.save_and_quit(screen, clock)
                     running = False
-                    pygame.quit()
                     return
                 if event.key == pygame.K_p and constants.dev_mode:
                     running = False

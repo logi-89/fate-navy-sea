@@ -102,6 +102,7 @@ player_inventory_clips = 0
 player_coins = 0
 total_score = 0
 total_kills = 0
+total_play_time = 0
 player_flasks = 0
 player_revive_tokens = 0
 player_owned_weapons = []

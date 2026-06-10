@@ -3,6 +3,7 @@ import constants
 from constants import *
 from helper.graphics import *
 from helper.music import Music
+from helper import scoreboard
 import maps
 import levels.level1
 import levels.level2
@@ -26,6 +27,7 @@ def show_title_screen(screen, clock, jukebox_object):
     start_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 40, 240, 60)
     chapters_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 110, 240, 60)
     settings_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 180, 240, 60)
+    highscores_button = pygame.Rect(WIDTH // 2 - 120, HEIGHT // 2 + 250, 240, 60)
 
     while running:
         WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
@@ -33,6 +35,7 @@ def show_title_screen(screen, clock, jukebox_object):
         hovered_start = start_button.collidepoint(mouse_pos)
         hovered_chapters = chapters_button.collidepoint(mouse_pos)
         hovered_settings = settings_button.collidepoint(mouse_pos)
+        hovered_scores = highscores_button.collidepoint(mouse_pos)
 
         draw_vertical_gradient(screen, (8, 24, 48), (20, 110, 160))
         pygame.draw.circle(screen, (160, 220, 255), (WIDTH // 2, 180), 90)
@@ -67,6 +70,12 @@ def show_title_screen(screen, clock, jukebox_object):
         settings_rect = settings_text.get_rect(center=settings_button.center)
         screen.blit(settings_text, settings_rect)
 
+        pygame.draw.rect(screen, title_screen.HOVER_COLOR if hovered_scores else title_screen.BUTTON_COLOR, highscores_button, border_radius=18)
+        pygame.draw.rect(screen, WHITE, highscores_button, 3, border_radius=18)
+        scores_text = button_font.render("High Scores", True, WHITE)
+        scores_rect = scores_text.get_rect(center=highscores_button.center)
+        screen.blit(scores_text, scores_rect)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -85,6 +94,10 @@ def show_title_screen(screen, clock, jukebox_object):
                         return screen
                 if settings_button.collidepoint(event.pos):
                     screen = settings_menu(screen, clock)
+                    if not pygame.get_init():
+                        return screen
+                if highscores_button.collidepoint(event.pos):
+                    screen = scoreboard.show_high_scores(screen, clock)
                     if not pygame.get_init():
                         return screen
 
@@ -382,19 +395,21 @@ def shop_(screen, clock, name):
 
     # Track owned keys for display
     def is_owned(key):
+        if key in ("flask", "balloon_ammo"):
+            return False
         if key == "Spears":
             return "spear" in constants.player_owned_weapons
         return key in constants.player_owned_weapons
 
     def buy_item(item):
-        if is_owned(item["key"]):
-            return False
         if constants.player_coins < item["cost"]:
             return False
         constants.player_coins -= item["cost"]
 
         key = item["key"]
-        if key == "Spears":
+        if key in ("flask", "balloon_ammo"):
+            pass
+        elif key == "Spears":
             constants.player_owned_weapons.append("spear")
         else:
             constants.player_owned_weapons.append(key)
@@ -433,6 +448,7 @@ def shop_(screen, clock, name):
             item_rects.append(rect)
 
             owned = is_owned(item["key"])
+            stackable = item["key"] in ("flask", "balloon_ammo")
             base_color = (40, 90, 130)
             border_color = (80, 140, 180)
             if owned:
@@ -448,6 +464,12 @@ def shop_(screen, clock, name):
 
             if owned:
                 text = font_item.render(f"✓ {item['name']} — OWNED", True, (120, 200, 160))
+            elif stackable:
+                count = constants.player_flasks if item["key"] == "flask" else constants.player_balloon_ammo_bonus
+                text = font_item.render(
+                    f"{item['name']} ({'owned: ' + str(count)}) — {item['cost']}g",
+                    True, (200, 220, 240) if constants.player_coins < item["cost"] else WHITE
+                )
             else:
                 text = font_item.render(
                     f"{item['name']} — {item['cost']}g",
