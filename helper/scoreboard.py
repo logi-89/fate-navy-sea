@@ -1,25 +1,34 @@
-import json
+import csv
 import os
 import pygame
 from datetime import datetime
 import constants
 from helper.graphics import draw_vertical_gradient
 
-SCORE_FILE = constants.resource_path("data/scores.json")
+SCORE_FILE = constants.resource_path("data/scores.csv")
+FIELDS = ["name", "score", "time", "date", "time_str"]
 
 def load_scores():
     if not os.path.exists(SCORE_FILE):
         return []
     try:
-        with open(SCORE_FILE, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
+        with open(SCORE_FILE, "r", newline="") as f:
+            reader = csv.DictReader(f)
+            scores = []
+            for row in reader:
+                row["score"] = int(row["score"])
+                row["time"] = float(row["time"])
+                scores.append(row)
+            return scores
+    except (csv.Error, IOError, KeyError, ValueError):
         return []
 
 def save_scores(scores):
     os.makedirs(os.path.dirname(SCORE_FILE), exist_ok=True)
-    with open(SCORE_FILE, "w") as f:
-        json.dump(scores, f, indent=2)
+    with open(SCORE_FILE, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDS)
+        writer.writeheader()
+        writer.writerows(scores)
 
 def add_score(name, score, time_secs):
     scores = load_scores()
@@ -134,9 +143,9 @@ def show_high_scores(screen, clock):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return
+                return screen
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return
+                    return screen
             if event.type == pygame.MOUSEBUTTONDOWN:
-                return
+                return screen
