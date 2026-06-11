@@ -14,18 +14,24 @@ _warden_shoot = []
 def _get_warden_sprites():
     global _warden_idle, _warden_shoot
     if _warden_idle is None:
+        W = 175
+        H = 215
         base = os.path.join(os.path.dirname(__file__), "..")
         img = pygame.image.load(
             os.path.join(base, "Warden Idle", "warden_shock_trooper(base).png")
         )
-        _warden_idle = pygame.transform.scale(img, (175, 215))
+        _warden_idle = pygame.transform.scale(img, (W, H))
         _warden_shoot = []
         for fname in (
             "warden_shock_shooter_frame_1.png",
             "warden_shock_shooter_frame_2.png",
         ):
-            img = pygame.image.load(os.path.join(base, "Warden Shoot", fname))
-            _warden_shoot.append(pygame.transform.scale(img, (175, 215)))
+            raw = pygame.image.load(os.path.join(base, "Warden Shoot", fname))
+            # Scale so the character matches idle size, then center onto W×H canvas
+            s = pygame.transform.scale(raw, (112, 148))
+            surf = pygame.Surface((W, H), pygame.SRCALPHA)
+            surf.blit(s, ((W - s.get_width()) // 2, (H - s.get_height()) // 2))
+            _warden_shoot.append(surf)
     return _warden_idle, _warden_shoot
 
 
