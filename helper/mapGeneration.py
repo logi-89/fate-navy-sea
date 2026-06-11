@@ -181,6 +181,27 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 shop_triggers.append({"rect": rect})
                 col += 1
 
+            elif ch == "P":
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append(
+                    {
+                        "rect": rect,
+                        "start_x": float(rect.x),
+                        "patrol_left": float(rect.x - 150),
+                        "patrol_right": float(rect.x + 150),
+                        "dir": random.choice([-1, 1]),
+                        "speed": 1.5,
+                        "chase_speed": 3,
+                        "detect_range": 400,
+                        "state": "patrol",
+                        "hp": 125,
+                        "max_hp": 125,
+                        "damage": 35,
+                        "type": "punchy_squid",
+                    }
+                )
+                col += 1
+
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
                 target = int(ch)
