@@ -530,6 +530,7 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                         clock,
                         lambda: levelTHREE(screen, tile_map),
                         "You were killed by an enemy!",
+                        music_key="warden",
                     )
                     return
 

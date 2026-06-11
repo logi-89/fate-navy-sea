@@ -1,4 +1,5 @@
 import pygame
+import os
 
 from constants import *
 
@@ -12,6 +13,12 @@ def show_death_screen(screen, clock, restart_func):
     button_font = pygame.font.Font(None, 50)
 
     button_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 50, 300, 70)
+
+    base = os.path.join(os.path.dirname(__file__), "..")
+    pygame.mixer.music.load(
+        os.path.join(base, "death screen music", "universfield-marimba-lose-250960.mp3")
+    )
+    pygame.mixer.music.play(-1)
 
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -51,10 +58,12 @@ def show_death_screen(screen, clock, restart_func):
                     pygame.quit()
                     return False
                 if event.key == pygame.K_r:
+                    pygame.mixer.music.stop()
                     restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
+                    pygame.mixer.music.stop()
                     restart_func()
                     return True
 
@@ -62,13 +71,25 @@ def show_death_screen(screen, clock, restart_func):
         clock.tick(60)
 
 
-def show_death_screen_ENEMIES(screen, clock, restart_func, text):
+def show_death_screen_ENEMIES(screen, clock, restart_func, text, music_key="enemies"):
     running = True
     title_font = pygame.font.Font(None, 100)
     sub_font = pygame.font.Font(None, 44)
     button_font = pygame.font.Font(None, 50)
 
     button_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 50, 300, 70)
+
+    base = os.path.join(os.path.dirname(__file__), "..")
+    if music_key == "warden":
+        path = os.path.join(
+            base, "death screen music", "mrstokes302-you-lose-sfx-mrstokes302-528744.mp3"
+        )
+    else:
+        path = os.path.join(
+            base, "death screen music", "floraphonic-violin-lose-4-185125.mp3"
+        )
+    pygame.mixer.music.load(path)
+    pygame.mixer.music.play(-1)
 
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -106,10 +127,12 @@ def show_death_screen_ENEMIES(screen, clock, restart_func, text):
                     pygame.quit()
                     return False
                 if event.key == pygame.K_r:
+                    pygame.mixer.music.stop()
                     restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
+                    pygame.mixer.music.stop()
                     restart_func()
                     return True
 

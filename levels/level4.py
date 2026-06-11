@@ -538,6 +538,7 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
                         clock,
                         lambda: levelFOUR(screen, tile_map),
                         "You were killed by an enemy!",
+                        music_key="warden",
                     )
                     return
 
