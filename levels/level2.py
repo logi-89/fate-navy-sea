@@ -4,7 +4,7 @@ import constants
 import math
 import random
 
-# constants.dev_mode = True
+constants.dev_mode = True
 
 from constants import *
 from helper import mapGeneration
@@ -60,18 +60,21 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     world_h = len(tile_map) * physics.TILE_SIZE
 
     spawn_x, spawn_y = 400, 500
-    #spawn_x, spawn_y = 2200, 690
+    #spawn_x, spawn_y = 4494, 690
 
     grounded = [p for p in platforms if HEIGHT // 4 < p.y < HEIGHT - 50]
     if grounded:
         best    = min(grounded, key=lambda p: p.x)
-        spawn_x = best.x + 2200
-        spawn_y = best.top - 214
+        spawn_x = best.x + 2300
+        spawn_y = best.top - 220
 
         if constants.dev_mode:
             # spawn_x = spawn_x + 7600
             # spawn_y = spawn_y - 467
             print("in dev mode")
+            spawn_x, spawn_y = 4494, 690
+
+        spawn_x, spawn_y = 4494, 690
 
     player_x = float(spawn_x)
     player_y = float(spawn_y)
@@ -116,6 +119,9 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
     weapon_list            = weapons.get_available(constants.dev_mode)
     selected_weapon        = 0
     ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    if constants.dev_mode:
+        for k in ammo_counts:
+            ammo_counts[k] = 9999
     projectiles            = []
     weapon_cooldown        = 0
     shop_cooldown          = 0
@@ -448,6 +454,9 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                         for k in weapon_list
                         if WEAPON_DEFS[k]["ammo"] > 0
                     }
+                    if constants.dev_mode:
+                        for k in ammo_counts:
+                            ammo_counts[k] = 9999
                     if selected_weapon >= len(weapon_list):
                         selected_weapon = 0
                     break
