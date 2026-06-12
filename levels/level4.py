@@ -548,7 +548,6 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
-        constants.player_current_hp = player_hp
 
         # SMOOTH CAMERA LaRP (LERP) TRACKING
         target_cam_x = player_rect.centerx - WIDTH // 2

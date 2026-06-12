@@ -440,6 +440,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
         for trigger in map_data.get("level_triggers", []):
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 3:
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
                     levels.level3.intro(screen, clock)
                     return
 
@@ -592,7 +593,6 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
-        constants.player_current_hp = player_hp
 
         # SMOOTH  CAMERA LERP TRACKING
         max_cam_x = max(0, world_w - WIDTH)

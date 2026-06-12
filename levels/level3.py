@@ -392,9 +392,18 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(
-                                screen, clock, lambda: levelTHREE(screen, tile_map)
-                            )
-                            return
+                        screen, clock, lambda: levelTHREE(screen, tile_map)
+                    )
+                    return
+
+        # LEVEL TRANSITION TRIGGER
+        for trigger in map_data.get("level_triggers", []):
+            if player_rect.colliderect(trigger["rect"]):
+                if trigger["target_level"] == 4:
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
+                    import levels.level4
+                    levels.level4.intro(screen, clock)
+                    return
 
         if shop_cooldown <= 0:
             for shop_t in shop_triggers:
@@ -540,7 +549,6 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
 
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
-        constants.player_current_hp = player_hp
 
         # SMOOTH CAMERA LaRP (LERP) TRACKING
         target_cam_x = player_rect.centerx - WIDTH // 2
