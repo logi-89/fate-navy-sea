@@ -74,6 +74,10 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 spawn_x = 4030
                 spawn_y = 150
 
+    if map_data.get("player_spawn"):
+        spawn_x = map_data["player_spawn"]["rect"].x
+        spawn_y = map_data["player_spawn"]["rect"].y
+
     player_x = float(spawn_x)
     player_y = float(spawn_y)
     player_rect = pygame.Rect(spawn_x, spawn_y, 40, 60)

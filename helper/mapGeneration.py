@@ -12,6 +12,8 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     _ -> elevator platform (moves up/down)
     ^ -> animated door (opens upward)
     num -> #level
+    S -> player spawn point
+    M -> shop vendor
     """
 
     platforms = []
@@ -25,6 +27,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
     enemies = []
     coins = []
     shop_triggers = []
+    player_spawn = None
 
     for row_idx, row in enumerate(tile_map):
         y = row_idx * tile_size
@@ -178,6 +181,11 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
 
             elif ch == "S":
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                player_spawn = {"rect": rect}
+                col += 1
+
+            elif ch == "M":
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 shop_triggers.append({"rect": rect})
                 col += 1
 
@@ -224,6 +232,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
         "enemies": enemies,
         "coins": coins,
         "shop_triggers": shop_triggers,
+        "player_spawn": player_spawn,
     }
 
 
