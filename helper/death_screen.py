@@ -1,6 +1,7 @@
 import pygame
 import os
 
+import constants
 from constants import *
 
 
@@ -59,11 +60,13 @@ def show_death_screen(screen, clock, restart_func):
                     return False
                 if event.key == pygame.K_r:
                     pygame.mixer.music.stop()
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
                     pygame.mixer.music.stop()
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True
 
@@ -128,11 +131,13 @@ def show_death_screen_ENEMIES(screen, clock, restart_func, text, music_key="enem
                     return False
                 if event.key == pygame.K_r:
                     pygame.mixer.music.stop()
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
                     pygame.mixer.music.stop()
+                    constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True
 
