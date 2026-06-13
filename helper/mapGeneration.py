@@ -168,13 +168,14 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                         "patrol_left": float(rect.x - 150),
                         "patrol_right": float(rect.x + 150),
                         "dir": random.choice([-1, 1]),
-                        "speed": 1,
-                        "chase_speed": 1,
-                        "detect_range": 750,
-                        "state": "patrol",  # fixed
-                        "hp": 500,
-                        "max_hp": 500,
-                        "damage": 33,
+                        "speed": 1.5,
+                        "chase_speed": 2.5,
+                        "detect_range": 800,
+                        "state": "patrol",
+                        "hp": 2000,
+                        "max_hp": 2000,
+                        "damage": 40,
+                        "type": "boss",
                     }
                 )
                 col += 1
