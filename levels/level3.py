@@ -1026,6 +1026,30 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
         graphics.update_lore_display(screen, dt)
 
+        # ── BOSS HEALTH BAR ──
+        for boss in enemies:
+            if boss.get("type") == "boss":
+                bw = int(300 * hs)
+                bh = int(20 * hs)
+                bx = WIDTH // 2 - bw // 2
+                by = int(12 * hs)
+                pygame.draw.rect(screen, (30, 10, 10), (bx, by, bw, bh), border_radius=6)
+                ratio = max(0.0, boss["hp"] / boss["max_hp"])
+                pygame.draw.rect(
+                    screen,
+                    (200, 40, 40),
+                    (bx, by, int(bw * ratio), bh),
+                    border_radius=6,
+                )
+                pygame.draw.rect(screen, (255, 100, 80), (bx, by, bw, bh), 2, border_radius=6)
+                name_s = ui_font_xs.render("MINI BOSS", True, (255, 160, 140))
+                screen.blit(name_s, (bx + bw + int(12 * hs), by + int(2 * hs)))
+                hp_s = ui_font_xs.render(
+                    f"{boss['hp']} / {boss['max_hp']}", True, (255, 200, 180)
+                )
+                screen.blit(hp_s, (bx + bw + int(12 * hs), by + int(12 * hs)))
+                break
+
         pygame.display.flip()
 
     pygame.quit()
