@@ -3,10 +3,11 @@ import os
 
 import constants
 from constants import *
+import helper.music as music
 
 
 # Accepts a restart_func callback so crushed players respawn in the
-def show_death_screen(screen, clock, restart_func):
+def show_death_screen(screen, clock, restart_func, jukebox):
     """Displays Game Over when crushed. Calls restart_func() on respawn."""
     running = True
     title_font = pygame.font.Font(None, 100)
@@ -16,10 +17,8 @@ def show_death_screen(screen, clock, restart_func):
     button_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 50, 300, 70)
 
     base = os.path.join(os.path.dirname(__file__), "..")
-    pygame.mixer.music.load(
-        os.path.join(base, "death screen music", "universfield-marimba-lose-250960.mp3")
-    )
-    pygame.mixer.music.play(-1)
+    death_effect = music.Music(os.path.join(base, "death screen music", "universfield-marimba-lose-250960.mp3"), False)
+    jukebox.resume()
 
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -74,7 +73,7 @@ def show_death_screen(screen, clock, restart_func):
         clock.tick(60)
 
 
-def show_death_screen_ENEMIES(screen, clock, restart_func, text, music_key="enemies"):
+def show_death_screen_ENEMIES(screen, clock, restart_func, text, jukebox, music_key="enemies"):
     running = True
     title_font = pygame.font.Font(None, 100)
     sub_font = pygame.font.Font(None, 44)
@@ -91,8 +90,8 @@ def show_death_screen_ENEMIES(screen, clock, restart_func, text, music_key="enem
         path = os.path.join(
             base, "death screen music", "floraphonic-violin-lose-4-185125.mp3"
         )
-    pygame.mixer.music.load(path)
-    pygame.mixer.music.play(-1)
+
+    death_effect = music.Music(path, False)
 
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -131,12 +130,14 @@ def show_death_screen_ENEMIES(screen, clock, restart_func, text, music_key="enem
                     return False
                 if event.key == pygame.K_r:
                     pygame.mixer.music.stop()
+                    jukebox.resume()
                     constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_rect.collidepoint(event.pos):
                     pygame.mixer.music.stop()
+                    jukebox.resume()
                     constants.player_current_hp = constants.PLAYER_MAX_HP
                     restart_func()
                     return True

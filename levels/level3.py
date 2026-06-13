@@ -19,15 +19,15 @@ from levels import menu
 clock = None
 
 
-def intro(screen, set_clock):
+def intro(screen, set_clock, jukebox):
     global clock
     clock = set_clock
     if constants.player_inventory_clips < 1:
         constants.player_inventory_clips = 1
-    levelTHREE(screen, maps.L3)
+    levelTHREE(screen, maps.L3, jukebox)
 
 
-def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelTHREE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -392,7 +392,10 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(
-                        screen, clock, lambda: levelTHREE(screen, tile_map)
+                                screen=screen,
+                                clock=clock,
+                                restart_func=lambda: levelTHREE(screen, tile_map, jukebox),
+                                jukebox=jukebox
                     )
                     return
 
@@ -402,7 +405,7 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 if trigger["target_level"] == 4:
                     constants.player_current_hp = constants.PLAYER_MAX_HP
                     import levels.level4
-                    levels.level4.intro(screen, clock)
+                    levels.level4.intro(screen, clock, jukebox)
                     return
 
         if shop_cooldown <= 0:
@@ -499,7 +502,7 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
             platforms,
             screen,
             clock,
-            lambda: levelTHREE(screen, tile_map),
+            lambda: levelTHREE(screen, tile_map, jukebox),
             projectiles,
             dt,
         )
@@ -520,10 +523,11 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_vel_y = -8
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
-                            screen,
-                            clock,
-                            lambda: levelTHREE(screen, tile_map),
-                            "You were killed by an enemy!",
+                            screen=screen,
+                            clock=clock,
+                            restart_func=lambda: levelTHREE(screen, tile_map, jukebox),
+                            text="You were killed by an enemy!",
+                            jukebox=jukebox
                         )
                         return
                     break
@@ -539,11 +543,12 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 projectiles.remove(p)
                 if player_hp <= 0:
                     death_screen.show_death_screen_ENEMIES(
-                        screen,
-                        clock,
-                        lambda: levelTHREE(screen, tile_map),
-                        "You were killed by an enemy!",
+                        screen=screen,
+                        clock=clock,
+                        restart_func=lambda: levelTHREE(screen, tile_map, jukebox),
+                        text="You were killed by an enemy!",
                         music_key="warden",
+                        jukebox=jukebox
                     )
                     return
 

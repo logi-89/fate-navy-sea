@@ -220,7 +220,7 @@ def show_title_screen(screen, clock, jukebox_object):
                     return screen
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start_btn.collidepoint(event.pos):
-                    levels.level1.intro(screen, clock)
+                    levels.level1.intro(screen, clock, jukebox)
                     return screen
                 if chapt_btn.collidepoint(event.pos):
                     screen = chapter_select(screen, clock)
@@ -243,6 +243,7 @@ def show_title_screen(screen, clock, jukebox_object):
 
 
 def chapter_select(screen, clock):
+    global jukebox
     running = True
     WIDTH, HEIGHT = constants.WIDTH, constants.HEIGHT
     font_title = pygame.font.Font(None, 76)
@@ -252,7 +253,7 @@ def chapter_select(screen, clock):
 
     chapters = [
         ("Chapter 1", "The Depths", levels.level1.intro, "Descend into the abyss"),
-        ("Chapter 2", "The Train", lambda s, c: levels.level2.intro(s, c), "Board the phantom express"),
+        ("Chapter 2", "The Train", levels.level2.intro, "Board the phantom express"),
         ("Chapter 3", "The Laboratory", levels.level3.intro, "Secrets beneath the waves"),
         ("Chapter 4", "The Lab", levels.level4.intro, "Face the heart of the storm"),
     ]
@@ -315,7 +316,7 @@ def chapter_select(screen, clock):
                     y = 140 + i * 110
                     rect = pygame.Rect(WIDTH // 2 - 220, y, 440, 85)
                     if rect.collidepoint(event.pos):
-                        func(screen, clock)
+                        func(screen, clock, jukebox)
                         return screen
                 if back_rect.collidepoint(event.pos):
                     return screen

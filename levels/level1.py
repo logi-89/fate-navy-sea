@@ -26,16 +26,16 @@ def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
 
-def intro(screen, set_clock):
+def intro(screen, set_clock, jukebox):
     global clock
 
     clock = set_clock
     introLORE(screen)
     print("[DEBUG] Show intro")
-    levelONE(screen, maps.L1)
+    levelONE(screen, maps.L1, jukebox)
 
 
-def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -402,7 +402,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(
-                                screen, clock, lambda: levelONE(screen, tile_map)
+                                screen, clock, jukebox, lambda: levelONE(screen, tile_map, jukebox)
                             )
                             return
 
@@ -412,7 +412,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 if trigger["target_level"] == 2:
                     print("TOOOOOO LEVEL 2 !!!!!!!!!!!!")
                     constants.player_current_hp = constants.PLAYER_MAX_HP
-                    levels.level2.intro(screen, clock)
+                    levels.level2.intro(screen, clock, jukebox)
                     return
 
         if shop_cooldown <= 0:
@@ -509,7 +509,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
             platforms,
             screen,
             clock,
-            lambda: levelONE(screen, tile_map),
+            lambda: levelONE(screen, tile_map, jukebox),
             projectiles,
             dt,
         )
@@ -530,10 +530,11 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_vel_y = -8
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
-                            screen,
-                            clock,
-                            lambda: levelONE(screen, tile_map),
-                            "You were killed by an enemy!",
+                            screen=screen,
+                            clock=clock,
+                            restart_func=lambda: levelONE(screen, tile_map, jukebox),
+                            text="You were killed by an enemy!",
+                            jukebox=jukebox
                         )
                         return
                     break
@@ -551,11 +552,12 @@ def levelONE(screen: pygame.Surface, tile_map: list[str]) -> None:
                 projectiles.remove(p)
                 if player_hp <= 0:
                     death_screen.show_death_screen_ENEMIES(
-                        screen,
-                        clock,
-                        lambda: levelONE(screen, tile_map),
-                        "You were killed by an enemy!",
-                        music_key="warden",
+                        screen=screen,
+                        clock=clock,
+                        restart_func=lambda: levelONE(screen, tile_map, jukebox),
+                        text="You were killed by an enemy!",
+                        jukebox=jukebox,
+                        music_key="warden"
                     )
                     return
 

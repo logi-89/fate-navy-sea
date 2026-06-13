@@ -19,15 +19,15 @@ from levels import menu
 clock = None
 
 
-def intro(screen, set_clock):
+def intro(screen, set_clock, jukebox):
     global clock
     clock = set_clock
     if constants.player_inventory_clips < 1:
         constants.player_inventory_clips = 1
-    levelFOUR(screen, maps.L_Lab)
+    levelFOUR(screen, maps.L4, jukebox)
 
 
-def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelFOUR(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -400,7 +400,10 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(
-                                screen, clock, lambda: levelFOUR(screen, tile_map)
+                                screen=screen,
+                                clock=clock,
+                                restart_func=lambda: levelFOUR(screen, tile_map, jukebox),
+                                jukebox=jukebox
                             )
                             return
 
@@ -498,7 +501,7 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
             platforms,
             screen,
             clock,
-            lambda: levelFOUR(screen, tile_map),
+            lambda: levelFOUR(screen, tile_map, jukebox),
             projectiles,
             dt,
         )
@@ -519,10 +522,11 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_vel_y = -8
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
-                            screen,
-                            clock,
-                            lambda: levelFOUR(screen, tile_map),
-                            "You were killed by an enemy!",
+                            screen=screen,
+                            clock=clock,
+                            restart_func=lambda: levelFOUR(screen, tile_map, jukebox),
+                            text="You were killed by an enemy!",
+                            jukebox=jukebox
                         )
                         return
                     break
@@ -538,11 +542,12 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str]) -> None:
                 projectiles.remove(p)
                 if player_hp <= 0:
                     death_screen.show_death_screen_ENEMIES(
-                        screen,
-                        clock,
-                        lambda: levelFOUR(screen, tile_map),
-                        "You were killed by an enemy!",
+                        screen=screen,
+                        clock=clock,
+                        restart_func=lambda: levelFOUR(screen, tile_map, jukebox),
+                        text="You were killed by an enemy!",
                         music_key="warden",
+                        jukebox=jukebox
                     )
                     return
 

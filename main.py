@@ -22,6 +22,6 @@ def run_shop():
 jukebox = music.Music("F4T3_ navy sea.mp3", loop=True)
 menu.jukebox = jukebox
 if dev_mode:
-    levels.level1.intro(screen, clock)
+    levels.level1.intro(screen, clock, jukebox)
 else:
     screen = menu.show_title_screen(screen, clock, jukebox)

@@ -13,7 +13,7 @@ class Music:
 
         self.mixer = pygame.mixer
         self.mixer.music.load(self.file)
-        self.mixer.music.play(-1 if loop else 0)
+        self.mixer.music.play(loops=-1 if self.loop else 0)
         exist = True
 
     def stop(self):
@@ -24,7 +24,7 @@ class Music:
 
     def resume(self):
         self.mixer.music.load(self.file)
-        self.mixer.music.play(self.loop)
+        self.mixer.music.play(loops=-1 if self.loop else 0)
 
     def unload(self):
         self.mixer.music.stop()

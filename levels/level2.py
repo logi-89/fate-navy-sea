@@ -25,7 +25,7 @@ def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
 
-def intro(screen, set_clock):
+def intro(screen, set_clock, jukebox):
     global clock
 
     clock = set_clock
@@ -35,10 +35,10 @@ def intro(screen, set_clock):
         constants.player_owned_weapons.append("water_gun")
     introLORE(screen)
     print("[DEBUG] Show intro")
-    levelTWO(screen, maps.L2)
+    levelTWO(screen, maps.L2, jukebox)
 
 
-def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
+def levelTWO(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     global clock
 
     WIDTH, HEIGHT = screen.get_size()
@@ -432,7 +432,10 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                     for static_floor in static_solids:
                         if player_rect.colliderect(static_floor):
                             death_screen.show_death_screen(
-                                screen, clock, lambda: levelTWO(screen, tile_map)
+                                screen=screen,
+                                clock=clock,
+                                jukebox=jukebox,
+                                restart_func=lambda: levelTWO(screen, tile_map, jukebox)
                             )
                             return
 
@@ -441,7 +444,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             if player_rect.colliderect(trigger["rect"]):
                 if trigger["target_level"] == 3:
                     constants.player_current_hp = constants.PLAYER_MAX_HP
-                    levels.level3.intro(screen, clock)
+                    levels.level3.intro(screen, clock, jukebox)
                     return
 
         if shop_cooldown <= 0:
@@ -541,7 +544,7 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
             platforms,
             screen,
             clock,
-            lambda: levelTWO(screen, tile_map),
+            lambda: levelTWO(screen, tile_map, jukebox),
             projectiles,
             dt,
         )
@@ -562,10 +565,11 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                     player_vel_y = -8
                     if player_hp <= 0:
                         death_screen.show_death_screen_ENEMIES(
-                            screen,
-                            clock,
-                            lambda: levelTWO(screen, tile_map),
-                            "You were killed by an enemy!",
+                            screen=screen,
+                            clock=clock,
+                            restart_func=lambda: levelTWO(screen, tile_map, jukebox),
+                            text="You were killed by an enemy!",
+                            jukebox=jukebox
                         )
                         return
                     break
@@ -583,11 +587,12 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str]) -> None:
                 projectiles.remove(p)
                 if player_hp <= 0:
                     death_screen.show_death_screen_ENEMIES(
-                        screen,
-                        clock,
-                        lambda: levelTWO(screen, tile_map),
-                        "You were killed by an enemy!",
+                        screen=screen,
+                        clock=clock,
+                        restart_func=lambda: levelTWO(screen, tile_map, jukebox),
+                        text="You were killed by an enemy!",
                         music_key="warden",
+                        jukebox=jukebox
                     )
                     return
 
