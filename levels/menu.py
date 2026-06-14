@@ -571,7 +571,7 @@ def shop_(screen, clock, name):
 
     # Track owned keys for display
     def is_owned(key):
-        if key in ("flask", "balloon_ammo"):
+        if key in ("flask", "balloon_ammo", "max_hp", "speed"):
             return False
         if key == "Spears":
             return "spear" in constants.player_owned_weapons
@@ -583,7 +583,7 @@ def shop_(screen, clock, name):
         constants.player_coins -= item["cost"]
 
         key = item["key"]
-        if key in ("flask", "balloon_ammo"):
+        if key in ("flask", "balloon_ammo", "max_hp", "speed"):
             pass
         elif key == "Spears":
             constants.player_owned_weapons.append("spear")
@@ -628,7 +628,7 @@ def shop_(screen, clock, name):
             item_rects.append(rect)
 
             owned = is_owned(item["key"])
-            stackable = item["key"] in ("flask", "balloon_ammo")
+            stackable = item["key"] in ("flask", "balloon_ammo", "max_hp", "speed")
             base_color = (40, 90, 130)
             border_color = (80, 140, 180)
             if owned:
@@ -647,13 +647,18 @@ def shop_(screen, clock, name):
                     f"✓ {item['name']} — OWNED", True, (120, 200, 160)
                 )
             elif stackable:
-                count = (
-                    constants.player_flasks
-                    if item["key"] == "flask"
-                    else constants.player_balloon_ammo_bonus
-                )
+                if item["key"] == "flask":
+                    count = constants.player_flasks
+                    stat = f"owned: {count}"
+                elif item["key"] == "balloon_ammo":
+                    count = constants.player_balloon_ammo_bonus
+                    stat = f"owned: {count}"
+                elif item["key"] == "max_hp":
+                    stat = f"HP: {constants.PLAYER_MAX_HP}"
+                elif item["key"] == "speed":
+                    stat = f"speed: {constants.physics.PLAYER_SPEED}"
                 text = font_item.render(
-                    f"{item['name']} ({'owned: ' + str(count)}) — {item['cost']}g",
+                    f"{item['name']} ({stat}) — {item['cost']}g",
                     True,
                     (200, 220, 240) if constants.player_coins < item["cost"] else WHITE,
                 )

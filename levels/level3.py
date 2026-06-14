@@ -125,22 +125,6 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
     COLOR_ELEVATOR = (25, 75, 75)
     COLOR_ANIM_DOOR = (45, 55, 65)
-    # Cap elevator downward travel at the nearest platform below
-    for elev in elevators:
-        floor_y = None
-        for plat in platforms:
-            if (
-                plat.top > elev["rect"].bottom
-                and plat.left < elev["rect"].right
-                and plat.right > elev["rect"].left
-            ):
-                if floor_y is None or plat.top < floor_y:
-                    floor_y = plat.top
-        if floor_y is not None:
-            elev["max_y"] = floor_y - elev["rect"].height
-        else:
-            elev["max_y"] = elev["origin_y"] + elev["range"]
-
     # Nudge spawn upward if it overlaps a platform
     for plat in platforms:
         if player_rect.colliderect(plat):
@@ -1026,9 +1010,9 @@ def levelTHREE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
         graphics.update_lore_display(screen, dt)
 
-        # ── BOSS HEALTH BAR ──
+        # ── BOSS HEALTH BAR (appears once boss is hit) ──
         for boss in enemies:
-            if boss.get("type") == "boss":
+            if boss.get("type") == "boss" and boss["hp"] < boss["max_hp"]:
                 bw = int(300 * hs)
                 bh = int(20 * hs)
                 bx = WIDTH // 2 - bw // 2

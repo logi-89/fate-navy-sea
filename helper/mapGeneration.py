@@ -146,7 +146,7 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                         "dir": random.choice([-1, 1]),
                         "speed": 1,
                         "chase_speed": 1,
-                        "detect_range": 750,
+                        "detect_range": 1000,
                         "state": "patrol",
                         "hp": 150,
                         "max_hp": 150,

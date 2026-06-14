@@ -200,11 +200,20 @@ def update_enemies(
                         )
                         spawn_y = enemy["rect"].centery - 4
                         speed = 8
+                        dx = player_rect.centerx - enemy["rect"].centerx
+                        dy = player_rect.centery - (enemy["rect"].centery - 4)
+                        dist = math.sqrt(dx * dx + dy * dy)
+                        if dist > 0:
+                            vx = speed * dx / dist
+                            vy = speed * dy / dist
+                        else:
+                            vx = speed * enemy["dir"]
+                            vy = 0
                         projectiles.append(
                             {
                                 "rect": pygame.Rect(spawn_x, spawn_y, 4, 4),
-                                "vx": speed * enemy["dir"],
-                                "vy": 3,
+                                "vx": vx,
+                                "vy": vy,
                                 "weapon": "warden_bullet",
                                 "dmg": 20,
                                 "color": (60, 180, 255),
