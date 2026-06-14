@@ -10,7 +10,8 @@ import os
 _warden_idle = None
 _warden_shoot = []
 _punchy_squid_frames = None
-_spear_squid_frames = None
+_spear_squid_idle_frames = None
+_spear_squid_attack_frames = None
 
 
 def _get_warden_sprites():
@@ -55,18 +56,30 @@ def _get_punchy_squid_frames():
 
 
 def _get_spear_squid_frames():
-    global _spear_squid_frames
-    if _spear_squid_frames is None:
-        base = os.path.join(os.path.dirname(__file__), "..")
+    global _spear_squid_idle_frames, _spear_squid_attack_frames
+    base = os.path.join(os.path.dirname(__file__), "..")
+
+    if _spear_squid_idle_frames is None:
         folder = os.path.join(base, "Spear Squid Idle")
         names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
-        _spear_squid_frames = [
+        _spear_squid_idle_frames = [
             pygame.transform.scale(
                 pygame.image.load(os.path.join(folder, f)), (100, 108)
             )
             for f in names
         ]
-    return _spear_squid_frames
+
+    if _spear_squid_attack_frames is None:
+        folder = os.path.join(base, "Spear Squid Attack")
+        names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
+        _spear_squid_attack_frames = [
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(folder, f)), (100, 108)
+            )
+            for f in names
+        ]
+
+    return _spear_squid_idle_frames, _spear_squid_attack_frames
 
 
 class Enemies:
@@ -259,7 +272,8 @@ def render_enemies(screen, enemies, camera_x, camera_y):
             continue
 
         if enemy.get("type") == "spear_squid":
-            frames = _get_spear_squid_frames()
+            idle_frames, attack_frames = _get_spear_squid_frames()
+            frames = attack_frames if enemy["state"] == "chase" else idle_frames
             idx = (pygame.time.get_ticks() // 180) % len(frames)
             sprite = frames[idx]
             if enemy["dir"] < 0:

@@ -11,6 +11,7 @@ import levels.level1
 import levels.level2
 import levels.level3
 import levels.level4
+import levels.level5
 
 jukebox = None
 
@@ -256,6 +257,7 @@ def chapter_select(screen, clock):
         ("Chapter 2", "The Train", levels.level2.intro, "Board the phantom express"),
         ("Chapter 3", "The Laboratory", levels.level3.intro, "Secrets beneath the waves"),
         ("Chapter 4", "The Lab", levels.level4.intro, "Face the heart of the storm"),
+        ("Chapter 5", "The Tower", levels.level5.intro, "Ascend beyond the waves"),
     ]
     t = 0.0
 
