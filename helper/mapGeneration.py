@@ -211,6 +211,27 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 )
                 col += 1
 
+            elif ch == "&":
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append(
+                    {
+                        "rect": rect,
+                        "start_x": float(rect.x),
+                        "patrol_left": float(rect.x - 150),
+                        "patrol_right": float(rect.x + 150),
+                        "dir": random.choice([-1, 1]),
+                        "speed": 2,
+                        "chase_speed": 4,
+                        "detect_range": 350,
+                        "state": "patrol",
+                        "hp": 100,
+                        "max_hp": 100,
+                        "damage": 5,
+                        "type": "spear_squid",
+                    }
+                )
+                col += 1
+
             elif ch.isdigit():
                 # Any digit 1-9 encodes a target level (e.g. '1' -> L1, '2' -> L2)
                 target = int(ch)
