@@ -6,9 +6,13 @@
 
 ## Game Overview
 
-### Concept & Storyline
+**FATE: The Navy Sea** is a **2D side-scrolling action-adventure platformer** with Metroidvania-style progression. Players explore a series of interconnected levels, fight enemies, collect coins and upgrades, and defeat bosses to progress through the story.
 
-Set in an expansive, interconnected naval world, *FATE: The Navy Sea* combines exploration with classic side-scrolling combat. Players must navigate labyrinthine environments, backtracking to open previously inaccessible paths as they acquire upgrades.
+### Objective
+Navigate through 6 distinct levels — from the Docks to the final Boss Arena — using platforming, combat, and puzzle-solving. Collect paperclips to break doors, spend coins at shops for health and ammo upgrades, and eliminate all enemies to clear each stage. The ultimate goal: conquer the Navy Sea.
+
+### Inspiration
+The game was developed as the ICS3U1 final culminating project at BHSS. It draws from classic Metroidvania design — non-linear exploration, ability-gated progression, and boss encounters — with an original nautical theme and custom soundtrack.
 
 ### Audio & Visual Design
 
