@@ -4,7 +4,7 @@
 
 ---
 
-## 🎮 Game Overview
+## Game Overview
 
 ### Concept & Storyline
 
@@ -12,77 +12,84 @@ Set in an expansive, interconnected naval world, *FATE: The Navy Sea* combines e
 
 ### Audio & Visual Design
 
-* **Visuals:** A 2D stylized world utilizing custom tilemaps and sprite animations to bring the naval setting to life.
-* **Audio:** Features a completely original, custom-composed soundtrack created entirely by **Nathan Chan** and **Nicky Mamoukarys**.
+- **Visuals:** A 2D stylized world utilizing custom tilemaps and sprite animations.
+- **Audio:** Original custom-composed soundtrack by **Nathan Chan** and **Nicky Mamoukarys**.
 
 ---
 
-## 🕹️ Gameplay Mechanics
+## Gameplay Mechanics
 
-* **Core Loop:** Exploration, enemy combat, and platforming.
-* **Controls:** * `W` `A` `S` `D` or `Arrow Keys` – Movement / Jumping
-* `Mouse Click` or `Spacebar` – Attack / Interact *(Adjust based on your actual controls)*
-
-
-* **Ability Gates:** Classic Metroidvania progression where certain zones require specific unlocked tools or power-ups to enter.
-
----
-
-## 🛠️ Technical Specifications
-
-The game is built using **Python 3** and the **Pygame** framework, incorporating the following core programming components:
-
-* **State Management:** Seamless transitions between the Start Screen, Active Gameplay, Pause Menu, and Game Over screens.
-* **Game Systems:** Implementation of game loops, Delta Time clock tracking, and physics-based collision detection.
-* **Enemy AI:** Dynamic enemy behaviors, tracking, and combat interactions.
-* **Custom Audio Engine:** Pygame mixer integration for handling simultaneous background tracks and sound effects.
-
----
-
-## 🏅 Player Progression & Rewards
-
-* **Milestones & Levels:** Progression through distinct, interconnected sectors of the Navy Sea map.
-* **Power-Ups & Items:** Collectibles that increase health or unlock movement options (e.g., double jumps, dash maneuvers).
-* **Scoring System:** *(Add details here if you are using a scoreboard, or remove if progression is entirely item-based)*
+- **Core Loop:** Exploration, enemy combat, platforming, and boss fights.
+- **Controls:**
+  - `W A S D` / `Arrow Keys` – Movement & Jumping
+  - `Space` / `W` / `Up` – Jump / Double Jump
+  - `E / Q` – Elevator up / down
+  - `F` – Break doors (requires paperclips) / Interact with lore
+  - `1` / `Mouse Click` – Attack with equipped weapon
+  - `H` – Heal (consumes flasks)
+  - `Esc` – Quit
+  - `P` – Quit (dev mode only)
+- **Weapons:**
+  - **Spear** – Melee, infinite ammo (Level 1)
+  - **Water Gun** – Ranged, 25 ammo (Level 2), 150 ammo (Level 6)
+  - **Water Balloon** – Heavy ranged, 5 ammo (Level 2), 150 ammo (Level 6)
+- **Shops:** Spend coins on ammo, health upgrades, speed boots, and revive tokens.
+- **Ability Gates:** Classic Metroidvania progression requiring specific upgrades.
 
 ---
 
-## 🚀 How to Run the Game
+## Levels
+
+| # | Name | Description |
+|---|------|-------------|
+| 1 | The Docks | Introductory area with spear-only combat and tutorial |
+| 2 | The Depths | Unlock water gun and balloon, platforming challenges |
+| 3 | The Elevator Shaft | Vertical ascent with elevator mechanics |
+| 4 | The Bridge | Mid-game gauntlet |
+| 5 | The Tower | Pre-boss gauntlet with the Warden |
+| 6 | Boss Arena | Final boss encounter (Fi Fy Fuh & Thule) |
+
+---
+
+## Technical Specifications
+
+Built using **Python 3** and **Pygame**:
+
+- **State Management:** Start Screen, Active Gameplay, Pause Menu, Death Screen, and Game Over.
+- **Game Systems:** Game loops, Delta Time clock, physics-based collision detection.
+- **Enemy AI:** Dynamic behaviors including tracking, ranged attacks, and boss phases.
+- **Custom Audio Engine:** Pygame mixer for simultaneous background tracks and SFX.
+- **Intro Animation:** MP4 video played on launch via pre-extracted frames.
+
+---
+
+## How to Run
 
 ### Prerequisites
 
-Make sure you have Python 3.x and `pip` installed on your system.
+Python 3.x and pip installed.
 
 ### Installation
 
-1. Clone this repository to your local machine:
+1. Clone the repo:
 ```bash
 git clone https://github.com/logi-89/fate-navy-sea.git
-
 ```
 
-
-2. Navigate into the project directory:
+2. Navigate into the directory:
 ```bash
 cd fate-navy-sea
-
 ```
 
-
-3. Install the required Pygame library:
+3. Install dependencies:
 ```bash
 pip install pygame
-
 ```
 
-
-4. Run the main game script:
+4. Run the game:
 ```bash
 python main.py
-
 ```
-
-
 
 ---
 
