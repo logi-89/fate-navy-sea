@@ -4,6 +4,8 @@ import constants
 import math
 import random
 
+# constants.dev_mode = True
+
 from constants import *
 from helper import mapGeneration
 from helper import graphics
@@ -20,6 +22,8 @@ clock = None
 def intro(screen, set_clock, jukebox):
     global clock
     clock = set_clock
+    if constants.player_inventory_clips < 1:
+        constants.player_inventory_clips = 1
     levelFIVE(screen, maps.L5, jukebox)
 
 
@@ -41,6 +45,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     shop_triggers = map_data.get("shop_triggers", [])
     lore_drop = map_data["lore"]
 
+    # Safely track map height
     world_h = len(tile_map) * physics.TILE_SIZE
 
     spawn_x, spawn_y = 400, 500
@@ -50,9 +55,16 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         spawn_x = best.x + 215
         spawn_y = best.top - 450
 
-        if constants.dev_mode:
-            spawn_x = 4030
-            spawn_y = 150
+        if constants.dev_mode == True:
+            w_mode = True
+            # spawn_x = spawn_x + 7600
+            # spawn_y = spawn_y - 467
+            print("in dev mode")
+
+            if w_mode == True:
+                print("MOM, I JUST HIT A CLIP!!")
+                spawn_x = 4030
+                spawn_y = 150
 
     if map_data.get("player_spawn"):
         spawn_x = map_data["player_spawn"]["rect"].x
@@ -123,18 +135,20 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     ]
 
     attack_anim_start = 0
-    camera_x = 0
-    camera_y = 0
-    show_warning_frames = 0
-    player_hp = constants.player_current_hp
-    invincible_timer = 0
-    player_facing = 1
-    weapon_list = weapons.get_available(constants.dev_mode)
-    selected_weapon = 0
-    ammo_counts = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
-    projectiles = []
-    weapon_cooldown = 0
-    shop_cooldown = 0
+    camera_x               = 0
+    camera_y               = 0
+    show_warning_frames    = 0
+    player_hp              = constants.player_current_hp
+    invincible_timer       = 0
+    player_facing          = 1
+    weapon_list            = weapons.get_available(constants.dev_mode)
+    selected_weapon        = 0
+    ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
+    projectiles            = []
+    weapon_cooldown        = 0
+    shop_cooldown          = 0
+
+    # LORE POPUP STATE (uses constants.lore_display_text / constants.lore_display_timer)
 
     SNAP_TOLERANCE = 8
     ui_font = pygame.font.Font(None, 30)
@@ -142,7 +156,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
     COLOR_ELEVATOR = (25, 75, 75)
     COLOR_ANIM_DOOR = (45, 55, 65)
-
+    # Cap elevator downward travel at the nearest platform below
     for elev in elevators:
         floor_y = None
         for plat in platforms:
@@ -156,8 +170,9 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         if floor_y is not None:
             elev["max_y"] = floor_y - elev["rect"].height
         else:
-            elev["max_y"] = elev["origin_y"] + 200
+            elev["max_y"] = elev["origin_y"] + elev["range"]
 
+    # Nudge spawn upward if it overlaps a platform
     for plat in platforms:
         if player_rect.colliderect(plat):
             player_rect.bottom = plat.top
@@ -165,6 +180,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             spawn_y = player_rect.y
             break
 
+    # Loading screen
     loading_font = pygame.font.Font(None, 48)
     for _ in range(15):
         for event in pygame.event.get():
@@ -309,6 +325,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
         keys = pygame.key.get_pressed()
 
+        # ── ELEVATOR REGISTRATION ─────────────────────────────────────
         riding_elev = None
         for elev in elevators:
             if (
@@ -322,6 +339,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 riding_elev = elev
                 break
 
+        # ── Q / E PLAYER-CONTROLLED ELEVATOR MOVEMENT
         for elev in elevators:
             prev_y = elev["float_y"]
 
@@ -344,6 +362,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 player_y += delta_y
                 player_rect.y = int(player_y)
 
+        # ANIMATED DOORS
         for door in animated_doors:
             if door["open"] and door["offset_y"] < door["max_open"]:
                 door["offset_y"] = min(door["offset_y"] + 4 * dt, door["max_open"])
@@ -361,6 +380,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             ]
         )
 
+        # HORIZONTAL PLAYER AXIS MOVEMENTS & COLLISIONS
         move_x = 0
         if keys[pygame.K_a] and input_allowed or keys[pygame.K_LEFT] and input_allowed:
             move_x -= physics.PLAYER_SPEED * dt
@@ -387,6 +407,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                     player_rect.left = plat.right
                     player_x = float(player_rect.x)
 
+        # VERTICAL PLAYER AXIS MOVEMENTS & COLLISIONS
         if riding_elev is None:
             player_vel_y = min(
                 player_vel_y + physics.GRAVITY * dt, physics.MAX_FALL_SPEED
@@ -394,6 +415,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             player_y += player_vel_y * dt
             player_rect.y = int(player_y)
 
+        # CRUSH / SQUISH DETECTION UNDER ELEVATOR
         for elev in elevators:
             if player_rect.colliderect(elev["rect"]):
                 if elev is riding_elev and keys[pygame.K_q]:
@@ -429,6 +451,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
 
         all_solids = static_solids + [e["rect"] for e in elevators]
 
+        # Resolve Floors and Ceilings
         is_grounded = False
         for plat in all_solids:
             if player_rect.colliderect(plat):
@@ -461,6 +484,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             else:
                 riding_elev = None
 
+        # ITEMS & BOUNDARIES
         for clip in paperclips:
             if not clip["collected"] and player_rect.colliderect(clip["rect"]):
                 clip["collected"] = True
@@ -491,12 +515,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             player_rect.y = spawn_y
             player_vel_y = 0.0
 
-        # LEVEL TRANSITION
-        for lt in map_data.get("level_triggers", []):
-            if player_rect.colliderect(lt["rect"]):
-                constants.player_current_hp = player_hp
-                return
-
+        # ENEMY AI
         enemy_result = enemies_module.update_enemies(
             enemies,
             player_rect,
@@ -513,6 +532,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             player_vel_y = enemy_result
             can_double_jump = True
 
+        # ENEMY SIDE-CONTACT DAMAGE
         if invincible_timer <= 0:
             for enemy in enemies:
                 if player_rect.colliderect(enemy["rect"]):
@@ -535,8 +555,10 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                     break
         invincible_timer = max(0, invincible_timer - dt)
 
+        # WEAPON UPDATES
         weapons.update(projectiles, static_solids, enemies, dt)
 
+        # Warden bullet vs. player
         for p in projectiles[:]:
             if p["weapon"] == "warden_bullet" and p["rect"].colliderect(player_rect):
                 player_hp -= p["dmg"]
@@ -555,23 +577,27 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
 
+        # SMOOTH CAMERA LaRP (LERP) TRACKING
         target_cam_x = player_rect.centerx - WIDTH // 2
         target_cam_y = player_rect.centery - HEIGHT // 2
 
         LERP_X = 0.12
-        LERP_Y = 0.14
+        LERP_Y = 0.14  # slightly snappier vertically feels more responsive
 
         camera_x += (target_cam_x - camera_x) * LERP_X
         camera_y += (target_cam_y - camera_y) * LERP_Y
 
+        # Snap to avoid sub-pixel drift when very close
         if abs(camera_x - target_cam_x) < 0.5:
             camera_x = target_cam_x
         if abs(camera_y - target_cam_y) < 0.5:
             camera_y = target_cam_y
 
+        # Single integer offset used for ALL rendering this frame
         cam_ix = int(camera_x)
         cam_iy = int(camera_y)
 
+        # ART RENDERING LAYER
         render_scale = constants.settings["render_scale"]
         if render_scale != 1.0:
             render_w = int(WIDTH * render_scale)
@@ -580,7 +606,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             orig_screen = screen
             screen = render_surf
 
-        graphics.draw_vertical_gradient(screen, (8, 6, 12), (20, 18, 35))
+        graphics.draw_vertical_gradient(screen, (4, 8, 15), (14, 42, 54))
 
         for plat in platforms:
             vx = plat.x - camera_x
@@ -757,10 +783,42 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         enemies_module.render_enemies(screen, enemies, camera_x, camera_y)
         weapons.render(screen, projectiles, camera_x, camera_y, dt)
 
+        # WATER RENDERING
+        water_time = pygame.time.get_ticks() / 1000.0
+        for w in water:
+            vx = w.x - camera_x
+            vy = w.y - camera_y
+            if vx + w.width < 0 or vx > WIDTH or vy + w.height < 0 or vy > HEIGHT:
+                continue
+
+            # Deep water body
+            pygame.draw.rect(screen, (10, 40, 80), (vx, vy + 6, w.width, w.height - 6))
+
+            # Animated surface wave strip
+            wave_surf = pygame.Surface((w.width, 10), pygame.SRCALPHA)
+            for wx_off in range(0, w.width, 4):
+                wave_y = int(3 + 3 * math.sin((wx_off / 18.0) + water_time * 2.5))
+                pygame.draw.circle(wave_surf, (40, 140, 210, 180), (wx_off, wave_y), 3)
+            screen.blit(wave_surf, (vx, vy))
+
+            # Shimmer lines
+            for shimmer_i in range(3):
+                sx = int(
+                    vx
+                    + (w.width * (0.2 + shimmer_i * 0.3))
+                    + 10 * math.sin(water_time * 1.4 + shimmer_i * 2.1)
+                )
+                sy = int(vy + 10 + shimmer_i * 8)
+                shimmer_alpha = int(60 + 40 * math.sin(water_time * 2.0 + shimmer_i))
+                shimmer_surf = pygame.Surface((30, 3), pygame.SRCALPHA)
+                shimmer_surf.fill((120, 210, 255, shimmer_alpha))
+                screen.blit(shimmer_surf, (sx, sy))
+
         if render_scale != 1.0:
             pygame.transform.smoothscale(screen, (WIDTH, HEIGHT), orig_screen)
             screen = orig_screen
 
+        # Lore drop text (crisp, not supersampled)
         for lorey in lore_drop:
             vx = lorey["rect"].x - camera_x
             vy = lorey["rect"].y - camera_y
@@ -784,9 +842,14 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 f_surf = pygame.font.Font(None, 20).render("[F]", True, (120, 220, 190))
                 screen.blit(f_surf, (cx - f_surf.get_width() // 2, cy + radius + 4))
 
+        # ── HUD ────────────────────────────────────────────────────────────────────
         hs = constants.settings["hud_scale"] / 100
         ui_font_sm = pygame.font.Font(None, int(22 * hs))
         ui_font_xs = pygame.font.Font(None, int(18 * hs))
+        hud_dark = (4, 10, 18, 200)
+        hud_border = (60, 180, 110, 60)
+        hud_green = (80, 220, 150)
+        hud_dim = (80, 140, 110)
 
         def draw_panel(surf, x, y, w, h, alpha=200):
             s = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -795,6 +858,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             pygame.draw.rect(s, (60, 180, 110, 55), (0, 0, w, h), 1, border_radius=br)
             surf.blit(s, (x, y))
 
+        # ── TOP HINT BAR ──
         hints = [
             ("A/D", "move"),
             ("SPACE", "jump"),
@@ -809,7 +873,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         for key, action in hints:
             hint_parts.append((key, (100, 180, 140)))
             hint_parts.append((f" {action}", (60, 130, 100)))
-            hint_parts.append(("  \u2502  ", (40, 80, 60)))
+            hint_parts.append(("  │  ", (40, 80, 60)))
         hint_parts = hint_parts[:-1]
 
         hint_total_w = sum(ui_font_xs.size(t)[0] for t, _ in hint_parts)
@@ -827,11 +891,13 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             screen.blit(s, (cx, int(16 * hs)))
             cx += s.get_width()
 
+        # ── COORDS (subtle) ──
         coord_s = ui_font_xs.render(
             f"x:{player_rect.x}  y:{player_rect.y}", True, (60, 110, 80)
         )
         screen.blit(coord_s, (int(18 * hs), int(38 * hs)))
 
+        # ── HEALTH PANEL ──
         PNL_X, PNL_Y, PNL_W, PNL_H = (
             int(14 * hs),
             HEIGHT - int(100 * hs),
@@ -876,7 +942,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         screen.blit(hp_val, (PNL_X + int(10 * hs), PNL_Y + int(38 * hs)))
 
         flask_surf = ui_font_xs.render(
-            f"\u2695 {constants.player_flasks}", True, (140, 220, 100)
+            f"⚕ {constants.player_flasks}", True, (140, 220, 100)
         )
         screen.blit(
             flask_surf,
@@ -886,11 +952,13 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             ),
         )
 
+        # ── SCORE ──
         score_surf = ui_font_xs.render(
             f"SCORE: {constants.total_score}", True, (255, 215, 0)
         )
         screen.blit(score_surf, (int(14 * hs), int(58 * hs)))
 
+        # ── CLIPS / LOCKPICK PANEL ──
         clips_collected = sum(1 for c in paperclips if c["collected"])
         clips_total = len(paperclips)
         has_pick = constants.player_inventory_clips >= 1
@@ -920,13 +988,14 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         )
 
         coin_surf = ui_font_xs.render(
-            f"\u00a2 {constants.player_coins}", True, (255, 215, 0)
+            f"¢ {constants.player_coins}", True, (255, 215, 0)
         )
         screen.blit(
             coin_surf,
             (CL_X + CL_W - coin_surf.get_width() - int(8 * hs), CL_Y + int(14 * hs)),
         )
 
+        # ── WEAPON SLOTS ──
         slot_w, slot_h = int(160 * hs), int(24 * hs)
         slot_gap = int(4 * hs)
         for wi, wk in enumerate(weapon_list):
@@ -962,7 +1031,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             ammo_col = (80, 210, 150) if active else (60, 110, 90)
 
             ammo = ammo_counts.get(wk, defs["ammo"])
-            ammo_s = "\u221e" if defs["ammo"] < 0 else str(ammo)
+            ammo_s = "∞" if defs["ammo"] < 0 else str(ammo)
 
             k_surf = ui_font_xs.render(str(wi + 1), True, key_col)
             n_surf = ui_font_xs.render(defs["name"].lower(), True, name_col)
@@ -975,6 +1044,7 @@ def levelFIVE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 (sx + slot_w - a_surf.get_width() - int(8 * hs), sy + int(5 * hs)),
             )
 
+        # ── LOW AMMO / NO PICK WARNING ──
         if show_warning_frames > 0:
             warn_font = pygame.font.Font(None, int(30 * hs))
             warn_s = warn_font.render("Find a paperclip first!", True, (255, 100, 100))

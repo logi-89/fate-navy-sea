@@ -23,44 +23,56 @@ from levels import menu
 clock = None
 
 
-def play_intro_video(screen: pygame.Surface) -> None:
-    try:
-        import cv2
-    except ImportError:
-        return
+pygame.mx.init() if hasattr(pygame, "mx") else None
+from pyvidplayer2 import Video
 
-    video_path = constants.resource_path("FATE - Navy Sea - Introduction Animation.mp4")
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
+
+def play_intro_video(screen: pygame.Surface) -> None:
+    video_path = constants.resource_path(
+        "FATE - Navy Sea - Introduction Animation.mp4"
+    )
+
+    if not os.path.exists(video_path):
+        print(f"[ERROR] Video file not found at: {video_path}")
         return
 
     screen_w, screen_h = screen.get_size()
-    fps = cap.get(cv2.CAP_PROP_FPS)
     clock = pygame.time.Clock()
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                cap.release()
-                pygame.quit()
-                return
-            if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
-                cap.release()
-                pygame.event.clear()
-                return
+    try:
+        # Initialize the MP4 video object using pyvidplayer2
+        # It natively handles the decoding and synchronization for Pygame
+        vid = Video(video_path)
+        
+        # Match video frame size to your Pygame window dimension
+        vid.set_size((screen_w, screen_h))
 
-        ret, frame = cap.read()
-        if not ret:
-            break
+        playing = True
+        while playing and vid.active:
+            # Handle Pygame events so window doesn't freeze or "Not Responding"
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    vid.close()
+                    pygame.quit()
+                    return
+                if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                    vid.close()
+                    pygame.event.clear()
+                    playing = False
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame_rgb = cv2.resize(frame_rgb, (screen_w, screen_h))
-        surf = pygame.image.frombuffer(frame_rgb.tobytes(), (screen_w, screen_h), "RGB")
-        screen.blit(surf, (0, 0))
-        pygame.display.flip()
-        clock.tick(fps if fps > 0 else 30)
+            # Draw the active video frame directly onto your Pygame window
+            vid.draw(screen, (0, 0))
+            pygame.display.flip()
+            
+            # Maintain the video's actual frame rate (e.g., 30 or 60 FPS)
+            clock.tick(vid.frame_rate)
 
-    cap.release()
+        # Ensure resources are freed up after the video finishes or is skipped
+        vid.close()
+
+    except Exception as e:
+        print(f"[ERROR] Failed to play video: {e}")
+
     pygame.event.clear()
 
 
