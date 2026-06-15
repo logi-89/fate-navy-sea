@@ -579,6 +579,10 @@ def levelSIX(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                     )
                     return
 
+        if len(enemies) == 0:
+            show_win_screen(screen, clock, jukebox)
+            return
+
         weapon_cooldown = max(0, weapon_cooldown - dt)
         shop_cooldown = max(0, shop_cooldown - dt)
 
@@ -1069,3 +1073,64 @@ def levelSIX(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         pygame.display.flip()
 
     pygame.quit()
+
+
+def show_win_screen(screen: pygame.Surface, clock: pygame.time.Clock, jukebox) -> None:
+    WIDTH, HEIGHT = screen.get_size()
+    running = True
+    save_rect = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2 + 130, 300, 60)
+
+    jukebox.stop()
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    name = scoreboard.name_entry(screen, clock)
+                    if name is not None:
+                        scoreboard.add_score(name, constants.total_score, constants.total_play_time / 1000)
+                    running = False
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = event.pos
+                if save_rect.collidepoint(mx, my):
+                    name = scoreboard.name_entry(screen, clock)
+                    if name is not None:
+                        scoreboard.add_score(name, constants.total_score, constants.total_play_time / 1000)
+                    running = False
+
+        screen.fill((5, 10, 30))
+
+        pygame.draw.rect(screen, (60, 50, 20), (0, 0, WIDTH, HEIGHT), 15)
+
+        title = pygame.font.Font(None, 100).render("VICTORY", True, (255, 215, 0))
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 4))
+
+        subtitle = pygame.font.Font(None, 36).render("All enemies defeated. You have conquered the Navy Sea.", True, (180, 220, 200))
+        screen.blit(subtitle, (WIDTH // 2 - subtitle.get_width() // 2, HEIGHT // 4 + 90))
+
+        font = pygame.font.Font(None, 40)
+        score_text = font.render(f"Score: {constants.total_score}", True, (255, 215, 0))
+        kills_text = font.render(f"Kills: {constants.total_kills}", True, (200, 200, 200))
+        time_secs = constants.total_play_time / 1000
+        minutes = int(time_secs // 60)
+        seconds = int(time_secs % 60)
+        time_text = font.render(f"Time: {minutes}:{seconds:02d}", True, (200, 200, 200))
+
+        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 - 40))
+        screen.blit(kills_text, (WIDTH // 2 - kills_text.get_width() // 2, HEIGHT // 2 + 10))
+        screen.blit(time_text, (WIDTH // 2 - time_text.get_width() // 2, HEIGHT // 2 + 60))
+
+        mouse_over = save_rect.collidepoint(pygame.mouse.get_pos())
+        pygame.draw.rect(screen, (60, 50, 20) if not mouse_over else (100, 85, 40), save_rect, border_radius=12)
+        pygame.draw.rect(screen, (255, 215, 0), save_rect, 2, border_radius=12)
+        save_label = pygame.font.Font(None, 40).render("Save & Quit", True, (255, 215, 0))
+        screen.blit(save_label, (save_rect.centerx - save_label.get_width() // 2, save_rect.centery - save_label.get_height() // 2))
+
+        pygame.display.flip()
+        clock.tick(30)
