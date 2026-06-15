@@ -5,13 +5,16 @@ import pygame
 from constants import WIDTH, HEIGHT
 import constants
 from helper import death_screen
-import os
 
 _warden_idle = None
 _warden_shoot = []
 _punchy_squid_frames = None
 _spear_squid_idle_frames = None
 _spear_squid_attack_frames = None
+_boss_idle_frames = None
+_boss_attack_frames = None
+_thule_idle_frames = None
+_thule_attack_frames = None
 
 
 def _get_warden_sprites():
@@ -80,6 +83,60 @@ def _get_spear_squid_frames():
         ]
 
     return _spear_squid_idle_frames, _spear_squid_attack_frames
+
+
+def _get_boss_frames():
+    global _boss_idle_frames, _boss_attack_frames
+    base = os.path.join(os.path.dirname(__file__), "..")
+
+    if _boss_idle_frames is None:
+        folder = os.path.join(base, "Fi Fy Fuh Idle")
+        names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
+        _boss_idle_frames = [
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(folder, f)), (220, 220)
+            )
+            for f in names
+        ]
+
+    if _boss_attack_frames is None:
+        folder = os.path.join(base, "Fi Fy Fuh Attack")
+        names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
+        _boss_attack_frames = [
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(folder, f)), (220, 220)
+            )
+            for f in names
+        ]
+
+    return _boss_idle_frames, _boss_attack_frames
+
+
+def _get_thule_frames():
+    global _thule_idle_frames, _thule_attack_frames
+    base = os.path.join(os.path.dirname(__file__), "..")
+
+    if _thule_idle_frames is None:
+        folder = os.path.join(base, "Thule Idle")
+        names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
+        _thule_idle_frames = [
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(folder, f)), (220, 220)
+            )
+            for f in names
+        ]
+
+    if _thule_attack_frames is None:
+        folder = os.path.join(base, "Thule Attack")
+        names = sorted(f for f in os.listdir(folder) if f.endswith(".png"))
+        _thule_attack_frames = [
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(folder, f)), (220, 220)
+            )
+            for f in names
+        ]
+
+    return _thule_idle_frames, _thule_attack_frames
 
 
 class Enemies:
@@ -289,6 +346,30 @@ def render_enemies(screen, enemies, camera_x, camera_y):
                 sprite = pygame.transform.flip(sprite, True, False)
             sx = vx - (sprite.get_width() - enemy["rect"].width) // 2
             sy = vy + enemy["rect"].height - sprite.get_height() + 5
+            screen.blit(sprite, (sx, sy))
+            continue
+
+        if enemy.get("type") == "boss":
+            idle_frames, attack_frames = _get_boss_frames()
+            frames = attack_frames if enemy["state"] == "chase" else idle_frames
+            idx = (pygame.time.get_ticks() // 180) % len(frames)
+            sprite = frames[idx]
+            if enemy["dir"] < 0:
+                sprite = pygame.transform.flip(sprite, True, False)
+            sx = vx - (sprite.get_width() - enemy["rect"].width) // 2
+            sy = vy + enemy["rect"].height - sprite.get_height()
+            screen.blit(sprite, (sx, sy))
+            continue
+
+        if enemy.get("type") == "thule_boss":
+            idle_frames, attack_frames = _get_thule_frames()
+            frames = attack_frames if enemy["state"] == "chase" else idle_frames
+            idx = (pygame.time.get_ticks() // 180) % len(frames)
+            sprite = frames[idx]
+            if enemy["dir"] < 0:
+                sprite = pygame.transform.flip(sprite, True, False)
+            sx = vx - (sprite.get_width() - enemy["rect"].width) // 2
+            sy = vy + enemy["rect"].height - sprite.get_height()
             screen.blit(sprite, (sx, sy))
             continue
 

@@ -180,6 +180,27 @@ def build_platforms_from_map(tile_map: list[str], tile_size: int = physics.TILE_
                 )
                 col += 1
 
+            elif ch == "B":
+                rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
+                enemies.append(
+                    {
+                        "rect": rect,
+                        "start_x": float(rect.x),
+                        "patrol_left": float(rect.x - 150),
+                        "patrol_right": float(rect.x + 150),
+                        "dir": random.choice([-1, 1]),
+                        "speed": 1.5,
+                        "chase_speed": 2.5,
+                        "detect_range": 800,
+                        "state": "patrol",
+                        "hp": 2000,
+                        "max_hp": 2000,
+                        "damage": 40,
+                        "type": "thule_boss",
+                    }
+                )
+                col += 1
+
             elif ch == "S":
                 rect = pygame.Rect(col * tile_size, y, tile_size, tile_size)
                 player_spawn = {"rect": rect}
