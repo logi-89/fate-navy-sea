@@ -26,6 +26,7 @@ def intro(screen, set_clock, jukebox):
         constants.player_inventory_clips = 1
     levelSIX(screen, maps.L6, jukebox)
 
+#le bron loves pygame
 
 def levelSIX(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     global clock
