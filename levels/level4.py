@@ -111,6 +111,29 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         pygame.transform.scale(f, (spear_w_scale[i], spear_h))
         for i, f in enumerate(spear_frames_raw)
     ]
+    gun_frames_raw = [
+        pygame.image.load(constants.resource_path("Death Knight Gun/Death Knight Hydrogen Blaster - 1.png")),
+        pygame.image.load(constants.resource_path("Death Knight Gun/Death Knight Hydrogen Blaster - 2.png")),
+        pygame.image.load(constants.resource_path("Death Knight Gun/Death Knight Hydrogen Blaster - 3.png")),
+    ]
+    gun_h = idle_frames[0].get_height()
+    gun_w_scale = int(gun_frames_raw[0].get_width() * gun_h / gun_frames_raw[0].get_height())
+    gun_frames = [
+        pygame.transform.scale(f, (gun_w_scale, gun_h)) for f in gun_frames_raw
+    ]
+
+    balloon_frames_raw = [
+        pygame.image.load(constants.resource_path("Death Knight Balloon/Death_Knight_Balloon_1.png")),
+        pygame.image.load(constants.resource_path("Death Knight Balloon/Death_Knight_Balloon_2.png")),
+        pygame.image.load(constants.resource_path("Death Knight Balloon/Death_Knight_Balloon_3.png")),
+        pygame.image.load(constants.resource_path("Death Knight Balloon/Death_Knight_Balloon_4.png")),
+    ]
+    balloon_h = idle_frames[0].get_height()
+    balloon_w_scale = int(balloon_frames_raw[0].get_width() * balloon_h / balloon_frames_raw[0].get_height())
+    balloon_frames = [
+        pygame.transform.scale(f, (balloon_w_scale, balloon_h)) for f in balloon_frames_raw
+    ]
+
     attack_anim_start = 0
     camera_x               = 0
     camera_y               = 0
@@ -235,7 +258,7 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                     if idx < len(weapon_list):
                         selected_weapon = idx
                         wk = weapon_list[idx]
-                        if wk == "spear":
+                        if wk in ("spear", "water_gun", "water_balloon"):
                             attack_anim_start = pygame.time.get_ticks()
                         if weapon_cooldown <= 0 and weapons.fire(
                             wk,
@@ -288,7 +311,7 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             ):
                 if selected_weapon < len(weapon_list):
                     wk = weapon_list[selected_weapon]
-                    if wk == "spear":
+                    if wk in ("spear", "water_gun", "water_balloon"):
                         attack_anim_start = pygame.time.get_ticks()
                     if weapon_cooldown <= 0 and weapons.fire(
                         wk,
@@ -722,16 +745,23 @@ def levelFOUR(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 3,
             )
 
-        SPEAR_ANIM_DURATION = 400
+        ANIM_DURATION = 400
         if (
             attack_anim_start
-            and pygame.time.get_ticks() - attack_anim_start < SPEAR_ANIM_DURATION
+            and pygame.time.get_ticks() - attack_anim_start < ANIM_DURATION
         ):
+            wk = weapon_list[selected_weapon]
             elapsed = pygame.time.get_ticks() - attack_anim_start
-            idx = int(elapsed / (SPEAR_ANIM_DURATION / len(spear_frames)))
-            if idx >= len(spear_frames):
-                idx = len(spear_frames) - 1
-            frame = spear_frames[idx]
+            if wk == "water_gun":
+                frames = gun_frames
+            elif wk == "water_balloon":
+                frames = balloon_frames
+            else:
+                frames = spear_frames
+            idx = int(elapsed / (ANIM_DURATION / len(frames)))
+            if idx >= len(frames):
+                idx = len(frames) - 1
+            frame = frames[idx]
         elif move_x != 0 and input_allowed:
             run_idx = (pygame.time.get_ticks() // 150) % len(running_frames)
             frame = running_frames[run_idx]

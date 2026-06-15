@@ -1,3 +1,4 @@
+import os
 import maps
 import pygame
 import constants
@@ -22,6 +23,47 @@ from levels import menu
 clock = None
 
 
+def play_intro_video(screen: pygame.Surface) -> None:
+    try:
+        import cv2
+    except ImportError:
+        return
+
+    video_path = constants.resource_path("FATE - Navy Sea - Introduction Animation.mp4")
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        return
+
+    screen_w, screen_h = screen.get_size()
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    clock = pygame.time.Clock()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                cap.release()
+                pygame.quit()
+                return
+            if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                cap.release()
+                pygame.event.clear()
+                return
+
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_rgb = cv2.resize(frame_rgb, (screen_w, screen_h))
+        surf = pygame.image.frombuffer(frame_rgb.tobytes(), (screen_w, screen_h), "RGB")
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(fps if fps > 0 else 30)
+
+    cap.release()
+    pygame.event.clear()
+
+
 def introLORE(screen: pygame.Surface) -> None:
     screen.fill(BLACK)
 
@@ -30,6 +72,7 @@ def intro(screen, set_clock, jukebox):
     global clock
 
     clock = set_clock
+    play_intro_video(screen)
     introLORE(screen)
     print("[DEBUG] Show intro")
     levelONE(screen, maps.L1, jukebox)
@@ -111,6 +154,29 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         pygame.transform.scale(f, (spear_w_scale[i], spear_h))
         for i, f in enumerate(spear_frames_raw)
     ]
+    gun_frames_raw = [
+        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 1.png"),
+        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 2.png"),
+        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 3.png"),
+    ]
+    gun_h = idle_frames[0].get_height()
+    gun_w_scale = int(gun_frames_raw[0].get_width() * gun_h / gun_frames_raw[0].get_height())
+    gun_frames = [
+        pygame.transform.scale(f, (gun_w_scale, gun_h)) for f in gun_frames_raw
+    ]
+
+    balloon_frames_raw = [
+        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_1.png"),
+        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_2.png"),
+        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_3.png"),
+        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_4.png"),
+    ]
+    balloon_h = idle_frames[0].get_height()
+    balloon_w_scale = int(balloon_frames_raw[0].get_width() * balloon_h / balloon_frames_raw[0].get_height())
+    balloon_frames = [
+        pygame.transform.scale(f, (balloon_w_scale, balloon_h)) for f in balloon_frames_raw
+    ]
+
     attack_anim_start = 0
     camera_x               = 0
     camera_y               = 0
@@ -237,7 +303,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                     if idx < len(weapon_list):
                         selected_weapon = idx
                         wk = weapon_list[idx]
-                        if wk == "spear":
+                        if wk in ("spear", "water_gun", "water_balloon"):
                             attack_anim_start = pygame.time.get_ticks()
                         if weapon_cooldown <= 0 and weapons.fire(
                             wk,
@@ -290,7 +356,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             ):
                 if selected_weapon < len(weapon_list):
                     wk = weapon_list[selected_weapon]
-                    if wk == "spear":
+                    if wk in ("spear", "water_gun", "water_balloon"):
                         attack_anim_start = pygame.time.get_ticks()
                     if weapon_cooldown <= 0 and weapons.fire(
                         wk,
@@ -736,16 +802,23 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 3,
             )
 
-        SPEAR_ANIM_DURATION = 400
+        ANIM_DURATION = 400
         if (
             attack_anim_start
-            and pygame.time.get_ticks() - attack_anim_start < SPEAR_ANIM_DURATION
+            and pygame.time.get_ticks() - attack_anim_start < ANIM_DURATION
         ):
+            wk = weapon_list[selected_weapon]
             elapsed = pygame.time.get_ticks() - attack_anim_start
-            idx = int(elapsed / (SPEAR_ANIM_DURATION / len(spear_frames)))
-            if idx >= len(spear_frames):
-                idx = len(spear_frames) - 1
-            frame = spear_frames[idx]
+            if wk == "water_gun":
+                frames = gun_frames
+            elif wk == "water_balloon":
+                frames = balloon_frames
+            else:
+                frames = spear_frames
+            idx = int(elapsed / (ANIM_DURATION / len(frames)))
+            if idx >= len(frames):
+                idx = len(frames) - 1
+            frame = frames[idx]
         elif move_x != 0 and input_allowed:
             run_idx = (pygame.time.get_ticks() // 150) % len(running_frames)
             frame = running_frames[run_idx]
