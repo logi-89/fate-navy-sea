@@ -23,56 +23,45 @@ from levels import menu
 clock = None
 
 
-pygame.mx.init() if hasattr(pygame, "mx") else None
-from pyvidplayer2 import Video
-
-
 def play_intro_video(screen: pygame.Surface) -> None:
-    video_path = constants.resource_path(
-        "FATE - Navy Sea - Introduction Animation.mp4"
+    frames_dir = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "intro_frames")
     )
 
-    if not os.path.exists(video_path):
-        print(f"[ERROR] Video file not found at: {video_path}")
+    if not os.path.isdir(frames_dir):
+        print(f"[ERROR] intro_frames directory not found at: {frames_dir}")
         return
 
+    print(f"[INTRO] Loading frames from {frames_dir}")
     screen_w, screen_h = screen.get_size()
     clock = pygame.time.Clock()
 
-    try:
-        # Initialize the MP4 video object using pyvidplayer2
-        # It natively handles the decoding and synchronization for Pygame
-        vid = Video(video_path)
-        
-        # Match video frame size to your Pygame window dimension
-        vid.set_size((screen_w, screen_h))
+    frame_num = 1
+    total_frames = 3732
+    running = True
 
-        playing = True
-        while playing and vid.active:
-            # Handle Pygame events so window doesn't freeze or "Not Responding"
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    vid.close()
-                    pygame.quit()
-                    return
-                if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
-                    vid.close()
-                    pygame.event.clear()
-                    playing = False
+    while running and frame_num <= total_frames:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                pygame.event.clear()
+                running = False
+                break
 
-            # Draw the active video frame directly onto your Pygame window
-            vid.draw(screen, (0, 0))
-            pygame.display.flip()
-            
-            # Maintain the video's actual frame rate (e.g., 30 or 60 FPS)
-            clock.tick(vid.frame_rate)
+        path = os.path.join(frames_dir, f"frame_{frame_num:05d}.png")
+        if not os.path.isfile(path):
+            print(f"[INTRO] Frame not found: {path}, stopping")
+            break
+        frame = pygame.image.load(path)
+        frame = pygame.transform.scale(frame, (screen_w, screen_h))
+        screen.blit(frame, (0, 0))
+        pygame.display.flip()
+        clock.tick(30)
+        frame_num += 1
 
-        # Ensure resources are freed up after the video finishes or is skipped
-        vid.close()
-
-    except Exception as e:
-        print(f"[ERROR] Failed to play video: {e}")
-
+    print(f"[INTRO] Done, played {frame_num - 1} frames")
     pygame.event.clear()
 
 
@@ -166,37 +155,14 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
         pygame.transform.scale(f, (spear_w_scale[i], spear_h))
         for i, f in enumerate(spear_frames_raw)
     ]
-    gun_frames_raw = [
-        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 1.png"),
-        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 2.png"),
-        pygame.image.load("Death Knight Gun/Death Knight Hydrogen Blaster - 3.png"),
-    ]
-    gun_h = idle_frames[0].get_height()
-    gun_w_scale = int(gun_frames_raw[0].get_width() * gun_h / gun_frames_raw[0].get_height())
-    gun_frames = [
-        pygame.transform.scale(f, (gun_w_scale, gun_h)) for f in gun_frames_raw
-    ]
-
-    balloon_frames_raw = [
-        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_1.png"),
-        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_2.png"),
-        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_3.png"),
-        pygame.image.load("Death Knight Balloon/Death_Knight_Balloon_4.png"),
-    ]
-    balloon_h = idle_frames[0].get_height()
-    balloon_w_scale = int(balloon_frames_raw[0].get_width() * balloon_h / balloon_frames_raw[0].get_height())
-    balloon_frames = [
-        pygame.transform.scale(f, (balloon_w_scale, balloon_h)) for f in balloon_frames_raw
-    ]
-
-    attack_anim_start = 0
     camera_x               = 0
     camera_y               = 0
     show_warning_frames    = 0
     player_hp              = constants.player_current_hp
     invincible_timer       = 0
     player_facing          = 1
-    weapon_list            = weapons.get_available(constants.dev_mode)
+    attack_anim_start      = 0
+    weapon_list            = ["spear"]
     selected_weapon        = 0
     ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
     projectiles            = []
@@ -310,23 +276,7 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                         can_double_jump = False
                         riding_elev = None
 
-                if event.key in (pygame.K_1, pygame.K_2, pygame.K_3) and input_allowed:
-                    idx = event.key - pygame.K_1
-                    if idx < len(weapon_list):
-                        selected_weapon = idx
-                        wk = weapon_list[idx]
-                        if wk in ("spear", "water_gun", "water_balloon"):
-                            attack_anim_start = pygame.time.get_ticks()
-                        if weapon_cooldown <= 0 and weapons.fire(
-                            wk,
-                            player_rect,
-                            player_facing,
-                            projectiles,
-                            ammo_counts,
-                            enemies,
-                        ):
-                            weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
-
+                
                 if event.key == pygame.K_f and input_allowed:
                     for door in breakable_doors:
                         if door["broken"]:
@@ -352,6 +302,19 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                             constants.lore_display_timer = 300
                             lorey["collected"] = True
 
+                if event.key == pygame.K_1 and input_allowed:
+                    wk = "spear"
+                    attack_anim_start = pygame.time.get_ticks()
+                    if weapon_cooldown <= 0 and weapons.fire(
+                        wk,
+                        player_rect,
+                        player_facing,
+                        projectiles,
+                        ammo_counts,
+                        enemies,
+                    ):
+                        weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
+
                 if (
                     event.key == pygame.K_h
                     and input_allowed
@@ -366,19 +329,17 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 and event.button == 1
                 and input_allowed
             ):
-                if selected_weapon < len(weapon_list):
-                    wk = weapon_list[selected_weapon]
-                    if wk in ("spear", "water_gun", "water_balloon"):
-                        attack_anim_start = pygame.time.get_ticks()
-                    if weapon_cooldown <= 0 and weapons.fire(
-                        wk,
-                        player_rect,
-                        player_facing,
-                        projectiles,
-                        ammo_counts,
-                        enemies,
-                    ):
-                        weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
+                wk = "spear"
+                attack_anim_start = pygame.time.get_ticks()
+                if weapon_cooldown <= 0 and weapons.fire(
+                    wk,
+                    player_rect,
+                    player_facing,
+                    projectiles,
+                    ammo_counts,
+                    enemies,
+                ):
+                    weapon_cooldown = WEAPON_DEFS[wk]["cooldown"]
 
         keys = pygame.key.get_pressed()
 
@@ -498,7 +459,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                 if player_rect.colliderect(shop_t["rect"]):
                     menu.shop_(screen, clock, SHOP_NAME_NE)
                     shop_cooldown = 60
-                    weapon_list = weapons.get_available(constants.dev_mode)
                     ammo_counts = {
                         k: (
                             WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus
@@ -508,8 +468,6 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                         for k in weapon_list
                         if WEAPON_DEFS[k]["ammo"] > 0
                     }
-                    if selected_weapon >= len(weapon_list):
-                        selected_weapon = 0
                     break
 
         all_solids = static_solids + [e["rect"] for e in elevators]
@@ -819,13 +777,9 @@ def levelONE(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
             attack_anim_start
             and pygame.time.get_ticks() - attack_anim_start < ANIM_DURATION
         ):
-            wk = weapon_list[selected_weapon]
+            wk = weapon_list[0]
             elapsed = pygame.time.get_ticks() - attack_anim_start
-            if wk == "water_gun":
-                frames = gun_frames
-            elif wk == "water_balloon":
-                frames = balloon_frames
-            else:
+            if wk == "spear":
                 frames = spear_frames
             idx = int(elapsed / (ANIM_DURATION / len(frames)))
             if idx >= len(frames):

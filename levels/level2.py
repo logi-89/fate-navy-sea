@@ -144,9 +144,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
     weapon_list            = weapons.get_available(constants.dev_mode)
     selected_weapon        = 0
     ammo_counts            = {k: (WEAPON_DEFS[k]["ammo"] + constants.player_balloon_ammo_bonus if WEAPON_DEFS[k]["ammo"] > 0 else -1) for k in weapon_list if WEAPON_DEFS[k]["ammo"] > 0}
-    if constants.dev_mode:
-        for k in ammo_counts:
-            ammo_counts[k] = 9999
+    ammo_counts["water_gun"] = 25
+    ammo_counts["water_balloon"] = 5
     projectiles            = []
     weapon_cooldown        = 0
     shop_cooldown          = 0
@@ -481,9 +480,8 @@ def levelTWO(screen: pygame.Surface, tile_map: list[str], jukebox) -> None:
                         for k in weapon_list
                         if WEAPON_DEFS[k]["ammo"] > 0
                     }
-                    if constants.dev_mode:
-                        for k in ammo_counts:
-                            ammo_counts[k] = 9999
+                    ammo_counts["water_gun"] = 25
+                    ammo_counts["water_balloon"] = 5
                     if selected_weapon >= len(weapon_list):
                         selected_weapon = 0
                     break
